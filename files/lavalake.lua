@@ -6,10 +6,9 @@ local origin = {x = 4, y = 0}
 local dimensions = {x = 5, y = 5}
 local directory = "mods/parallel_parity/files/lavalake2/"
 
-old_init = init
+local old_init = init
 init = function( x, y, w, h )
     old_init(x, y, w, h)
-    x = x + 512
     print("x y is " .. x .. " " .. y)
     local chunk = {x = x/512, y = y/512} --get chunk coordinates
 
@@ -32,10 +31,10 @@ init = function( x, y, w, h )
         print("checking \"" .. directory .. target .. ".png\"")
         if ModDoesFileExist(directory .. target .. ".png") then
             LoadPixelScene(directory .. target .. ".png", "", x, y, "")
-            local marker = EntityLoad("mods/parallel_parity/files/marker.xml")
-            local icomp = EntityGetComponent(marker, "InteractableComponent")
-            if not tonumber(icomp) then return end
-            ComponentSetValue2(icomp, "ui_text", chunk.x .. ", " .. chunk.y)
+            --local marker = EntityLoad("mods/parallel_parity/files/marker.xml")
+            --local icomp = EntityGetComponent(marker, "InteractableComponent")
+            --if not icomp then return end
+            --ComponentSetValue2(icomp, "ui_text", chunk.x .. ", " .. chunk.y)
         end
     end
 
