@@ -80,4 +80,5 @@ ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(pixel_scenes))
 --print(tostring(pixel_scenes))
 
 
+--ModLuaFileAppend("data/scripts/biome_scripts.lua", "mods/parallel_parity/files/lavalake.lua")
 ModLuaFileAppend("data/scripts/biomes/lavalake.lua", "mods/parallel_parity/files/lavalake.lua")
