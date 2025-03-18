@@ -8,8 +8,7 @@ local directory = "mods/parallel_parity/files/lavalake2/"
 
 local old_init = init
 init = function( x, y, w, h )
-    old_init(x, y, w, h)
-    print("x y is " .. x .. " " .. y)
+    print("(x, y) is (" .. x .. ", " .. y .. ")")
     local chunk = {x = x/512, y = y/512} --get chunk coordinates
 
     while chunk.x > map_width do --logic that relativises east PWs
@@ -30,26 +29,16 @@ init = function( x, y, w, h )
         print("target is " .. target)
         print("checking \"" .. directory .. target .. ".png\"")
         if ModDoesFileExist(directory .. target .. ".png") then
+            print("Loading \"" .. directory .. target .. ".png\"")
             LoadPixelScene(directory .. target .. ".png", "", x, y, "")
-            --local marker = EntityLoad("mods/parallel_parity/files/marker.xml")
-            --local icomp = EntityGetComponent(marker, "InteractableComponent")
-            --if not icomp then return end
-            --ComponentSetValue2(icomp, "ui_text", chunk.x .. ", " .. chunk.y)
+        else
+            print("no file at coordinates (" .. x .. ", " .. y.. ") for value " .. target)
         end
     end
 
 
 
-
-
-
-
-
-
-
-
-
-
+    old_init(x, y, w, h)
 end
 
 
