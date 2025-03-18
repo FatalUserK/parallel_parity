@@ -81,4 +81,23 @@ ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(pixel_scenes))
 
 
 --ModLuaFileAppend("data/scripts/biome_scripts.lua", "mods/parallel_parity/files/lavalake.lua")
+
+local biomelist = {}
+local biomesfile = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
+for elem in biomesfile:each_child() do
+	table.insert(biomelist, elem.attr.biome_filename)
+end
+
+for index, filepath in ipairs(biomelist) do
+	local script = nxml.parse(ModTextFileGetContent(filepath)):first_of("Topology").attr.lua_script
+	if script ~= nil then
+		ModLuaFileAppend(script, "mods/parallel_parity/files/lavalake.lua")
+	end
+end
+
+do return end
 ModLuaFileAppend("data/scripts/biomes/lavalake.lua", "mods/parallel_parity/files/lavalake.lua")
+ModLuaFileAppend("data/scripts/biomes/hills.lua", "mods/parallel_parity/files/lavalake.lua")
+ModLuaFileAppend("data/scripts/biomes/mountain_lake.lua", "mods/parallel_parity/files/lavalake.lua")
+ModLuaFileAppend("data/scripts/biomes/lavalake_pit.lua", "mods/parallel_parity/files/lavalake.lua")
+ModLuaFileAppend("data/scripts/biomes/coalmine.lua", "mods/parallel_parity/files/lavalake.lua")
