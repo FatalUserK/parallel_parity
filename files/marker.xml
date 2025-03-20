@@ -1,9 +1,5 @@
 <Entity>
 	<SpriteComponent
-		image_file="data\ui_gfx\mods_newer.png"
-	/>
-    <InteractableComponent
-		radius="50"
-		ui_text=""
+		image_file="data/ui_gfx/sale_indicator.png"
 	/>
 </Entity>
