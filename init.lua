@@ -96,7 +96,9 @@ local localise = {
 
 for pixel_scene_id, pixel_scene in pairs(localise) do
     for object, target in pairs(pixel_scene) do
-        if ModSettingGet(string.format("parallel_parity.%s.%s.is_local", pixel_scene_id, object)) then
+        print("checking " .. string.format("parallel_parity.%s.%s", pixel_scene_id, object))
+        if ModSettingGet(string.format("parallel_parity.%s.%s", pixel_scene_id, object)) then
+            print("returned true")
             ModTextFileSetContent(target.script,
                 ModTextFileGetContent(target.script):gsub(target.code,
                     "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. target.code .. " end")) --
