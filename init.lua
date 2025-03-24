@@ -117,36 +117,35 @@ end
 local biome_appends = {}
 
 --remove spliced pixel scenes from _pixel_scenes.xml
-local pixel_scenes = nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml"))
+local pixel_scenes = nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")) --get all global pixel scenes
 if pixel_scenes then
 	local spliced_scenes = pixel_scenes:first_of("PixelSceneFiles")
 	local remove_list = {}
-	for elem in spliced_scenes:each_child() do
+	for elem in spliced_scenes:each_child() do --run through spliced pixel scenes
         local pixel_scene_id = elem.content[#elem.content]:sub(1,-5) --acquire the pixel scene file name minus the file extension
         local target = spliced_pixel_scenes[pixel_scene_id]
-		if target and (ModSettingGet("parallel_parity." .. target.setting) or ModSettingGet(target.setting)) then
+		if target and (ModSettingGet("parallel_parity." .. target.setting) or ModSettingGet(target.setting)) then --make sure it exists and is enabled
 			remove_list[#remove_list+1] = elem --add to list of spliced pixel scenes to remove
 
             if target.localise then --apply localisation changes to objects within the spliced pixel scene
                 for object, data in pairs(target.localise) do
-                    if ModSettingGet(target.setting) == false then
+                    if ModSettingGet(target.setting) == false then --if spawning in PWs is disallowed
                         ModTextFileSetContent(data.script,
-                            ModTextFileGetContent(data.script):gsub(data.code,
-                                "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. data.code .. " end" --encapsulate designated code within a MW check
+                            ModTextFileGetContent(data.script):gsub(data.code, --encapsulate designated code within a MW check
+                                "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. data.code .. " end"
                         ))
                     end
                 end
             end
 
-            for i = 1, target.dimensions.y, 1 do
+            for i = 1, target.dimensions.y, 1 do --iterate over the part of the biomemap this takes up
                 for j = 1, target.dimensions.x, 1 do
-                    local abgr_int = ModImageGetPixel(map, target.origin.x + j + (map_x * .5) - 1, target.origin.y + i + 13)
-                    local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF))
+                    local abgr_int = ModImageGetPixel(map, target.origin.x + j + (map_x * .5) - 1, target.origin.y + i + 13) --get pixel colour as ABGR integer
+                    local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
 
                     local biome = biomelist[hex]
                     biome_appends[biome] = biome_appends[biome] or {}
-                    biome_appends[biome][#biome_appends[biome] + 1] = target
-                    print(("(%s, %s) = %s"):format(target.origin.x + j - 1, target.origin.y + i -1, biome))
+                    biome_appends[biome][#biome_appends[biome] + 1] = target --add pixel scene to biome_appends table under biomexml path as a key
                 end
             end
 		end
@@ -165,14 +164,16 @@ for xml_path, pixel_scenes in pairs(biome_appends) do
         if toplogy then
             if toplogy.attr.lua_script then
                 for key, pixel_scene in ipairs(pixel_scenes) do
-                    ModTextFileSetContent(toplogy.attr.lua_script, ModTextFileGetContent(toplogy.attr.lua_script) .. 
-                        ModTextFileGetContent("mods/parallel_parity/files/template_code.lua")
+                    ModTextFileSetContent(toplogy.attr.lua_script, ModTextFileGetContent(toplogy.attr.lua_script) ..
+                        ModTextFileGetContent("mods/parallel_parity/files/template_splicer.lua") --gsub in pixel scene data + map width
                             :gsub("MAPWIDTH", map_x)
                             :gsub("ORIGINX", pixel_scene.origin.x)
                             :gsub("ORIGINY", pixel_scene.origin.y)
                             :gsub("DIMENSIONSX", pixel_scene.dimensions.x)
                             :gsub("DIMENSIONSY", pixel_scene.dimensions.y)
-                            :gsub("SCENEDIRECTORY", pixel_scene.directory)
+                            :gsub("SCENEDIRECTORY", pixel_scene.directory
+                                :gsub("\\", "\\\\"):gsub("\"", "\\\"") --gsub thing nathan told me to put or the world would end idk
+                            )
                     )
                     --print(ModTextFileGetContent(toplogy.attr.lua_script))
                 end
