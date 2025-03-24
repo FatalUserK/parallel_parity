@@ -44,19 +44,34 @@ end
 
 
 local spliced_pixel_scenes = {
-	lavalake2 = true,
-	skull_in_desert = true,
-	boss_arena = true,
-	tree = true,
-	watercave = true,
-	mountain_lake = true,
-	lake_statue = true,
-	moon = ModSettingGet("parallel_parity.moons"),
-	moon_dark = ModSettingGet("parallel_parity.moons"),
-	lavalake_pit_bottom = true,
-	gourd_room = true,
-	skull = true,
+	lavalake2 = {
+        localise = {
+            ORB = {
+                script = "data/scripts/biomes/lavalake.lua",
+                code = [[EntityLoad%( "data/entities/items/orbs/orb_03%.xml", x%-10, y %)]]
+            }
+        },
+    },
+	skull_in_desert = {},
+	boss_arena = {},
+	tree = {},
+	watercave = {},
+	mountain_lake = {},
+	lake_statue = {},
+	moon = {
+        setting = "parallel_parity.moons"
+    },
+	moon_dark = {
+        setting = "parallel_parity.moons"
+    },
+	lavalake_pit_bottom = {},
+	gourd_room = {},
+	skull = {},
 }
+
+for key, value in pairs(spliced_pixel_scenes) do
+    if not value.setting then value.setting = "parallel_parity." .. key end
+end
 
 local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
 nxml.error_handler = function() end
@@ -67,7 +82,7 @@ if pixel_scenes then
 	local spliced_scenes = pixel_scenes:first_of("PixelSceneFiles")
 	local remove_list = {}
 	for elem in spliced_scenes:each_child() do
-		if spliced_pixel_scenes[elem.content[#elem.content]:sub(1,-5)] then
+		if ModSettingGet("parallel_parity." .. spliced_pixel_scenes[elem.content[#elem.content]:sub(1,-5)].setting) or ModSettingGet(spliced_pixel_scenes[elem.content[#elem.content]:sub(1,-5)].setting) then
 			print("removing spliced pixel scene: " .. elem.content[#elem.content]:sub(1,-5) .. "...")
 			remove_list[#remove_list+1] = elem
 		end
@@ -87,22 +102,16 @@ ModLuaFileAppend("data/scripts/biomes/lavalake.lua", "mods/parallel_parity/files
 
 local localise = {
     lavalake2 = {
-        ORB = {
-            script = "data/scripts/biomes/lavalake.lua",
-            code = [[EntityLoad%( "data/entities/items/orbs/orb_03%.xml", x%-10, y %)]]
-        }
     }
 }
 
 for pixel_scene_id, pixel_scene in pairs(localise) do
     for object, target in pairs(pixel_scene) do
         print("checking " .. string.format("parallel_parity.%s.%s", pixel_scene_id, object))
-        if ModSettingGet(string.format("parallel_parity.%s.%s", pixel_scene_id, object)) then
-            print("returned true")
+        if ModSettingGet(string.format("parallel_parity.%s.%s", pixel_scene_id, object)) == false then
             ModTextFileSetContent(target.script,
                 ModTextFileGetContent(target.script):gsub(target.code,
-                    "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. target.code .. " end")) --
-            print(ModTextFileGetContent(target.script))
+                    "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. target.code .. " end"))
         end
     end
 end

@@ -179,7 +179,7 @@ local function update_translations(input_settings, input_translations, path)
             else
                 setting.description = input_translations[setting.id][current_language .. "_desc"] or nil
             end
-            print(tostring(setting.label) .. ": " .. tostring(setting.path))
+            --print(tostring(setting.label) .. ": " .. tostring(setting.path))
         end
 
         if setting.items then
@@ -200,9 +200,8 @@ function ModSettingsUpdate(init_scope)
                 set_defaults(item)
             end
         else
-            if setting.value_default ~= nil then
-                ModSettingSetNextValue(setting.path, setting.value_default, true)
-                print(("Setting Check A\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
+            if setting.value_default ~= nil and ModSettingGet(setting.path) == nil then
+                ModSettingSet(setting.path, setting.value_default)
             end
             if setting.dependents then
                 for i, item in ipairs(setting.dependents) do
@@ -220,7 +219,6 @@ function ModSettingsUpdate(init_scope)
             local next_value = ModSettingGetNextValue(setting.path)
             if next_value ~= nil then
                 ModSettingSet(setting.path, next_value)
-                print(("Setting Check B\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
             end
             if setting.dependents then
                 for i, item in ipairs(setting.dependents) do
@@ -231,7 +229,7 @@ function ModSettingsUpdate(init_scope)
     end
     for i, setting in ipairs(settings) do
         set_defaults(setting)
-        save_setting(setting)
+        --save_setting(setting)
     end
     ModSettingSet(get_setting_id("_version"), mod_settings_version)
 end
@@ -259,7 +257,7 @@ function ModSettingsGui( gui, in_main_menu, _settings, offset)
 
     for i, setting in ipairs(_settings) do
         offset = offset + (setting.offset or 0)
-        if not setting.requires or (setting.requires and (ModSettingGetNextValue(get_setting_id(setting.requires.id)) == setting.requires.value)) then
+        if not setting.requires or (setting.requires and (ModSettingGet(get_setting_id(setting.requires.id)) == setting.requires.value)) then
             if setting.type == "group" then
                 GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawSemiTransparent)
                 GuiText(gui, offset, 0, setting.label)
@@ -270,7 +268,7 @@ function ModSettingsGui( gui, in_main_menu, _settings, offset)
                 ModSettingsGui(gui, in_main_menu, setting.items, offset + 15) --i think recursion just works here
             else
                 if type(setting.value_default) == "boolean" then
-                    local next_value = ModSettingGetNextValue(setting.path)
+                    local value = ModSettingGet(setting.path)
 
                     GuiText(gui, offset, 0, "")
                     local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
@@ -295,24 +293,23 @@ function ModSettingsGui( gui, in_main_menu, _settings, offset)
                     GuiText(gui, offset, 0, setting.label)
 
                     if highlighted then GuiColorSetForNextWidget(gui, 1, 1, 0.7 , 1) end
-                    GuiText(gui, offset + setting_offset + 1, 0, next_value == true and "(*)" or "(  )")
+                    GuiText(gui, offset + setting_offset + 1, 0, value == true and "(*)" or "(  )")
 
                     if clicked then
                         GamePlaySound("ui", "ui/button_click", 0, 0)
-                        ModSettingSetNextValue(setting.path, not next_value, false)
-                        print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
+                        ModSettingSet(setting.path, not value)
+                        --ModSettingSetNextValue(setting.path, not next_value, false)
+                        --print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
                     end
                     if rclicked then
                         GamePlaySound("ui", "ui/button_click", 0, 0)
-                        ModSettingSetNextValue(setting.path, setting.value_default, false)
-                        print(("Setting Check D\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
+                        ModSettingSet(setting.path, not value)
                     end
                 elseif type(setting.value_default) == "number" then
-                    local next_value = ModSettingGetNextValue(setting.path)
+                    local next_value = ModSettingGet(setting.path)
                     local new_value = GuiSlider(gui, get_id(), offset, 0, setting.label .. " ", next_value, setting.value_min, setting.value_max, setting.value_default, setting.value_display_multiplier or 1, setting.value_display_formatting or " $0", 80)
                     if new_value ~= next_value then
-                        ModSettingSetNextValue(setting.path, new_value, false)
-                        print(("Setting Check E\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
+                        ModSettingSet(setting.path, not next_value)
                     end
                 end
 
