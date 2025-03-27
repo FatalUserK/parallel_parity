@@ -5,36 +5,36 @@ dofile_once( "data/scripts/lib/utilities.lua" )
 --[[
 
 function OnModPreInit()
-	print("Mod - OnModPreInit()") -- First this is called for all mods
+    print("Mod - OnModPreInit()") -- First this is called for all mods
 end
 
 function OnModInit()
-	print("Mod - OnModInit()") -- After that this is called for all mods
+    print("Mod - OnModInit()") -- After that this is called for all mods
 end
 
 function OnModPostInit()
-	print("Mod - OnModPostInit()") -- Then this is called for all mods
+    print("Mod - OnModPostInit()") -- Then this is called for all mods
 end
 
 function OnWorldInitialized() -- This is called once the game world is initialized. Doesn't ensure any world chunks actually exist. Use OnPlayerSpawned to ensure the chunks around player have been loaded or created.
-	GamePrint( "OnWorldInitialized() " .. tostring(GameGetFrameNum()) )
+    GamePrint( "OnWorldInitialized() " .. tostring(GameGetFrameNum()) )
 end
 
 function OnWorldPreUpdate() -- This is called every time the game is about to start updating the world
-	GamePrint( "Pre-update hook " .. tostring(GameGetFrameNum()) )
+    GamePrint( "Pre-update hook " .. tostring(GameGetFrameNum()) )
 end
 
 function OnWorldPostUpdate() -- This is called every time the game has finished updating the world
-	GamePrint( "Post-update hook " .. tostring(GameGetFrameNum()) )
+    GamePrint( "Post-update hook " .. tostring(GameGetFrameNum()) )
 end
 
 function OnMagicNumbersAndWorldSeedInitialized() -- this is the last point where the Mod* API is available. after this materials.xml will be loaded.
-	local x = ProceduralRandom(0,0)
-	print( "===================================== random " .. tostring(x) )
+    local x = ProceduralRandom(0,0)
+    print( "===================================== random " .. tostring(x) )
 end
 
 function OnPlayerSpawned( player_entity ) -- This runs when player entity has been created
-	local x,y = EntityGetTransform(player_entity)
+    local x,y = EntityGetTransform(player_entity)
     EntityLoad("mods/parallel_parity/files/marker.xml", x, y)
 end
 
@@ -54,14 +54,12 @@ end
 local map_width = 70
 local map_path = "data/biome_impl/biome_map.png"
 
-local map,map_x,map_y = ModImageMakeEditable(map_path, 0, 0)
-print(ModImageGetPixel(map, 27, 24))
-print(color_abgr_split(ModImageGetPixel(map, 27, 24)))
+local map,map_x = ModImageMakeEditable(map_path, 0, 0)
 
 
 
 local spliced_pixel_scenes = {
-	lavalake2 = {
+    lavalake2 = {
         origin = {x = 4, y = 0},
         dimensions = {x = 5, y = 5},
         directory = "mods/parallel_parity/files/lavalake2/",
@@ -71,27 +69,40 @@ local spliced_pixel_scenes = {
                 code = [[EntityLoad%( "data/entities/items/orbs/orb_03%.xml", x%-10, y %)]]
             }
         },
+        child_scenes = {
+
+        }
     },
     --[[
-	skull_in_desert = {},
-	boss_arena = {},
-	tree = {},
-	watercave = {},
-	mountain_lake = {},
-	lake_statue = {},
-	moon = {
+    skull_in_desert = {},
+    boss_arena = {},
+    tree = {},
+    watercave = {},
+    mountain_lake = {},
+    lake_statue = {},
+    moon = {
         setting = "moons"
     },
-	moon_dark = {
+    moon_dark = {
         setting = "moons"
     },
-	lavalake_pit_bottom = {},
-	gourd_room = {},
-	skull = {},]]
+    lavalake_pit_bottom = {},
+    gourd_room = {},
+    skull = {},]]
 }
+
+local backgrounds = {
+    {
+        match = "data/biome_impl/hidden",
+        setting = ""
+    }
+}
+
+local pixel_scenes
 
 for id, pixel_scene in pairs(spliced_pixel_scenes) do
     if not pixel_scene.setting then pixel_scene.setting = "parallel_parity." .. id else pixel_scene.setting = "parallel_parity." .. pixel_scene.setting end
+    if not pixel_scene.offset then pixel_scene.offset = {x = 0, y = 0} end
     if pixel_scene.localise then
         for object, data in pairs(pixel_scene.localise) do
             if not data.setting then data.setting = "parallel_parity." .. id .. "." .. object else data.setting = "parallel_parity." .. data.setting end
@@ -119,13 +130,13 @@ local biome_appends = {}
 --remove spliced pixel scenes from _pixel_scenes.xml
 local pixel_scenes = nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")) --get all global pixel scenes
 if pixel_scenes then
-	local spliced_scenes = pixel_scenes:first_of("PixelSceneFiles")
-	local remove_list = {}
-	for elem in spliced_scenes:each_child() do --run through spliced pixel scenes
+    local spliced_scenes = pixel_scenes:first_of("PixelSceneFiles")
+    local remove_list = {}
+    for elem in spliced_scenes:each_child() do --run through spliced pixel scenes
         local pixel_scene_id = elem.content[#elem.content]:sub(1,-5) --acquire the pixel scene file name minus the file extension
         local target = spliced_pixel_scenes[pixel_scene_id]
-		if target and (ModSettingGet("parallel_parity." .. target.setting) or ModSettingGet(target.setting)) then --make sure it exists and is enabled
-			remove_list[#remove_list+1] = elem --add to list of spliced pixel scenes to remove
+        if target and (ModSettingGet("parallel_parity." .. target.setting) or ModSettingGet(target.setting)) then --make sure it exists and is enabled
+            remove_list[#remove_list+1] = elem --add to list of spliced pixel scenes to remove
 
             if target.localise then --apply localisation changes to objects within the spliced pixel scene
                 for object, data in pairs(target.localise) do
@@ -148,11 +159,16 @@ if pixel_scenes then
                     biome_appends[biome][#biome_appends[biome] + 1] = target --add pixel scene to biome_appends table under biomexml path as a key
                 end
             end
-		end
-	end
-	for index, value in ipairs(remove_list) do
-		spliced_scenes:remove_child(value) --remove spliced pixel scenes from file
-	end
+        end
+    end
+    for index, value in ipairs(remove_list) do
+        spliced_scenes:remove_child(value) --remove spliced pixel scenes from file
+    end
+
+
+    for elem in pixel_scenes:first_of("BackgroundImages") do
+        
+    end
 end
 ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(pixel_scenes)) --apply changes to file
 
@@ -163,19 +179,22 @@ for xml_path, pixel_scenes in pairs(biome_appends) do
         local toplogy = biomexml:first_of("Topology")
         if toplogy then
             if toplogy.attr.lua_script then
+                local table_string = ""
                 for key, pixel_scene in ipairs(pixel_scenes) do
                     ModTextFileSetContent(toplogy.attr.lua_script, ModTextFileGetContent(toplogy.attr.lua_script) ..
                         ModTextFileGetContent("mods/parallel_parity/files/template_splicer.lua") --gsub in pixel scene data + map width
                             :gsub("MAPWIDTH", map_x)
                             :gsub("ORIGINX", pixel_scene.origin.x)
                             :gsub("ORIGINY", pixel_scene.origin.y)
+                            :gsub("OFFSETX", pixel_scene.offset.x)
+                            :gsub("OFFSETY", pixel_scene.offset.y)
                             :gsub("DIMENSIONSX", pixel_scene.dimensions.x)
                             :gsub("DIMENSIONSY", pixel_scene.dimensions.y)
-                            :gsub("SCENEDIRECTORY", pixel_scene.directory
-                                :gsub("\\", "\\\\"):gsub("\"", "\\\"") --gsub thing nathan told me to put or the world would end idk
+                            :gsub("SCENEDIRECTORY", (pixel_scene.directory
+                                :gsub("\\", "\\\\"):gsub("\"", "\\\"") --gsub thing nathan told me to put or the world would end idk- nvm, no worky
                             )
+                        )
                     )
-                    --print(ModTextFileGetContent(toplogy.attr.lua_script))
                 end
             end
         end
@@ -203,10 +222,10 @@ for pixel_scene_id, pixel_scene in pairs(localise) do
 end
 
 for index, filepath in ipairs(biomelist) do
-	local script = nxml.parse(ModTextFileGetContent(filepath)):first_of("Topology").attr.lua_script
-	if script ~= nil then
-		ModLuaFileAppend(script, "mods/parallel_parity/files/lavalake.lua")
-	end
+    local script = nxml.parse(ModTextFileGetContent(filepath)):first_of("Topology").attr.lua_script
+    if script ~= nil then
+        ModLuaFileAppend(script, "mods/parallel_parity/files/lavalake.lua")
+    end
 end
 
 ModLuaFileAppend("data/scripts/biomes/hills.lua", "mods/parallel_parity/files/lavalake.lua")

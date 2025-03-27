@@ -28,6 +28,10 @@ local current_language = languages[GameTextGetTranslatedOrNot("$current_language
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the languages table above
 local translation_strings = {
+    visuals = {
+        en = "Visuals",
+        en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering"
+    },
     spliced_pixel_scenes = {
         en = "Spliced Pixel Scenes",
         en_desc = "Pixel Scenes that are larger than a single chunk (512x512 area)",
@@ -41,33 +45,43 @@ local translation_strings = {
         },
         skull_in_desert = {
             en = "Desert Skull",
+            en_desc = "The Giant Deer Skull to the right in the Desert"
         },
         boss_arena = {
             en = "Kolmisilmä Arena",
+            en_desc = "The final boss arena after the Temple of the Art including the Holy Mountain just before it"
         },
         tree = {
             en = "Tree",
+            en_desc = "The large tree to the left of the starting cave"
         },
         watercave = {
             en = "Dark Cave",
+            en_desc = "The flooded cavern to the left of Mines"
         },
         mountain_lake = {
             en = "Mountain Lake",
+            en_desc = "The lake between the mountain and the desert, on the surface above the Lava Lake"
         },
         lake_statue = {
             en = "Lake Island",
+            en_desc = "The island that spawns on top of the lake"
         },
         moons = {
             en = "Moons",
+            en_desc = "The moons located in The Work (Sky) and The Work (Hell)"
         },
         lavalake_pit_bottom = {
             en = "Pit Bottom",
+            en_desc = "The bottom of the pit on the right of Lava Lake"
         },
         gourd_room = {
             en = "Gourd Room",
+            en_desc = "The Gourd Room in the left EDR wall in The Work (Sky)"
         },
         skull = {
             en = "Limatoukka Skull",
+            en_desc = "The giant skull that spawns Tiny at the bottom of the desert cavern under Powerplant/Meat Lair"
         },
     },
 }
@@ -77,6 +91,11 @@ local path_ignore = {
 }
 
 local settings = {
+    {
+        id = "visuals",
+        value_default = true,
+        scope = MOD_SETTING_SCOPE_NEW_GAME,
+    },
     {
         id = "spliced_pixel_scenes",
         type = "group",
