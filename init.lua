@@ -81,10 +81,10 @@ local spliced_pixel_scenes = {
     mountain_lake = {},
     lake_statue = {},
     moon = {
-        setting = "moons"
+        setting = "moons",
     },
     moon_dark = {
-        setting = "moons"
+        setting = "moons",
     },
     lavalake_pit_bottom = {},
     gourd_room = {},
@@ -94,19 +94,170 @@ local spliced_pixel_scenes = {
 local backgrounds = {
     {
         match = "data/biome_impl/hidden",
-        setting = ""
-    }
+        setting = "backgrounds.hidden",
+    },
+    {
+        match = "data/biome_impl/liquidcave/",
+        setting = "visual",
+    },
 }
 
-local pixel_scenes
+local pixel_scenes = {
+    {
+        material_filename = "data/biome_impl/pyramid/boss_limbs.png",
+        setting = "pyramid_boss",
+    },
+    {
+        material_filename = "data/biome_impl/temple/altar_vault_capsule.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/temple/altar_snowcastle_capsule.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/tower_start.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/the_end/the_end_shop.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/greed_treasure.png",
+        setting = "avarice_diamond",
+    },
+    {
+        material_filename = "data/biome_impl/fishing_hut.png",
+        setting = "fishing_hut",
+    },
+    {
+        material_filename = "data/biome_impl/overworld/essence_altar",
+        setting = "essence_eaters",
+    },
+    {
+        material_filename = "data/biome_impl/bunker.png",
+        setting = "fishing_hut",
+    },
+    {
+        material_filename = "data/biome_impl/bunker2.png",
+        setting = "fishing_hut",
+    },
+    {
+        material_filename = "data/biome_impl/overworld/snowy_ruins_eye_pillar.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/rainbow_cloud.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/overworld/cliff_visual.png",
+        setting = "visual",
+    },
+    {
+        material_filename = "data/biome_impl/eyespot.png",
+        setting = "fungal_altars",
+    },
+    {
+        material_filename = "data/biome_impl/overworld/desert_ruins_base_01.png",
+        setting = "general",
+    },
+    {
+        material_filename = "data/biome_impl/overworld/music_machine_stand.png",
+        setting = "music_machines",
+    },
+}
+
+local entities = {
+    {
+        filepath = "data/entities/props/music_machines/music_machine_00.xml",
+        setting = "music_machines",
+    },
+    {
+        filepath = "data/entities/props/music_machines/music_machine_01.xml",
+        setting = "music_machines",
+    },
+    {
+        filepath = "data/entities/props/music_machines/music_machine_02.xml",
+        setting = "music_machines",
+    },
+    {
+        filepath = "data/entities/props/music_machines/music_machine_03.xml",
+        setting = "music_machines",
+    },
+    {
+        filepath = "data/entities/props/physics_fungus.xml",
+        setting = "tree",
+    },
+    {
+        filepath = "data/entities/props/physics_fungus_big.xml",
+        setting = "tree",
+    },
+    {
+        filepath = "data/entities/props/physics_fungus_small.xml",
+        setting = "tree",
+    },
+    {
+        filepath = "data/entities/props/physics/bridge_spawner.xml",
+        setting = "lavalake2",
+    },
+    {
+        filepath = "data/entities/buildings/essence_eater.xml",
+        setting = "essence_eaters",
+    },
+    {
+        filepath = "data/entities/misc/platform_wide.xml",
+        setting = "general",
+    },
+    {
+        filepath = "data/entities/buildings/eyespot_a.xml",
+        setting = "fungal_altars",
+    },
+    {
+        filepath = "data/entities/buildings/eyespot_b.xml",
+        setting = "fungal_altars",
+    },
+    {
+        filepath = "data/entities/buildings/eyespot_c.xml",
+        setting = "fungal_altars",
+    },
+    {
+        filepath = "data/entities/buildings/eyespot_d.xml",
+        setting = "fungal_altars",
+    },
+    {
+        filepath = "data/entities/buildings/eyespot_e.xml",
+        setting = "fungal_altars",
+    },
+}
+
 
 for id, pixel_scene in pairs(spliced_pixel_scenes) do
-    if not pixel_scene.setting then pixel_scene.setting = "parallel_parity." .. id else pixel_scene.setting = "parallel_parity." .. pixel_scene.setting end
+    if not ModSettingGet(pixel_scene.setting and ("parallel_parity." .. pixel_scene.setting) or ("parallel_parity." .. id)) then
+        pixel_scene = nil
+        goto continue
+    end
     if not pixel_scene.offset then pixel_scene.offset = {x = 0, y = 0} end
     if pixel_scene.localise then
         for object, data in pairs(pixel_scene.localise) do
             if not data.setting then data.setting = "parallel_parity." .. id .. "." .. object else data.setting = "parallel_parity." .. data.setting end
         end
+    end
+    ::continue::
+end
+
+local filtered_backgrounds = {}
+for i = 1, #backgrounds, 1 do
+    if ModSettingGet("parallel_parity." .. backgrounds[i].setting) then
+        filtered_backgrounds[#filtered_backgrounds+1] = backgrounds[i]
+    end
+end
+
+local filtered_ps = {}
+for i = 1, #pixel_scenes, 1 do
+    if ModSettingGet("parallel_parity." .. pixel_scenes[i].setting) then
+        filtered_ps[#filtered_ps+1] = pixel_scenes[i]
     end
 end
 
