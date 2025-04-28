@@ -52,6 +52,7 @@ local function color_abgr_split(abgr_int)
 end
 
 local map_width = 70
+local boundry_coordinate = map_width * 256 --get the full width of the map in pixels, divided by 2
 local map_path = "data/biome_impl/biome_map.png"
 
 local map,map_x = ModImageMakeEditable(map_path, 0, 0)
