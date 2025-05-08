@@ -14,8 +14,8 @@ init = function( x, y, w, h )
 
     --print("(x, y) is (" .. x .. ", " .. y .. ")")
     local chunk = {x = x/512, y = y/512} --get chunk coordinates
-    local pw_num = 0
 
+    local pw_num = 0
     while chunk.x > map_width do --logic that relativises east PWs
         chunk.x = chunk.x - map_width
         pw_num = pw_num + 1

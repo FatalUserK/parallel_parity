@@ -51,13 +51,218 @@ local function color_abgr_split(abgr_int)
 
 end
 
-local map_width = 70
-local boundry_coordinate = map_width * 256 --get the full width of the map in pixels, divided by 2
 local map_path = "data/biome_impl/biome_map.png"
 
-local map,map_x = ModImageMakeEditable(map_path, 0, 0)
+local map,map_width = ModImageMakeEditable(map_path, 0, 0)
+local boundry_coordinate = map_width * 256 --get the full width of the map in pixels, divided by 2
+
+--list of relevant biome scripts using biome xml as index key, vanilla biomescript data is pregenerated
+local biome_scripts = {
+    ["data/biome/mountain_left_3.xml"] = "data/scripts/biomes/mountain/mountain_left_3.lua",
+    ["data/biome/pyramid_left.xml"] = "data/scripts/biomes/pyramid_left.lua",
+    ["data/biome/lava.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/mestari_secret.xml"] = "data/scripts/biomes/mestari_secret.lua",
+    ["data/biome/the_sky.xml"] = "data/scripts/biomes/the_end.lua",
+    ["data/biome/null_room.xml"] = "data/scripts/biomes/null_room.lua",
+    ["data/biome/laboratory.xml"] = "data/scripts/biomes/laboratory.lua",
+    ["data/biome/lake_blood.xml"] = "data/scripts/biomes/lake.lua",
+    ["data/biome/gun_room.xml"] = "data/scripts/biomes/gun_room.lua",
+    ["data/biome/secret_lab.xml"] = "data/scripts/biomes/secret_lab.lua",
+    ["data/biome/desert.xml"] = "data/scripts/biomes/desert.lua",
+    ["data/biome/boss_arena.xml"] = "data/scripts/biomes/boss_arena.lua",
+    ["data/biome_impl/static_tile/biome_barren.xml"] = "data/biome_impl/static_tile/temples_common.lua",
+    ["data/biome/tower/solid_wall_tower_10.xml"] = "data/scripts/biomes/tower_end.lua",
+    ["data/biome/clouds.xml"] = "data/scripts/biomes/clouds.lua",
+    ["data/biome/snowcave_tunnel.xml"] = "data/scripts/biomes/snowcave.lua",
+    ["data/biome/lake_deep.xml"] = "data/scripts/biomes/lake_deep.lua",
+    ["data/biome/temple_altar_right_snowcave.xml"] = "data/scripts/biomes/temple_altar_right_snowcave.lua",
+    ["data/biome/mountain_right_entrance.xml"] = "data/scripts/biomes/mountain/mountain_right_entrance.lua",
+    ["data/biome/gourd_room.xml"] = "data/scripts/biomes/gourd_room.lua",
+    ["data/biome/empty.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/essenceroom_hell.xml"] = "data/scripts/biomes/essenceroom_hell.lua",
+    ["data/biome/solid_wall_damage.xml"] = "data/scripts/biomes/solid_wall_tower.lua",
+    ["data/biome/pyramid_top.xml"] = "data/scripts/biomes/pyramid_top.lua",
+    ["data/biome/forest.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/snowcastle_cavern.xml"] = "data/scripts/biomes/snowcastle_cavern.lua",
+    ["data/biome/excavationsite.xml"] = "data/scripts/biomes/excavationsite.lua",
+    ["data/biome_impl/static_tile/biome_darkness.xml"] = "data/biome_impl/static_tile/temples_common.lua",
+    ["data/biome/temple_altar_right_snowcastle.xml"] = "data/scripts/biomes/temple_altar_right_snowcastle.lua",
+    ["data/biome/hills2.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/rock_room.xml"] = "data/scripts/biomes/rock_room.lua",
+    ["data/biome/pyramid_hallway.xml"] = "data/scripts/biomes/pyramid_hallway.lua",
+    ["data/biome/pyramid.xml"] = "data/scripts/biomes/pyramid.lua",
+    ["data/biome/smokecave_middle.xml"] = "data/scripts/biomes/smokecave_middle.lua",
+    ["data/biome/roadblock.xml"] = "data/scripts/biomes/roadblock.lua",
+    ["data/biome/temple_altar_secret.xml"] = "data/scripts/biomes/temple_altar_secret.lua",
+    ["data/biome/robobase.xml"] = "data/scripts/biomes/robobase.lua",
+    ["data/biome/lavalake.xml"] = "data/scripts/biomes/lavalake.lua",
+    ["data/biome/vault.xml"] = "data/scripts/biomes/vault.lua",
+    ["data/biome/lava_90percent.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/niilo_testroom_b.xml"] = "data/scripts/biomes/niilo_testroom_b.lua",
+    ["data/biome/smokecave_right.xml"] = "data/scripts/biomes/smokecave_right.lua",
+    ["data/biome/magic_gate.xml"] = "data/scripts/biomes/magic_gate.lua",
+    ["data/biome/mountain_hall_trailer.xml"] = "data/scripts/biomes/mountain/trailer/mountain_hall.lua",
+    ["data/biome/rainforest_open.xml"] = "data/scripts/biomes/rainforest.lua",
+    ["data/biome/ghost_secret.xml"] = "data/scripts/biomes/ghost_secret.lua",
+    ["data/biome/snowcave_secret_chamber.xml"] = "data/scripts/biomes/snowcave_secret_chamber.lua",
+    ["data/biome/friend_1.xml"] = "data/scripts/biomes/friend_1.lua",
+    ["data/biome/lake_statue.xml"] = "data/scripts/biomes/lake_statue.lua",
+    ["data/biome/funroom.xml"] = "data/scripts/biomes/funroom.lua",
+    ["data/biome/winter_caves.xml"] = "data/scripts/biomes/winter.lua",
+    ["data/biome/tower/solid_wall_tower.xml"] = "data/scripts/biomes/solid_wall_tower.lua",
+    ["data/biome/mountain_left_entrance.xml"] = "data/scripts/biomes/mountain/mountain_left_entrance.lua",
+    ["data/biome/essenceroom.xml"] = "data/scripts/biomes/essenceroom.lua",
+    ["data/biome/bridge.xml"] = "data/scripts/biomes/bridge.lua",
+    ["data/biome/moon_room.xml"] = "data/scripts/biomes/moon_room.lua",
+    ["data/biome/fungicave.xml"] = "data/scripts/biomes/fungicave.lua",
+    ["data/biome/temple_altar.xml"] = "data/scripts/biomes/temple_altar.lua",
+    ["data/biome/mountain_tree.xml"] = "data/scripts/biomes/mountain_tree.lua",
+    ["data/biome/rainforest.xml"] = "data/scripts/biomes/rainforest.lua",
+    ["data/biome/wizardcave.xml"] = "data/scripts/biomes/wizardcave.lua",
+    ["data/biome/hills_flat.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/snowcastle_hourglass_chamber.xml"] = "data/scripts/biomes/snowcastle_hourglass_chamber.lua",
+    ["data/biome/mountain_right_stub.xml"] = "data/scripts/biomes/mountain/mountain_right_stub.lua",
+    ["data/biome/town_under.xml"] = "data/scripts/biomes/town.lua",
+    ["data/biome_impl/static_tile/biome_boss_sky.xml"] = "data/biome_impl/static_tile/temples_common.lua",
+    ["data/biome/temple_altar_left.xml"] = "data/scripts/biomes/temple_altar_left.lua",
+    ["data/biome_impl/static_tile/biome_potion_mimics.xml"] = "data/biome_impl/static_tile/temples_common.lua",
+    ["data/biome_impl/static_tile/biome_watchtower.xml"] = "data/biome_impl/static_tile/watchtower.lua",
+    ["data/biome/wandcave.xml"] = "data/scripts/biomes/wandcave.lua",
+    ["data/biome/boss_arena_top.xml"] = "data/scripts/biomes/boss_arena_top.lua",
+    ["data/biome/fungiforest.xml"] = "data/scripts/biomes/fungiforest.lua",
+    ["data/biome/meat.xml"] = "data/scripts/biomes/meat.lua",
+    ["data/biome/lavalake_pit.xml"] = "data/scripts/biomes/lavalake_pit.lua",
+    ["data/biome/mountain_hall_2.xml"] = "data/scripts/biomes/mountain/mountain_hall_2.lua",
+    ["data/biome/friend_6.xml"] = "data/scripts/biomes/friend_6.lua",
+    ["data/biome/friend_5.xml"] = "data/scripts/biomes/friend_5.lua",
+    ["data/biome/sandcave.xml"] = "data/scripts/biomes/sandcave.lua",
+    ["data/biome/friend_4.xml"] = "data/scripts/biomes/friend_4.lua",
+    ["data/biome/friend_3.xml"] = "data/scripts/biomes/friend_3.lua",
+    ["data/biome/friend_2.xml"] = "data/scripts/biomes/friend_2.lua",
+    ["data/biome/ending_placeholder.xml"] = "data/scripts/biomes/ending_placeholder.lua",
+    ["data/biome/meatroom.xml"] = "data/scripts/biomes/meatroom.lua",
+    ["data/biome/roboroom.xml"] = "data/scripts/biomes/roboroom.lua",
+    ["data/biome/rainforest_dark.xml"] = "data/scripts/biomes/rainforest_dark.lua",
+    ["data/biome/tower/solid_wall_tower_8.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/greed_room.xml"] = "data/scripts/biomes/greed_room.lua",
+    ["data/biome/excavationsite_cube_chamber.xml"] = "data/scripts/biomes/excavationsite_cube_chamber.lua",
+    ["data/biome/mountain_right_2.xml"] = "data/scripts/biomes/mountain/mountain_right_2.lua",
+    ["data/biome/alchemist_secret.xml"] = "data/scripts/biomes/alchemist_secret.lua",
+    ["data/biome/orbrooms/orbroom_11.xml"] = "data/scripts/biomes/orbrooms/orbroom_11.lua",
+    ["data/biome/boss_limbs_arena.xml"] = "data/scripts/biomes/boss_limbs_arena.lua",
+    ["data/biome/essenceroom_air.xml"] = "data/scripts/biomes/essenceroom_air.lua",
+    ["data/biome/mystery_teleport.xml"] = "data/scripts/biomes/mystery_teleport.lua",
+    ["data/biome/coalmine_alt.xml"] = "data/scripts/biomes/coalmine_alt.lua",
+    ["data/biome/watercave.xml"] = "data/scripts/biomes/watercave.lua",
+    ["data/biome/secret_entrance.xml"] = "data/scripts/biomes/secret_entrance.lua",
+    ["data/biome/end_wall.xml"] = "data/scripts/biomes/end_wall.lua",
+    ["data/biome/temple_wall.xml"] = "data/scripts/biomes/temple_wall.lua",
+    ["data/biome/essenceroom_alc.xml"] = "data/scripts/biomes/essenceroom_alc.lua",
+    ["data/biome/niilo_testroom_d.xml"] = "data/scripts/biomes/niilo_testroom_d.lua",
+    ["data/biome/niilo_testroom_c.xml"] = "data/scripts/biomes/niilo_testroom_c.lua",
+    ["data/biome/niilo_testroom.xml"] = "data/scripts/biomes/niilo_testroom.lua",
+    ["data/biome/orbrooms/orbroom_10.xml"] = "data/scripts/biomes/orbrooms/orbroom_10.lua",
+    ["data/biome/robot_egg.xml"] = "data/scripts/biomes/robot_egg.lua",
+    ["data/biome/winter.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/solid_wall.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/ocarina.xml"] = "data/scripts/biomes/ocarina.lua",
+    ["data/biome/mountain_hall_3.xml"] = "data/scripts/biomes/mountain/mountain_hall_3.lua",
+    ["data/biome/temple_altar_right_snowcastle_empty.xml"] = "data/scripts/biomes/temple_altar_right_snowcastle_empty.lua",
+    ["data/biome/lavalake_racing.xml"] = "data/scripts/biomes/lavalake_racing.lua",
+    ["data/biome/teleroom.xml"] = "data/scripts/biomes/teleroom.lua",
+    ["data/biome/snowcave.xml"] = "data/scripts/biomes/snowcave.lua",
+    ["data/biome/mountain_left.xml"] = "data/scripts/biomes/mountain/mountain_left.lua",
+    ["data/biome/mountain_hall.xml"] = "data/scripts/biomes/mountain/mountain_hall.lua",
+    ["data/biome/orbrooms/orbroom_05.xml"] = "data/scripts/biomes/orbrooms/orbroom_05.lua",
+    ["data/biome/orbrooms/orbroom_04.xml"] = "data/scripts/biomes/orbrooms/orbroom_04.lua",
+    ["data/biome/hills.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/secret_altar.xml"] = "data/scripts/biomes/secret_altar.lua",
+    ["data/biome/the_end.xml"] = "data/scripts/biomes/the_end.lua",
+    ["data/biome/liquidcave.xml"] = "data/scripts/biomes/liquidcave.lua",
+    ["data/biome/vault_entrance.xml"] = "data/scripts/biomes/vault_entrance.lua",
+    ["data/biome/solid_wall_hidden_cavern.xml"] = "data/scripts/biomes/solid_wall_hidden_cavern.lua",
+    ["data/biome/tower/solid_wall_tower_7.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/tower/solid_wall_tower_6.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/tower/solid_wall_tower_5.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/tower/solid_wall_tower_3.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/tower/solid_wall_tower_2.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/mountain_left_2.xml"] = "data/scripts/biomes/mountain/mountain_left_2.lua",
+    ["data/biome/tower/solid_wall_tower_1.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/tower/solid_wall_tower_9.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/smokecave_left.xml"] = "data/scripts/biomes/smokecave_left.lua",
+    ["data/biome/crypt.xml"] = "data/scripts/biomes/crypt.lua",
+    ["data/biome/temple_altar_left_empty.xml"] = "data/scripts/biomes/temple_altar_left_empty.lua",
+    ["data/biome/temple_altar_right_empty.xml"] = "data/scripts/biomes/temple_altar_right_empty.lua",
+    ["data/biome/vault_frozen.xml"] = "data/scripts/biomes/vault_frozen.lua",
+    ["data/biome/wizardcave_entrance.xml"] = "data/scripts/biomes/wizardcave_entrance.lua",
+    ["data/biome/temple_altar_right.xml"] = "data/scripts/biomes/temple_altar_right.lua",
+    ["data/biome/mountain_right_entrance_2.xml"] = "data/scripts/biomes/mountain/mountain_right_entrance_2.lua",
+    ["data/biome/snowcastle.xml"] = "data/scripts/biomes/snowcastle.lua",
+    ["data/biome/mountain_top.xml"] = "data/scripts/biomes/mountain/mountain_top.lua",
+    ["data/biome/mountain_floating_island.xml"] = "data/scripts/biomes/mountain/mountain_floating_island.lua",
+    ["data/biome/mountain_center.xml"] = "data/scripts/biomes/mountain/mountain_center.lua",
+    ["data/biome/dragoncave.xml"] = "data/scripts/biomes/dragoncave.lua",
+    ["data/biome/boss_victoryroom.xml"] = "data/scripts/biomes/boss_victoryroom.lua",
+    ["data/biome/song_room.xml"] = "data/scripts/biomes/song_room.lua",
+    ["data/biome/temple_altar_right_snowcave_empty.xml"] = "data/scripts/biomes/temple_altar_right_snowcave_empty.lua",
+    ["data/biome/temple_altar_empty.xml"] = "data/scripts/biomes/temple_altar_empty.lua",
+    ["data/biome/sandroom.xml"] = "data/scripts/biomes/sandroom.lua",
+    ["data/biome/solid_wall_temple.xml"] = "data/scripts/biomes/hills.lua",
+    ["data/biome/temple_wall_ending.xml"] = "data/scripts/biomes/temple_wall_ending.lua",
+    ["data/biome/mountain_lake.xml"] = "data/scripts/biomes/mountain_lake.lua",
+    ["data/biome/mountain_left_stub.xml"] = "data/scripts/biomes/mountain/mountain_left_stub.lua",
+    ["data/biome/pyramid_right.xml"] = "data/scripts/biomes/pyramid_right.lua",
+    ["data/biome/mountain_hall_4.xml"] = "data/scripts/biomes/mountain/mountain_hall_4.lua",
+    ["data/biome/scale.xml"] = "data/scripts/biomes/scale.lua",
+    ["data/biome/shop_room.xml"] = "data/scripts/biomes/shop_room.lua",
+    ["data/biome/lake.xml"] = "data/scripts/biomes/lake.lua",
+    ["data/biome/tower/solid_wall_tower_4.xml"] = "data/scripts/biomes/tower.lua",
+    ["data/biome/orbrooms/orbroom_00.xml"] = "data/scripts/biomes/orbrooms/orbroom_00.lua",
+    ["data/biome/orbrooms/orbroom_01.xml"] = "data/scripts/biomes/orbrooms/orbroom_01.lua",
+    ["data/biome/orbrooms/orbroom_02.xml"] = "data/scripts/biomes/orbrooms/orbroom_02.lua",
+    ["data/biome/orbrooms/orbroom_03.xml"] = "data/scripts/biomes/orbrooms/orbroom_03.lua",
+    ["data/biome/coalmine.xml"] = "data/scripts/biomes/coalmine.lua",
+    ["data/biome/mountain_right.xml"] = "data/scripts/biomes/mountain/mountain_right.lua",
+    ["data/biome/orbrooms/orbroom_06.xml"] = "data/scripts/biomes/orbrooms/orbroom_06.lua",
+    ["data/biome/orbrooms/orbroom_07.xml"] = "data/scripts/biomes/orbrooms/orbroom_07.lua",
+    ["data/biome/orbrooms/orbroom_08.xml"] = "data/scripts/biomes/orbrooms/orbroom_08.lua",
+    ["data/biome/orbrooms/orbroom_09.xml"] = "data/scripts/biomes/orbrooms/orbroom_09.lua",
+    ["data/biome/pyramid_entrance.xml"] = "data/scripts/biomes/pyramid_entrance.lua",
+}
+
+local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
+nxml.error_handler = function() end
+
+local function GetBiomeScript(biomepath, generate)
+    local biomexml = nxml.parse(ModTextFileGetContent(biomepath))
+
+    if not biome_scripts[biomepath] then
+        local toplogy = biomexml and biomexml:first_of("Topology")
+        if toplogy then
+            local script = toplogy.attr.lua_script
+            if generate and script == nil then
+                local filename
+                local _script_filepath = ("mods/parallel_parity/files/biomescripts/") .. biomepath:sub(1, -4) .. "lua"
+                ModTextFileSetContent(_script_filepath, "")
+                toplogy.attr.lua_script = _script_filepath
+            end
+            biome_scripts[biomepath] = toplogy.attr.lua_script
+        end
+    end
+
+    return biome_scripts[biomepath]
+end
 
 
+
+local biomelist_xml = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
+if biomelist_xml then
+    for elem in biomelist_xml:each_child() do
+        GetBiomeScript(elem.attr.biome_filename)
+    end
+end
+
+do return end
 
 local spliced_pixel_scenes = {
     lavalake2 = {
@@ -262,8 +467,6 @@ for i = 1, #pixel_scenes, 1 do
     end
 end
 
-local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
-nxml.error_handler = function() end
 
 
 local biomelist = {}
@@ -278,6 +481,21 @@ end
 
 
 local biome_appends = {}
+
+local spliced_pixel_scenes = {
+    ["data/biome_impl/spliced/lavalake2.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/skull_in_desert.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/boss_arena.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/tree.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/watercave.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/mountain_lake.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/lake_statue.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/moon.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/moon_dark.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/lavalake_pit_bottom.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/gourd_room.xml"] = ModSettingGet(""),
+    ["data/biome_impl/spliced/skull.xml"] = ModSettingGet(""),
+}
 
 --remove spliced pixel scenes from _pixel_scenes.xml
 local pixel_scenes = nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")) --get all global pixel scenes
@@ -303,7 +521,7 @@ if pixel_scenes then
 
             for i = 1, target.dimensions.y, 1 do --iterate over the part of the biomemap this takes up
                 for j = 1, target.dimensions.x, 1 do
-                    local abgr_int = ModImageGetPixel(map, target.origin.x + j + (map_x * .5) - 1, target.origin.y + i + 13) --get pixel colour as ABGR integer
+                    local abgr_int = ModImageGetPixel(map, target.origin.x + j + (map_width * .5) - 1, target.origin.y + i + 13) --get pixel colour as ABGR integer
                     local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
 
                     local biome = biomelist[hex]
@@ -335,7 +553,7 @@ for xml_path, pixel_scenes in pairs(biome_appends) do
                 for key, pixel_scene in ipairs(pixel_scenes) do
                     ModTextFileSetContent(toplogy.attr.lua_script, ModTextFileGetContent(toplogy.attr.lua_script) ..
                         ModTextFileGetContent("mods/parallel_parity/files/template_splicer.lua") --gsub in pixel scene data + map width
-                            :gsub("MAPWIDTH", map_x)
+                            :gsub("MAPWIDTH", map_width)
                             :gsub("ORIGINX", pixel_scene.origin.x)
                             :gsub("ORIGINY", pixel_scene.origin.y)
                             :gsub("OFFSETX", pixel_scene.offset.x)
