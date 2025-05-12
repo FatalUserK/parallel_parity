@@ -30,32 +30,32 @@ local current_language = languages[GameTextGetTranslatedOrNot("$current_language
 local translation_strings = {
     visuals = {
         en = "Visuals",
-        en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering"
+        en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering\nThe criteria for this group is decided at my own discretion"
     },
     spliced_pixel_scenes = {
         en = "Spliced Pixel Scenes",
         en_desc = "Pixel Scenes that are larger than a single chunk (512x512 area)",
-        lavalake2 = {
+        lava_lake = {
             en = "Lava Lake",
-            en_desc = "Should the Lava Lake to the East of Mines generate in Parallel Worlds",
+            en_desc = "The large Lava Lake to the right of Mines, this includes the bottom of the pit underneath",
             ORB = {
                 en = "Spawn Orb",
                 en_desc = "Dictates whether or not the Lava Lake orb spawns in Parallel Worlds"
             }
         },
-        skull_in_desert = {
+        desert_skull = {
             en = "Desert Skull",
-            en_desc = "The Giant Deer Skull to the right in the Desert"
+            en_desc = "The giant deer skull located in the Desert"
         },
-        boss_arena = {
+        kolmi_arena = {
             en = "Kolmisilmä Arena",
             en_desc = "The final boss arena after the Temple of the Art including the Holy Mountain just before it"
         },
         tree = {
             en = "Tree",
-            en_desc = "The large tree to the left of the starting cave"
+            en_desc = "The large tree to the left of the player spawn"
         },
-        watercave = {
+        dark_cave = {
             en = "Dark Cave",
             en_desc = "The flooded cavern to the left of Mines"
         },
@@ -63,7 +63,7 @@ local translation_strings = {
             en = "Mountain Lake",
             en_desc = "The lake between the mountain and the desert, on the surface above the Lava Lake"
         },
-        lake_statue = {
+        lake_island = {
             en = "Lake Island",
             en_desc = "The island that spawns on top of the lake"
         },
@@ -71,15 +71,11 @@ local translation_strings = {
             en = "Moons",
             en_desc = "The moons located in The Work (Sky) and The Work (Hell)"
         },
-        lavalake_pit_bottom = {
-            en = "Pit Bottom",
-            en_desc = "The bottom of the pit on the right of Lava Lake"
-        },
         gourd_room = {
             en = "Gourd Room",
             en_desc = "The Gourd Room in the left EDR wall in The Work (Sky)"
         },
-        skull = {
+        meat_skull = {
             en = "Limatoukka Skull",
             en_desc = "The giant skull that spawns Tiny at the bottom of the desert cavern under Powerplant/Meat Lair"
         },

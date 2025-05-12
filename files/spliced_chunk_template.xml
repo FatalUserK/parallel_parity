@@ -1,6 +1,8 @@
 <Entity>
     <PixelSceneComponent
-        pixel_scene=""
+		pixel_scene="!MATERIALS!"
+		pixel_scene_visual="!GFX!"
+		pixel_scene_background="!BACKGROUND!"
         skip_biome_checks="1"
         skip_edge_textures="1"
     />

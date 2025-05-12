@@ -41,22 +41,14 @@ end
 
 ]]--
 
-local function color_abgr_split(abgr_int)
-    local r = bit.band(abgr_int, 0xFF)
-    local g = bit.band(bit.rshift(abgr_int, 8), 0xFF)
-    local b = bit.band(bit.rshift(abgr_int, 16), 0xFF)
-    local a = bit.band(bit.rshift(abgr_int, 24), 0xFF)
-
-    return 
-
-end
 
 local map_path = "data/biome_impl/biome_map.png"
 
 local map,map_width = ModImageMakeEditable(map_path, 0, 0)
-local boundry_coordinate = map_width * 256 --get the full width of the map in pixels, divided by 2
+local boundry_coordinate = map_width * 256 --get the full width of the map in pixels, divided by 2, this should be used to identify targets outside of a parallel world
 
---list of relevant biome scripts using biome xml as index key, vanilla biomescript data is pregenerated
+
+--list of relevant biome scripts using biome xml as index key, vanilla biomescript data is pregenerated under the assumption surely no one would go out their way to alter the filepath of vanilla biomescripts
 local biome_scripts = {
     ["data/biome/mountain_left_3.xml"] = "data/scripts/biomes/mountain/mountain_left_3.lua",
     ["data/biome/pyramid_left.xml"] = "data/scripts/biomes/pyramid_left.lua",
@@ -242,9 +234,12 @@ local function GetBiomeScript(biomepath, generate)
             local script = toplogy.attr.lua_script
             if generate and script == nil then
                 local filename
-                local _script_filepath = ("mods/parallel_parity/files/biomescripts/") .. biomepath:sub(1, -4) .. "lua"
-                ModTextFileSetContent(_script_filepath, "")
-                toplogy.attr.lua_script = _script_filepath
+                for str in string.gmatch(biomepath, "([^".."/".."]+)") do --i stole the gmatch string i still dont get string patterns 😭
+                    filename = str
+                end
+                local generated_script_path = ("mods/parallel_parity/files/biomescripts/") .. filename:sub(1, -4) .. "lua"
+                ModTextFileSetContent(generated_script_path, "") --yknow itd be really funny if i could just append empty nothingness and have that work without needing to make an entire script
+                toplogy.attr.lua_script = generated_script_path
             end
             biome_scripts[biomepath] = toplogy.attr.lua_script
         end
@@ -258,214 +253,112 @@ end
 local biomelist_xml = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
 if biomelist_xml then
     for elem in biomelist_xml:each_child() do
-        GetBiomeScript(elem.attr.biome_filename)
+        GetBiomeScript(elem.attr.biome_filename, true)
     end
 end
 
-do return end
+--table used to cache all mod settings and flag stuff like that so i dont have to call ModSettingGet duplicates
+local settings = {
+    --General
+    visual =                ModSettingGet("parallel_parity.visual"),
+    hidden_backgrounds =    ModSettingGet("parallel_parity.backgrounds.secret"),
+
+    --Spliced
+    lava_lake =             ModSettingGet("parallel_parity.lava_lake") or true,
+    moons =                 ModSettingGet("parallel_parity.moons"),
+    hidden =                ModSettingGet("parallel_parity.backgrounds.hidden"),
+    desert_skull =          ModSettingGet("parallel_parity.desert_skull"),
+    kolmi_arena =           ModSettingGet("parallel_parity.kolmi_arena"),
+    tree =                  ModSettingGet("parallel_parity.tree"),
+    dark_cave =             ModSettingGet("parallel_parity.dark_cave"),
+    mountain_lake =         ModSettingGet("parallel_parity.mountain_lake"),
+    lake_island =           ModSettingGet("parallel_parity.lake_island"),
+    gourd_room =            ModSettingGet("parallel_parity.gourd_room"),
+    meat_skull =            ModSettingGet("parallel_parity.meat_skull"),
+
+}
 
 local spliced_pixel_scenes = {
-    lavalake2 = {
-        origin = {x = 4, y = 0},
-        dimensions = {x = 5, y = 5},
-        directory = "mods/parallel_parity/files/lavalake2/",
-        localise = {
-            ORB = {
-                script = "data/scripts/biomes/lavalake.lua",
-                code = [[EntityLoad%( "data/entities/items/orbs/orb_03%.xml", x%-10, y %)]]
-            }
-        },
-        child_scenes = {
-
-        }
-    },
-    --[[
-    skull_in_desert = {},
-    boss_arena = {},
-    tree = {},
-    watercave = {},
-    mountain_lake = {},
-    lake_statue = {},
-    moon = {
-        setting = "moons",
-    },
-    moon_dark = {
-        setting = "moons",
-    },
-    lavalake_pit_bottom = {},
-    gourd_room = {},
-    skull = {},]]
+    lavalake2 =             settings.lava_lake,
+    lavalake_pit_bottom =   settings.lava_lake,
+    skull_in_desert =       settings.skull_in_desert,
+    boss_arena =            settings.boss_arena,
+    tree =                  settings.tree,
+    watercave =             settings.watercave,
+    mountain_lake =         settings.mountain_lake,
+    lake_statue =           settings.lake_statue,
+    moon =                  settings.moons,
+    moon_dark =             settings.moons,
+    gourd_room =            settings.gourd_room,
+    skull =                 settings.skull,
 }
 
-local backgrounds = {
-    {
-        match = "data/biome_impl/hidden",
-        setting = "backgrounds.hidden",
-    },
-    {
-        match = "data/biome_impl/liquidcave/",
-        setting = "visual",
-    },
-}
 
 local pixel_scenes = {
-    {
-        material_filename = "data/biome_impl/pyramid/boss_limbs.png",
-        setting = "pyramid_boss",
-    },
-    {
-        material_filename = "data/biome_impl/temple/altar_vault_capsule.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/temple/altar_snowcastle_capsule.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/tower_start.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/the_end/the_end_shop.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/greed_treasure.png",
-        setting = "avarice_diamond",
-    },
-    {
-        material_filename = "data/biome_impl/fishing_hut.png",
-        setting = "fishing_hut",
-    },
-    {
-        material_filename = "data/biome_impl/overworld/essence_altar",
-        setting = "essence_eaters",
-    },
-    {
-        material_filename = "data/biome_impl/bunker.png",
-        setting = "fishing_hut",
-    },
-    {
-        material_filename = "data/biome_impl/bunker2.png",
-        setting = "fishing_hut",
-    },
-    {
-        material_filename = "data/biome_impl/overworld/snowy_ruins_eye_pillar.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/rainbow_cloud.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/overworld/cliff_visual.png",
-        setting = "visual",
-    },
-    {
-        material_filename = "data/biome_impl/eyespot.png",
-        setting = "fungal_altars",
-    },
-    {
-        material_filename = "data/biome_impl/overworld/desert_ruins_base_01.png",
-        setting = "general",
-    },
-    {
-        material_filename = "data/biome_impl/overworld/music_machine_stand.png",
-        setting = "music_machines",
-    },
-}
+    --materials
+    ["data/biome_impl/temple/altar_vault_capsule.png"] =            settings.general,
+    ["data/biome_impl/temple/altar_snowcastle_capsule.png"] =       settings.general,
+    ["data/biome_impl/tower_start.png"] =                           settings.general,
+    ["data/biome_impl/the_end/the_end_shop.png"] =                  settings.general,
+    ["data/biome_impl/overworld/desert_ruins_base_01.png"] =        settings.general,
 
-local entities = {
-    {
-        filepath = "data/entities/props/music_machines/music_machine_00.xml",
-        setting = "music_machines",
-    },
-    {
-        filepath = "data/entities/props/music_machines/music_machine_01.xml",
-        setting = "music_machines",
-    },
-    {
-        filepath = "data/entities/props/music_machines/music_machine_02.xml",
-        setting = "music_machines",
-    },
-    {
-        filepath = "data/entities/props/music_machines/music_machine_03.xml",
-        setting = "music_machines",
-    },
-    {
-        filepath = "data/entities/props/physics_fungus.xml",
-        setting = "tree",
-    },
-    {
-        filepath = "data/entities/props/physics_fungus_big.xml",
-        setting = "tree",
-    },
-    {
-        filepath = "data/entities/props/physics_fungus_small.xml",
-        setting = "tree",
-    },
-    {
-        filepath = "data/entities/props/physics/bridge_spawner.xml",
-        setting = "lavalake2",
-    },
-    {
-        filepath = "data/entities/buildings/essence_eater.xml",
-        setting = "essence_eaters",
-    },
-    {
-        filepath = "data/entities/misc/platform_wide.xml",
-        setting = "general",
-    },
-    {
-        filepath = "data/entities/buildings/eyespot_a.xml",
-        setting = "fungal_altars",
-    },
-    {
-        filepath = "data/entities/buildings/eyespot_b.xml",
-        setting = "fungal_altars",
-    },
-    {
-        filepath = "data/entities/buildings/eyespot_c.xml",
-        setting = "fungal_altars",
-    },
-    {
-        filepath = "data/entities/buildings/eyespot_d.xml",
-        setting = "fungal_altars",
-    },
-    {
-        filepath = "data/entities/buildings/eyespot_e.xml",
-        setting = "fungal_altars",
-    },
+    ["data/biome_impl/overworld/snowy_ruins_eye_pillar.png"] =      settings.fungal_altars,
+    ["data/biome_impl/rainbow_cloud.png"] =                         settings.fungal_altars,
+    ["data/biome_impl/eyespot.png"] =                               settings.fungal_altars,
+
+    ["data/biome_impl/bunker.png"] =                                settings.fishing_hut,
+    ["data/biome_impl/bunker2.png"] =                               settings.fishing_hut,
+
+    ["data/biome_impl/pyramid/boss_limbs.png"] =                    settings.pyramid_boss,
+    ["data/biome_impl/greed_treasure.png"] =                        settings.avarice_diamond,
+    ["data/biome_impl/fishing_hut.png"] =                           settings.fishing_hut,
+    ["data/biome_impl/overworld/essence_altar"] =                   settings.essence_eaters,
+    ["data/biome_impl/overworld/cliff_visual.png"] =                settings.visual,
+    ["data/biome_impl/overworld/music_machine_stand.png"] =         settings.music_machines,
+
+    --backgrounds
+    ["data/biome_impl/hidden/boss_arena.png"] =                     settings.visual,
+    ["data/biome_impl/hidden/boss_arena_under.png"] =               settings.visual,
+    ["data/biome_impl/hidden/boss_arena_under_right.png"] =         settings.visual,
+    ["data/biome_impl/hidden/completely_random.png"] =              settings.visual,
+    ["data/biome_impl/hidden/completely_random_2.png"] =            settings.visual,
+    ["data/biome_impl/hidden/fungal_caverns_1.png"] =               settings.visual,
+    ["data/biome_impl/hidden/holy_mountain_1.png"] =                settings.visual,
+    ["data/biome_impl/hidden/jungle_right.png"] =                   settings.visual,
+    ["data/biome_impl/hidden/mountain_text.png"] =                  settings.visual,
+    ["data/biome_impl/hidden/under_the_wand_cave.png"] =            settings.visual,
+    ["data/biome_impl/hidden/vault_inside.png"] =                   settings.visual,
+    ["data/biome_impl/hidden/crypt_left.png"] =                     settings.visual,
+
+    ["data/biome_impl/liquidcave/liquidcave_corner.png"] =          settings.visual,
+    ["data/biome_impl/liquidcave/liquidcave_top.png"] =             settings.visual,
+    ["data/biome_impl/liquidcave/liquidcave_corner2.png"] =         settings.visual,
+
+
+    --entities
+    ["data/entities/misc/platform_wide.xml"] =                      settings.fungal_altars,
+    ["data/entities/buildings/eyespot_a.xml"] =                     settings.fungal_altars,
+    ["data/entities/buildings/eyespot_b.xml"] =                     settings.fungal_altars,
+    ["data/entities/buildings/eyespot_c.xml"] =                     settings.fungal_altars,
+    ["data/entities/buildings/eyespot_d.xml"] =                     settings.fungal_altars,
+    ["data/entities/buildings/eyespot_e.xml"] =                     settings.fungal_altars,
+
+    ["data/entities/props/physics_fungus.xml"] =                    settings.tree,
+    ["data/entities/props/physics_fungus_big.xml"] =                settings.tree,
+    ["data/entities/props/physics_fungus_small.xml"] =              settings.tree,
+
+    ["data/entities/props/music_machines/music_machine_00.xml"] =   settings.music_machines,
+    ["data/entities/props/music_machines/music_machine_01.xml"] =   settings.music_machines,
+    ["data/entities/props/music_machines/music_machine_02.xml"] =   settings.music_machines,
+    ["data/entities/props/music_machines/music_machine_03.xml"] =   settings.music_machines,
+
+    ["data/entities/props/physics/bridge_spawner.xml"] =            settings.lavalake2,
+    ["data/entities/buildings/essence_eater.xml"] =                 settings.essence_eaters,
 }
 
 
-for id, pixel_scene in pairs(spliced_pixel_scenes) do
-    if not ModSettingGet(pixel_scene.setting and ("parallel_parity." .. pixel_scene.setting) or ("parallel_parity." .. id)) then
-        pixel_scene = nil
-        goto continue
-    end
-    if not pixel_scene.offset then pixel_scene.offset = {x = 0, y = 0} end
-    if pixel_scene.localise then
-        for object, data in pairs(pixel_scene.localise) do
-            if not data.setting then data.setting = "parallel_parity." .. id .. "." .. object else data.setting = "parallel_parity." .. data.setting end
-        end
-    end
-    ::continue::
-end
 
-local filtered_backgrounds = {}
-for i = 1, #backgrounds, 1 do
-    if ModSettingGet("parallel_parity." .. backgrounds[i].setting) then
-        filtered_backgrounds[#filtered_backgrounds+1] = backgrounds[i]
-    end
-end
 
-local filtered_ps = {}
-for i = 1, #pixel_scenes, 1 do
-    if ModSettingGet("parallel_parity." .. pixel_scenes[i].setting) then
-        filtered_ps[#filtered_ps+1] = pixel_scenes[i]
-    end
-end
 
 
 
@@ -482,21 +375,6 @@ end
 
 local biome_appends = {}
 
-local spliced_pixel_scenes = {
-    ["data/biome_impl/spliced/lavalake2.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/skull_in_desert.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/boss_arena.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/tree.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/watercave.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/mountain_lake.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/lake_statue.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/moon.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/moon_dark.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/lavalake_pit_bottom.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/gourd_room.xml"] = ModSettingGet(""),
-    ["data/biome_impl/spliced/skull.xml"] = ModSettingGet(""),
-}
-
 --remove spliced pixel scenes from _pixel_scenes.xml
 local pixel_scenes = nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")) --get all global pixel scenes
 if pixel_scenes then
@@ -505,10 +383,57 @@ if pixel_scenes then
     for elem in spliced_scenes:each_child() do --run through spliced pixel scenes
         local pixel_scene_id = elem.content[#elem.content]:sub(1,-5) --acquire the pixel scene file name minus the file extension
         local target = spliced_pixel_scenes[pixel_scene_id]
-        if target and (ModSettingGet("parallel_parity." .. target.setting) or ModSettingGet(target.setting)) then --make sure it exists and is enabled
+        if spliced_pixel_scenes[pixel_scene_id] then --check if pixel scene is flagged
             remove_list[#remove_list+1] = elem --add to list of spliced pixel scenes to remove
 
-            if target.localise then --apply localisation changes to objects within the spliced pixel scene
+            local sps_filepath = ""
+            for i = 1, #elem.content, 1 do
+                sps_filepath = sps_filepath .. elem.content[i]
+            end
+
+            if ModDoesFileExist(sps_filepath) then
+                local sps_data = nxml.parse(ModTextFileGetContent(sps_filepath))
+                if sps_data and sps_data.children[1] then --this should generally just be mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
+                    local origin_x
+                    local origin_y
+                    for chunk in sps_data.children[1] do
+                        local map_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) + (map_width * .5)
+                        local map_pos_y = math.floor(chunk.attr.pos_y * 0.001953125) + 14
+                        origin_x = origin_x or map_pos_x
+                        origin_y = origin_y or map_pos_y
+                        local chunk_filepath = ("mods/parallel_parity/files/spliced_pixel_scenes/%s/%s_%s.xml"):format(pixel_scene_id, map_pos_x - origin_x, map_pos_y - origin_y)
+
+                        ModTextFileSetContent( --create entity file for chunk
+                            chunk_filepath,
+                            ("mods/parallel_parity/files/spliced_chunk_template.xml")
+                                :gsub("!MATERIALS!", chunk.attr.material_filename or "")
+                                :gsub("!GFX!", chunk.attr.colors_filename or "")
+                                :gsub("!BACKGROUND!", chunk.attr.background_filename or "")
+                        )
+
+                        local abgr_int = ModImageGetPixel(map, map_pos_x, map_pos_y) --get pixel colour as ABGR integer
+                        local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
+
+                        local biome = biomelist[hex]
+                        biome_appends[biome] = biome_appends[biome] or {}
+                        biome_appends[biome][#biome_appends[biome] + 1] = {
+                            path = chunk_filepath,
+                            chunk = {
+                                x = map_pos_x,
+                                y = map_pos_y,
+                            },
+                            offset = {
+                                x = chunk.attr.pos_x - (chunk.attr.pos_x * 512),
+                                y = chunk.attr.pos_y - (chunk.attr.pos_y * 512),
+                            }
+                        } --add pixel scene to biome_appends table under biomexml path as a key
+                    end
+                end
+            end
+
+
+            --move to separate thingy
+            --[[if target.localise then --apply localisation changes to objects within the spliced pixel scene
                 for object, data in pairs(target.localise) do
                     if ModSettingGet(target.setting) == false then --if spawning in PWs is disallowed
                         ModTextFileSetContent(data.script,
@@ -517,8 +442,8 @@ if pixel_scenes then
                         ))
                     end
                 end
-            end
-
+            end]]
+            do return end
             for i = 1, target.dimensions.y, 1 do --iterate over the part of the biomemap this takes up
                 for j = 1, target.dimensions.x, 1 do
                     local abgr_int = ModImageGetPixel(map, target.origin.x + j + (map_width * .5) - 1, target.origin.y + i + 13) --get pixel colour as ABGR integer
@@ -534,13 +459,24 @@ if pixel_scenes then
     for index, value in ipairs(remove_list) do
         spliced_scenes:remove_child(value) --remove spliced pixel scenes from file
     end
-
-
-    for elem in pixel_scenes:first_of("BackgroundImages") do
-        
-    end
 end
 ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(pixel_scenes)) --apply changes to file
+
+
+
+do return end
+
+local paths = {
+    {
+        match = "data/biome_impl/hidden/",
+        setting = "backgrounds.hidden",
+    },
+    {
+        match = "data/biome_impl/liquidcave/",
+        setting = "visual",
+    },
+    --"data/entities/props/music_machines/"
+}
 
 
 for xml_path, pixel_scenes in pairs(biome_appends) do
