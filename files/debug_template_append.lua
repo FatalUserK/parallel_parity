@@ -1,6 +1,6 @@
  --map_width is subbed in here
 
- if init == nil then
+if init == nil then
     RegisterSpawnFunction( 0xffffeedd, "init" ) --holy shit i spent way too long debugging stupid shit until horscht reminded me i need to register spawn functions if they dont already exist am i stupid?? 😭
 end
 
