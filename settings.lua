@@ -45,39 +45,43 @@ local translation_strings = {
         },
         desert_skull = {
             en = "Desert Skull",
-            en_desc = "The giant deer skull located in the Desert"
+            en_desc = "The giant deer skull located in the Desert",
         },
         kolmi_arena = {
             en = "Kolmisilmä Arena",
-            en_desc = "The final boss arena after the Temple of the Art including the Holy Mountain just before it"
+            en_desc = "The final boss arena after the Temple of the Art including the Holy Mountain just before it",
+            KOLMI = {
+                en = "Spawn Kolmisilmä",
+                en_desc = "Decides whether or not the final boss spawns in Parallel Worlds\nThis is highly advised against, I do not know the rammifications of spawning more than one finaly boss, but I can't imagine they would be good."
+            },
         },
         tree = {
             en = "Tree",
-            en_desc = "The large tree to the left of the player spawn"
+            en_desc = "The large tree to the left of the player spawn",
         },
         dark_cave = {
             en = "Dark Cave",
-            en_desc = "The flooded cavern to the left of Mines"
+            en_desc = "The flooded cavern to the left of Mines",
         },
         mountain_lake = {
             en = "Mountain Lake",
-            en_desc = "The lake between the mountain and the desert, on the surface above the Lava Lake"
+            en_desc = "The lake between the mountain and the desert, on the surface above the Lava Lake",
         },
         lake_island = {
             en = "Lake Island",
-            en_desc = "The island that spawns on top of the lake"
+            en_desc = "The island that spawns on top of the lake",
         },
         moons = {
             en = "Moons",
-            en_desc = "The moons located in The Work (Sky) and The Work (Hell)"
+            en_desc = "The moons located in The Work (Sky) and The Work (Hell)",
         },
         gourd_room = {
             en = "Gourd Room",
-            en_desc = "The Gourd Room in the left EDR wall in The Work (Sky)"
+            en_desc = "The Gourd Room in the left EDR wall in The Work (Sky)",
         },
         meat_skull = {
             en = "Limatoukka Skull",
-            en_desc = "The giant skull that spawns Tiny at the bottom of the desert cavern under Powerplant/Meat Lair"
+            en_desc = "The giant skull that spawns Tiny at the bottom of the desert cavern under Powerplant/Meat Lair",
         },
     },
 }
