@@ -220,7 +220,10 @@ end
 --get biomescript from chunk coordinate
 local function MapGetBiomeScript(chunk_pos_x, chunk_pos_y)
     local map_pos_x = (chunk_pos_x + (map_width * .5))
-    local map_pos_y = clamp(chunk_pos_y + 14, 0, map_height - 1)
+
+    local map_pos_y = chunk_pos_y + 14
+	map_pos_y = math.max(map_pos_y, 0)
+	map_pos_y = math.min(map_pos_y, map_height - 1)
 
     local abgr_int = ModImageGetPixel(map, map_pos_x, map_pos_y) --get pixel colour as ABGR integer
     local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
@@ -246,13 +249,15 @@ local settings = {
     --General
     general =           ModSettingGet("parallel_parity.general") or force_true,
     visual =            ModSettingGet("parallel_parity.visual") or force_true,
-    hidden =            ModSettingGet("parallel_parity.backgrounds.hidden") or force_true,
+    hidden =            ModSettingGet("parallel_parity.hidden") or force_true,
     fungal_altars =     ModSettingGet("parallel_parity.fungal_altars") or force_true,
     fishing_hut =       ModSettingGet("parallel_parity.fishing_hut") or force_true,
     pyramid_boss =      ModSettingGet("parallel_parity.pyramid_boss") or force_true,
+    leviathan =         ModSettingGet("parallel_parity.leviathan") or force_true,
     avarice_diamond =   ModSettingGet("parallel_parity.avarice_diamond") or force_true,
     essence_eaters =    ModSettingGet("parallel_parity.essence_eaters") or force_true,
     music_machines =    ModSettingGet("parallel_parity.music_machines") or force_true,
+    evil_eye =          ModSettingGet("parallel_parity.evil_eye") or force_true,
 
 
     --Spliced
@@ -275,6 +280,7 @@ local settings = {
     spawn_kolmi =       ModSettingGet("parallel_parity.kolmi_arena.KOLMI") or force_true,
     greed_curse =       ModSettingGet("parallel_parity.tree.GREED") or force_true,
     dark_cave_hp =      ModSettingGet("parallel_parity.dark_cave.HP") or force_true,
+    fire_essence =      ModSettingGet("parallel_parity.lake_island.FIRE_ESSENCE") or force_true,
     island_boss =       ModSettingGet("parallel_parity.lake_island.BOSS") or force_true,
     spawn_gourds =      ModSettingGet("parallel_parity.gourd_room.GOURDS") or force_true,
 }
@@ -302,6 +308,12 @@ local pixel_scenes = {
     ["data/biome_impl/tower_start.png"] =                           settings.general,
     ["data/biome_impl/the_end/the_end_shop.png"] =                  settings.general,
     ["data/biome_impl/overworld/desert_ruins_base_01.png"] =        settings.general,
+    ["data/biome_impl/snowcastle/forge.png"] =                      settings.general,
+    ["data/biome_impl/temple/altar_snowcave_capsule.png"] =         settings.general,
+    ["data/biome_impl/huussi.png"] =                                settings.general,
+
+    ["data/biome_impl/overworld/essence_altar.png"] =               settings.essence_eaters,
+    ["data/biome_impl/overworld/essence_altar_desert.png"] =        settings.essence_eaters,
 
     ["data/biome_impl/overworld/snowy_ruins_eye_pillar.png"] =      settings.fungal_altars,
     ["data/biome_impl/rainbow_cloud.png"] =                         settings.fungal_altars,
@@ -343,6 +355,7 @@ local pixel_scenes = {
     ["data/entities/buildings/eyespot_c.xml"] =                     settings.fungal_altars,
     ["data/entities/buildings/eyespot_d.xml"] =                     settings.fungal_altars,
     ["data/entities/buildings/eyespot_e.xml"] =                     settings.fungal_altars,
+    ["data/entities/items/books/book_hint.xml"] =                   settings.fungal_altars,
 
     ["data/entities/props/physics_fungus.xml"] =                    settings.tree,
     ["data/entities/props/physics_fungus_big.xml"] =                settings.tree,
@@ -355,6 +368,10 @@ local pixel_scenes = {
 
     ["data/entities/props/physics/bridge_spawner.xml"] =            settings.lava_lake,
     ["data/entities/buildings/essence_eater.xml"] =                 settings.essence_eaters,
+    ["data/entities/buildings/hut_check.xml"] =                     settings.fishing_bunkers,
+    ["data/entities/buildings/maggotspot.xml"] =                    settings.meat_skull,
+    ["data/entities/animals/boss_fish/fish_giga.xml"] =             settings.leviathan,
+    ["data/entities/items/pickup/evil_eye.xml"] =                   settings.evil_eye,
 }
 
 
@@ -386,8 +403,6 @@ if _pixel_scenes then
             if ModDoesFileExist(sps_filepath) then
                 local sps_data = nxml.parse(ModTextFileGetContent(sps_filepath))
                 if sps_data and sps_data.children[1] then --this should generally just be one singular mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
-                    local origin_x
-                    local origin_y
                     for chunk in sps_data.children[1]:each_child() do
                         local chunk_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
                         local chunk_pos_y = math.floor(chunk.attr.pos_y * 0.001953125)
@@ -411,8 +426,6 @@ if _pixel_scenes then
                     end
                 end
             end
-        else
-            print(spliced_scene_id .. " is inactive")
         end
 
             --move to separate thingy
@@ -454,8 +467,6 @@ if _pixel_scenes then
     end
 
     for elem in ps_data.scenes:each_child() do
-        print(("Checking:\n    %s\n    %s\n    %s\n    %s\n    %s\n    %s"):format(elem.attr.just_load_an_entity, elem.attr.material_filename, elem.attr.colors_filename, elem.attr.background_filename, elem.attr.pos_x, elem.attr.pos_y))
-        print(("Checking:\n    %s\n    %s\n    %s\n    %s"):format(pixel_scenes[elem.attr.just_load_an_entity], pixel_scenes[elem.attr.material_filename], pixel_scenes[elem.attr.colors_filename], pixel_scenes[elem.attr.background_filename]))
         if pixel_scenes[elem.attr.just_load_an_entity] or pixel_scenes[elem.attr.material_filename] or pixel_scenes[elem.attr.colors_filename] or pixel_scenes[elem.attr.background_filename] then
             remove_list.scenes[#remove_list.scenes+1] = elem
             local chunk_pos_x = math.floor(elem.attr.pos_x * 0.001953125)
@@ -489,8 +500,6 @@ if _pixel_scenes then
                     --print(("PS:\n    %s\n    %s\n    %s"):format(elem.attr.material_filename, elem.attr.colors_filename, elem.attr.background_filename))
                 end
             end
-        else
-            print(("NOOOOOOOOOOOOO:\n    %s\n    %s\n    %s\n    %s\n    %s\n    %s"):format(elem.attr.just_load_an_entity, elem.attr.material_filename, elem.attr.colors_filename, elem.attr.background_filename, elem.attr.pos_x, elem.attr.pos_y))
         end
     end
 
@@ -523,7 +532,7 @@ for biomescript, biome in pairs(biome_appends) do
     for index, chunk in pairs(biome.entities) do
         entities_insert = entities_insert .. "    [\"" .. index .. "\"] = {\n"
         for index, entity in ipairs(chunk) do
-            entities_insert = entities_insert .. "{path = \"" .. entity.path .. "\", offset = { x = " .. entity.offset.x .. ", y = " .. entity.offset.y .. " }},\n"
+            entities_insert = entities_insert .. "        {path = \"" .. entity.path .. "\", offset = { x = " .. entity.offset.x .. ", y = " .. entity.offset.y .. " }},\n"
         end
         entities_insert = entities_insert .. "    },\n"
     end
@@ -544,46 +553,65 @@ for biomescript, biome in pairs(biome_appends) do
 end
 
 
-do return end
-
 --Special Main-World Localisation
 
---i considered restructuring the pixel scene table of scene indexed to mod setting values to be a table of tables for more control, but i dont feel like doing that rn and im not in the right headspace to decide if its worth committing to.
---This is a bandaid solution to avoid having to think about restructuring parts of my mod again regardless of how trivial this would be. I will think about it another time.
-local localise = { 
+local localise = {
+    ["data/scripts/biomes/lake_statue.lua"] = {
+        settings.lake_island and not settings.island_boss and {
+            [[EntityLoad%( "data/entities/animals/boss_spirit/spawner%.xml", x, y %)]],
+        } or nil,
+        settings.lake_island and not settings.fire_essence and {
+            [[EntityLoad%( "data/entities/items/pickup/essence_fire%.xml", x, y %)]],
+        } or nil,
+    },
+    ["data/scripts/biomes/lake.lua"] = {
+        settings.fishing_hut and not settings.fishing_bunkers and {
+            [[EntityLoad%( "data/entities/buildings/bunker%.xml", x, y %)]],
+            [[EntityLoad%( "data/entities/buildings/bunker2%.xml", x, y %)]],
+        } or nil,
+    },
     ["data/scripts/biomes/lavalake.lua"] = {
-        {
-            setting = not settings.lava_lake_orb,
-            replace_code = {
-                [[EntityLoad( %"data/entities/items/orbs/orb_03%.xml", x-10, y )]]
-            }
-        },
+        settings.lava_lake and not settings.lava_lake_orb and {
+            [[EntityLoad( %"data/entities/items/orbs/orb_03%.xml", x-10, y )]],
+        } or nil,
     },
     ["data/scripts/biomes/boss_arena.lua"] = {
-        {
-            setting = not settings.spawn_kolmi,
-            replace_code = {
-                [[EntityLoad%( "data/entities/animals/boss_centipede/boss_music_buildup_trigger%.xml", x, y %)]],
-            },
-            override_function = {
-                [[function spawn_items%( x, y %)]]
-            }
-        },
+        settings.kolmi_arena and not settings.spawn_kolmi and {
+            [[EntityLoad%( "data/entities/animals/boss_centipede/boss_music_buildup_trigger%.xml", x, y %)]],
+            [[EntityLoad%( "data/entities/animals/boss_centipede/boss_centipede%.xml", x, y %)
+	%-%- if game is not completed
+	if%( GameHasFlagRun%( "ending_game_completed" %) == false %) then
+		EntityLoad%( "data/entities/animals/boss_centipede/sampo%.xml", x, y + 80 %)
+	end
+	
+	EntityLoad%( "data/entities/animals/boss_centipede/reference_point%.xml", x, y %)]],
+        } or nil,
     },
     ["data/scripts/biomes/mountain_tree.lua"] = {
-        {
-            
-        }
+        settings.tree and not settings.greed_curse and {
+            [[EntityLoad%( "data/entities/items/pickup/greed_curse%.xml", x, y %)]],
+        } or nil,
+    },
+    ["data/scripts/biomes/watercave.lua"] = {
+        settings.dark_cave and not settings.dark_cave_hp and {
+            [[EntityLoad%( "data/entities/items/pickup/heart%.xml", x, y %)]],
+            [[EntityLoad%( "data/entities/items/pickup/heart_fullhp%.xml", x, y %)]],
+        } or nil,
+    },
+    ["data/scripts/biomes/gourd_room.lua"] = {
+        settings.gourd_room and not settings.spawn_gourds and {
+            [[EntityLoad( "data/entities/items/pickup/gourd.xml", x, y )
+	EntityLoad( "data/entities/items/pickup/gourd.xml", x - 12, y )
+	EntityLoad( "data/entities/items/pickup/gourd.xml", x + 12, y )
+	EntityLoad( "data/entities/items/pickup/gourd.xml", x, y - 12 )
+	EntityLoad( "data/entities/items/pickup/gourd.xml", x - 12, y )
+	EntityLoad( "data/entities/animals/shotgunner.xml", x + 24, y - 24 )]],
+        } or nil,
     }
 }
 
-for pixel_scene_id, pixel_scene in pairs(localise) do
-    for object, target in pairs(pixel_scene) do
-        print("checking " .. string.format("parallel_parity.%s.%s", pixel_scene_id, object))
-        if ModSettingGet(string.format("parallel_parity.%s.%s", pixel_scene_id, object)) == false then
-            ModTextFileSetContent(target.script,
-                ModTextFileGetContent(target.script):gsub(target.code,
-                    "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. target.code .. " end"))
-        end
+for path, biome in pairs(localise) do
+    for index, code in ipairs(biome) do
+        ModTextFileSetContent(path, ModTextFileGetContent(path):gsub(code, "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. code .. " end"))
     end
 end
