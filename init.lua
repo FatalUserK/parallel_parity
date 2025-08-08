@@ -233,56 +233,63 @@ end
 
 
 
-local biomelist_xml --= nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
-if biomelist_xml then
-    for elem in biomelist_xml:each_child() do
-        --ModLuaFileAppend(GetBiomeScript(elem.attr.biome_filename, true), "mods/parallel_parity/files/template_append.lua")
-    end
-end
-
-
-
 local force_true = true
 
 --table used to cache all mod settings and flag stuff like that so i dont have to call ModSettingGet duplicates
 local settings = {
     --General
-    general =           ModSettingGet("parallel_parity.general") or force_true,
-    visual =            ModSettingGet("parallel_parity.visual") or force_true,
-    hidden =            ModSettingGet("parallel_parity.hidden") or force_true,
-    fungal_altars =     ModSettingGet("parallel_parity.fungal_altars") or force_true,
-    fishing_hut =       ModSettingGet("parallel_parity.fishing_hut") or force_true,
-    pyramid_boss =      ModSettingGet("parallel_parity.pyramid_boss") or force_true,
-    leviathan =         ModSettingGet("parallel_parity.leviathan") or force_true,
-    avarice_diamond =   ModSettingGet("parallel_parity.avarice_diamond") or force_true,
-    essence_eaters =    ModSettingGet("parallel_parity.essence_eaters") or force_true,
-    music_machines =    ModSettingGet("parallel_parity.music_machines") or force_true,
-    evil_eye =          ModSettingGet("parallel_parity.evil_eye") or force_true,
+    general =               ModSettingGet("parallel_parity.general") or force_true,
+    visual =                ModSettingGet("parallel_parity.visual") or force_true,
+    hidden =                ModSettingGet("parallel_parity.hidden") or force_true,
+    fungal_altars =         ModSettingGet("parallel_parity.fungal_altars") or force_true,
+    fishing_hut =           ModSettingGet("parallel_parity.fishing_hut") or force_true,
+    pyramid_boss =          ModSettingGet("parallel_parity.pyramid_boss") or force_true,
+    leviathan =             ModSettingGet("parallel_parity.leviathan") or force_true,
+    avarice_diamond =       ModSettingGet("parallel_parity.avarice_diamond") or force_true,
+    essence_eaters =        ModSettingGet("parallel_parity.essence_eaters") or force_true,
+    music_machines =        ModSettingGet("parallel_parity.music_machines") or force_true,
+    evil_eye =              ModSettingGet("parallel_parity.evil_eye") or force_true,
 
 
     --Spliced
-    lava_lake =         ModSettingGet("parallel_parity.lava_lake") or force_true,
-    moons =             ModSettingGet("parallel_parity.moons") or force_true,
-    desert_skull =      ModSettingGet("parallel_parity.desert_skull") or force_true,
-    kolmi_arena =       ModSettingGet("parallel_parity.kolmi_arena") or force_true,
-    tree =              ModSettingGet("parallel_parity.tree") or force_true,
-    dark_cave =         ModSettingGet("parallel_parity.dark_cave") or force_true,
-    mountain_lake =     ModSettingGet("parallel_parity.mountain_lake") or force_true,
-    lake_island =       ModSettingGet("parallel_parity.lake_island") or force_true,
-    gourd_room =        ModSettingGet("parallel_parity.gourd_room") or force_true,
-    meat_skull =        ModSettingGet("parallel_parity.meat_skull") or force_true,
+    lava_lake =             ModSettingGet("parallel_parity.lava_lake") or force_true,
+    moons =                 ModSettingGet("parallel_parity.moons") or force_true,
+    desert_skull =          ModSettingGet("parallel_parity.desert_skull") or force_true,
+    kolmi_arena =           ModSettingGet("parallel_parity.kolmi_arena") or force_true,
+    tree =                  ModSettingGet("parallel_parity.tree") or force_true,
+    dark_cave =             ModSettingGet("parallel_parity.dark_cave") or force_true,
+    mountain_lake =         ModSettingGet("parallel_parity.mountain_lake") or force_true,
+    lake_island =           ModSettingGet("parallel_parity.lake_island") or force_true,
+    gourd_room =            ModSettingGet("parallel_parity.gourd_room") or force_true,
+    meat_skull =            ModSettingGet("parallel_parity.meat_skull") or force_true,
 
 
     --Localised
-    fishing_bunkers =   ModSettingGet("parallel_parity.fishing_hut.BUNKERS") or force_true,
+    fishing_bunkers =       ModSettingGet("parallel_parity.fishing_hut.BUNKERS") or force_true,
 
-    lava_lake_orb =     ModSettingGet("parallel_parity.lava_lake.ORB") or force_true,
-    spawn_kolmi =       ModSettingGet("parallel_parity.kolmi_arena.KOLMI") or force_true,
-    greed_curse =       ModSettingGet("parallel_parity.tree.GREED") or force_true,
-    dark_cave_hp =      ModSettingGet("parallel_parity.dark_cave.HP") or force_true,
-    fire_essence =      ModSettingGet("parallel_parity.lake_island.FIRE_ESSENCE") or force_true,
-    island_boss =       ModSettingGet("parallel_parity.lake_island.BOSS") or force_true,
-    spawn_gourds =      ModSettingGet("parallel_parity.gourd_room.GOURDS") or force_true,
+    lava_lake_orb =         ModSettingGet("parallel_parity.lava_lake.ORB") or force_true,
+    spawn_kolmi =           ModSettingGet("parallel_parity.kolmi_arena.KOLMI") or force_true,
+    greed_curse =           ModSettingGet("parallel_parity.tree.GREED") or force_true,
+    dark_cave_hp =          ModSettingGet("parallel_parity.dark_cave.HP") or force_true,
+    fire_essence =          ModSettingGet("parallel_parity.lake_island.FIRE_ESSENCE") or force_true,
+    island_boss =           ModSettingGet("parallel_parity.lake_island.BOSS") or force_true,
+    spawn_gourds =          ModSettingGet("parallel_parity.gourd_room.GOURDS") or force_true,
+
+
+
+    --Portals
+    portal_general =        ModSettingGet("parallel_parity.portals.general") or force_true,
+    portal_holy_mountain =  ModSettingGet("parallel_parity.portals.holy_mountain") or force_true,
+    portal_fast_travel =    ModSettingGet("parallel_parity.portals.fast_travel") or force_true,
+    portal_tower_entrance = ModSettingGet("parallel_parity.portals.tower_entrance") or force_true,
+    portal_mountain =       ModSettingGet("parallel_parity.portals.mountain") or force_true,
+    portal_skull_island =   ModSettingGet("parallel_parity.portals.skull_island") or force_true,
+    portal_summon =         ModSettingGet("parallel_parity.portals.summon") or force_true,
+
+
+
+    --Special
+    ng_plus =               ModSettingGet("parallel_parity.ng_plus") or force_true
 }
 
 local spliced_pixel_scenes = {
@@ -375,17 +382,57 @@ local pixel_scenes = {
 }
 
 
-local biome_appends = {}
+local portals = {
+    ["data/entities/buildings/teleport_bunker.xml"] =                       settings.portal_general,
+    ["data/entities/buildings/teleport_bunker_back.xml"] =                  settings.portal_general,
+    ["data/entities/buildings/teleport_bunker2.xml"] =                      settings.portal_general,
+    ["data/entities/buildings/teleport_meditation_cube.xml"] =              settings.portal_general,
+    ["data/entities/buildings/teleport_meditation_cube_return.xml"] =       settings.portal_general,
+    ["data/entities/buildings/teleport_snowcave_buried_eye.xml"] =          settings.portal_general,
+    ["data/entities/buildings/teleport_snowcave_buried_eye_return.xml"] =   settings.portal_general,
+    ["data/entities/buildings/teleport_hourglass.xml"] =                    settings.portal_general,
+    ["data/entities/buildings/teleport_hourglass_return.xml"] =             settings.portal_general,
+    ["data/entities/buildings/teleport_ending_victory.xml"] =               settings.portal_general, --kolmi death portal
+    ["data/entities/buildings/teleport_start.xml"] =                        settings.portal_general,
+    ["data/entities/buildings/teleport_liquid_powered.xml"] =               settings.portal_holy_mountain, --holy mountain portal
+    ["data/entities/buildings/teleport_ending.xml"] =                       settings.portal_holy_mountain, --final holy mountain portal
+    ["data/entities/buildings/teleport_teleroom.xml"] =                     settings.portal_fast_travel, --fast travel portal room and co
+    ["data/entities/buildings/teleport_teleroom_1.xml"] =                   settings.portal_fast_travel,
+    ["data/entities/buildings/teleport_teleroom_2.xml"] =                   settings.portal_fast_travel,
+    ["data/entities/buildings/teleport_teleroom_3.xml"] =                   settings.portal_fast_travel,
+    ["data/entities/buildings/teleport_teleroom_4.xml"] =                   settings.portal_fast_travel,
+    ["data/entities/buildings/teleport_teleroom_5.xml"] =                   settings.portal_fast_travel,
+    ["data/entities/buildings/teleport_teleroom_6.xml"] =                   settings.portal_fast_travel,
+    ["data/entities/buildings/mystery_teleport.xml"] =                      settings.portal_tower_entrance,
+    ["data/entities/buildings/mystery_teleport_back.xml"] =                 settings.portal_mountain, --tower exit + musical curiosity
+    ["data/entities/buildings/teleport_lake.xml"] =                         settings.portal_skull_island, --teleport to lake
+    ["data/entities/buildings/teleport_desert.xml"] =                       settings.portal_skull_island, --teleport to desert
+    ["data/entities/projectiles/deck/summon_portal_teleport.xml"] =         settings.portal_summon, --EoE portal in underground jungle
+    ["data/entities/buildings/teleport_robot_egg_return.xml"] =             settings.portal_summon,
+}
+
+local biome_appends = {
+    {},
+    {},
+}
 
 --remove spliced pixel scenes from _pixel_scenes.xml
-local _pixel_scenes = nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")) --get all global pixel scenes
-if _pixel_scenes then
+
+local pixel_scene_files = { --grab pixel scene files, all 2 of them
+    nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")),
+    --settings.ng_plus and nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes_newgame_plus.xml")),
+}
+
+for index, _pixel_scenes in ipairs(pixel_scene_files) do --iterate over like this cuz this seemed like the easiest way to slip NG+ pixel scenes into my script
+
+    local ps_file = index-- == 1 and "regular" or "ng_plus" --nathan would love this system
+
     local ps_data = {
         spliced = _pixel_scenes:first_of("PixelSceneFiles"),
         backgrounds = _pixel_scenes:first_of("BackgroundImages"),
         scenes = _pixel_scenes:first_of("mBufferedPixelScenes"),
     }
-    local remove_list = {
+    local remove_list = { --create remove list- for some reason ig
         spliced = {},
         backgrounds = {},
         scenes = {},
@@ -411,9 +458,9 @@ if _pixel_scenes then
 
                         if biomescript ~= nil then
                             local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky 
-                            biome_appends[biomescript] = biome_appends[biomescript] or {scenes = {}, entities = {}}
-                            biome_appends[biomescript].scenes[chunk_key] = biome_appends[biomescript].scenes[chunk_key] or {}
-                            biome_appends[biomescript].scenes[chunk_key][#biome_appends[biomescript].scenes[chunk_key] + 1] = {
+                            biome_appends[ps_file][biomescript] = biome_appends[ps_file][biomescript] or {scenes = {}, entities = {}}
+                            biome_appends[ps_file][biomescript].scenes[chunk_key] = biome_appends[ps_file][biomescript].scenes[chunk_key] or {}
+                            biome_appends[ps_file][biomescript].scenes[chunk_key][#biome_appends[ps_file][biomescript].scenes[chunk_key] + 1] = {
                                 materials = chunk.attr.material_filename,
                                 gfx = chunk.attr.colors_filename,
                                 background = chunk.attr.background_filename,
@@ -427,18 +474,6 @@ if _pixel_scenes then
                 end
             end
         end
-
-            --move to separate thingy
-            --[[if target.localise then --apply localisation changes to objects within the spliced pixel scene
-                for object, data in pairs(target.localise) do
-                    if ModSettingGet(target.setting) == false then --if spawning in PWs is disallowed
-                        ModTextFileSetContent(data.script,
-                            ModTextFileGetContent(data.script):gsub(data.code, --encapsulate designated code within a MW check
-                                "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. data.code .. " end"
-                        ))
-                    end
-                end
-            end]]
     end
 
     for bg in ps_data.backgrounds:each_child() do
@@ -451,9 +486,9 @@ if _pixel_scenes then
 
             if biomescript ~= nil then
                 local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
-                biome_appends[biomescript] = biome_appends[biomescript] or {scenes = {}, entities = {}}
-                biome_appends[biomescript].scenes[chunk_key] = biome_appends[biomescript].scenes[chunk_key] or {}
-                biome_appends[biomescript].scenes[chunk_key][#biome_appends[biomescript].scenes[chunk_key] + 1] = {
+                biome_appends[ps_file][biomescript] = biome_appends[ps_file][biomescript] or {scenes = {}, entities = {}}
+                biome_appends[ps_file][biomescript].scenes[chunk_key] = biome_appends[ps_file][biomescript].scenes[chunk_key] or {}
+                biome_appends[ps_file][biomescript].scenes[chunk_key][#biome_appends[ps_file][biomescript].scenes[chunk_key] + 1] = {
                     materials = "",
                     gfx = "",
                     background = bg.attr.filename,
@@ -476,10 +511,10 @@ if _pixel_scenes then
 
             if biomescript then --do this check cuz map x is no longer modulated, this is to cull additional scenes thrown in PWs, this might break compat with future mods that specifically want a pixel scene in a PW but i can burn that bridge when it comes to it
                 local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
-                biome_appends[biomescript] = biome_appends[biomescript] or {scenes = {}, entities = {}}
+                biome_appends[ps_file][biomescript] = biome_appends[ps_file][biomescript] or {scenes = {}, entities = {}}
                 if elem.attr.just_load_an_entity then
-                    biome_appends[biomescript].entities[chunk_key] = biome_appends[biomescript].entities[chunk_key] or {}
-                    biome_appends[biomescript].entities[chunk_key][#biome_appends[biomescript].entities[chunk_key] + 1] = {
+                    biome_appends[ps_file][biomescript].entities[chunk_key] = biome_appends[ps_file][biomescript].entities[chunk_key] or {}
+                    biome_appends[ps_file][biomescript].entities[chunk_key][#biome_appends[ps_file][biomescript].entities[chunk_key] + 1] = {
                         path = elem.attr.just_load_an_entity,
                         offset = {
                             x = elem.attr.pos_x - (chunk_pos_x * 512),
@@ -487,8 +522,8 @@ if _pixel_scenes then
                         }
                     }
                 else
-                    biome_appends[biomescript].scenes[chunk_key] = biome_appends[biomescript].scenes[chunk_key] or {}
-                    biome_appends[biomescript].scenes[chunk_key][#biome_appends[biomescript].scenes[chunk_key] + 1] = {
+                    biome_appends[ps_file][biomescript].scenes[chunk_key] = biome_appends[ps_file][biomescript].scenes[chunk_key] or {}
+                    biome_appends[ps_file][biomescript].scenes[chunk_key][#biome_appends[ps_file][biomescript].scenes[chunk_key] + 1] = {
                         materials = elem.attr.material_filename,
                         gfx = elem.attr.colors_filename,
                         background = elem.attr.background_filename,
@@ -509,47 +544,81 @@ if _pixel_scenes then
         end
     end
 
+    ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(_pixel_scenes)) --apply changes to file
+    print(tostring(_pixel_scenes))
 end
-ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(_pixel_scenes)) --apply changes to file
-print(tostring(_pixel_scenes))
 
 
+
+local function dump(o, offset_amount)
+    local offset_amount = offset_amount or 0
+    local function offset()
+        local _offset = ""
+        for i = 1, offset_amount, 1 do
+            _offset = _offset .. " "
+        end
+        return _offset
+    end
+
+    if type(o) == 'table' then
+        local s = '{\n'
+        offset_amount = offset_amount + 4
+        for k,v in pairs(o) do
+            if type(k) ~= 'number' then k = '"'..k..'"' end
+            if type(v) == 'string' then v = '"'..v..'"' end
+            s = s .. offset() .. '['..k..'] = ' .. dump(v, offset_amount) .. ',\n'
+       end
+       offset_amount = offset_amount - 4
+       return s.. offset() .. '}'
+    else
+       return tostring(o)
+    end
+end
+
+--print(dump(biome_appends))
 
 local map_width_prepend = "local map_width = " .. map_width
-for biomescript, biome in pairs(biome_appends) do
+for index, world in ipairs(biome_appends) do
+    local target_world = ({"--REGULAR", "--NG_PLUS"})[index]
+    print(target_world)
 
-    local scenes_insert = ""
-    for index, chunk in pairs(biome.scenes) do
-        scenes_insert = scenes_insert .. "    [\"" .. index .. "\"] = {\n"
-        for index, pixel_scene in ipairs(chunk) do
-            if pixel_scene.materials == "" then pixel_scene.materials = "mods/parallel_parity/files/nil_materials.png" end
-            scenes_insert = scenes_insert .. "{materials = \"" .. pixel_scene.materials .. "\", gfx = \"" .. pixel_scene.gfx .. "\", background = \"" .. pixel_scene.background .. "\", offset = { x = " .. pixel_scene.offset.x .. ", y = " .. pixel_scene.offset.y .. " }},\n"
+    for biomescript, biome in pairs(world) do
+
+        local scenes_insert = ""
+        for chunk_index, chunk in pairs(biome.scenes) do
+            scenes_insert = scenes_insert .. "    [\"" .. chunk_index .. "\"] = {\n"
+            for _, pixel_scene in ipairs(chunk) do
+                if pixel_scene.materials == "" then pixel_scene.materials = "mods/parallel_parity/files/nil_materials.png" end
+                scenes_insert = scenes_insert .. "{materials = \"" .. pixel_scene.materials .. "\", gfx = \"" .. pixel_scene.gfx .. "\", background = \"" .. pixel_scene.background .. "\", offset = { x = " .. pixel_scene.offset.x .. ", y = " .. pixel_scene.offset.y .. " }},\n"
+            end
+            scenes_insert = scenes_insert .. "    },\n"
         end
-        scenes_insert = scenes_insert .. "    },\n"
-    end
 
-    local entities_insert = ""
-    for index, chunk in pairs(biome.entities) do
-        entities_insert = entities_insert .. "    [\"" .. index .. "\"] = {\n"
-        for index, entity in ipairs(chunk) do
-            entities_insert = entities_insert .. "        {path = \"" .. entity.path .. "\", offset = { x = " .. entity.offset.x .. ", y = " .. entity.offset.y .. " }},\n"
+        local entities_insert = ""
+        for chunk_index, chunk in pairs(biome.entities) do
+            entities_insert = entities_insert .. "    [\"" .. chunk_index .. "\"] = {\n"
+            for _, entity in ipairs(chunk) do
+                entities_insert = entities_insert .. "        {path = \"" .. entity.path .. "\", offset = { x = " .. entity.offset.x .. ", y = " .. entity.offset.y .. " }},\n"
+            end
+            entities_insert = entities_insert .. "    },\n"
         end
-        entities_insert = entities_insert .. "    },\n"
+
+
+        local filename
+        for str in string.gmatch(biomescript, "([^/]+)") do --i stole the gmatch string, i still dont get string patterns 😭
+            filename = str
+        end
+
+        local append_path = "mods/parallel_parity/generated/append_" .. filename
+        ModTextFileSetContent(append_path,
+            map_width_prepend .. ModTextFileGetContent("mods/parallel_parity/files/template_append.lua")
+                :gsub(target_world .. " PIXEL SCENE APPEND!", scenes_insert or "")
+                :gsub(target_world .. " ENTITIES APPEND!", entities_insert or "")
+                :gsub("FILEHERE", append_path)
+        )
+        ModLuaFileAppend(biomescript, append_path)
+        print(ModTextFileGetContent(append_path)) --uncomment this to get a full print of every generated append file
     end
-
-
-    local filename
-    for str in string.gmatch(biomescript, "([^/]+)") do --i stole the gmatch string, i still dont get string patterns 😭
-        filename = str
-    end
-
-    local append_path = "mods/parallel_parity/generated/append_" .. filename
-    ModTextFileSetContent(append_path,
-        map_width_prepend .. ModTextFileGetContent("mods/parallel_parity/files/template_append.lua")
-            :gsub("--PIXEL SCENE APPEND!", scenes_insert or "")
-            :gsub("--ENTITIES APPEND!", entities_insert or ""))
-    ModLuaFileAppend(biomescript, append_path)
-    --print(ModTextFileGetContent(append_path)) --uncomment this to get a full print of every generated append file
 end
 
 
@@ -611,7 +680,37 @@ local localise = {
 }
 
 for path, biome in pairs(localise) do
-    for index, code in ipairs(biome) do
-        ModTextFileSetContent(path, ModTextFileGetContent(path):gsub(code, "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. code .. " end"))
+    for index, targets in ipairs(biome) do
+        for index, code in ipairs(targets) do
+            ModTextFileSetContent(path, ModTextFileGetContent(path):gsub(code, "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. code .. " end"))
+        end
     end
 end
+
+
+
+for path, value in pairs(portals) do
+    if value then
+        for portal in nxml.edit_file(path) do
+	        portal:add_child(nxml.new_element("LuaComponent", {
+	        	script_source_file = "mods/parallel_parity/files/parallel_portals.lua",
+		        execute_on_added = true,
+                remove_after_executed = true,
+	        }))
+        end
+    end
+end
+
+
+
+--Special support for the Summon Portal spell and related hints in Underground Jungle
+if settings.portal_summon then
+    print("yap")
+    ModTextFileSetContent("data/scripts/biomes/rainforest.lua",
+        ModTextFileGetContent("data/scripts/biomes/rainforest.lua")
+            --:gsub("return pos_x >= x and pos_x <= x%+w", "local _ = GetParallelWorldPosition(x, y)\nreturn pos_x >= x%-%(_%*".. map_width .."%*512%) and pos_x <= x%+w%-(_%*".. map_width .."%*512)")
+            :gsub("local portal_x, portal_y = get_portal_position%(%)", "local portal_x, portal_y = get_portal_position()\nlocal _ = GetParallelWorldPosition(x, y)\nportal_x = portal_x%-(_%*".. map_width .."%*512)")
+    )
+end
+
+--print(ModTextFileGetContent("data/scripts/biomes/rainforest.lua"))
