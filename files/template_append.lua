@@ -1,63 +1,52 @@
-
-
-if init == nil then
-    RegisterSpawnFunction( 0xffffeedd, "init" )
+local init_func_name
+if RegisteredFunctions ~= nil then
+    init_func_name = RegisteredFunctions[0xffffeedd]
+    if init_func_name == nil then
+        init_func_name = "init"
+        RegisterSpawnFunction(0xffffeedd, "init")
+    end
 end
 
 if Parallel_Parity_InitOverridden then return end
 Parallel_Parity_InitOverridden = true
 Parallel_Parity_old_init = init
 
-local half_width = map_width * .5
-local scenes  = {
-    regular = {
---REGULAR PIXEL SCENE APPEND!
-    },
-    ng_plus = {
---NG_PLUS PIXEL SCENE APPEND!
-    }
+local worlds = {
+--PARALLEL APPEND HERE!
 }
 
-local entities  = {
-    regular = {
---REGULAR ENTITIES APPEND!
-    },
-    ng_plus = {
---NG_PLUS ENTITIES APPEND!
-    }
-}
 
-init = function( x, y, w, h)
-    print("a")
-    if Parallel_Parity_old_init then Parallel_Parity_old_init(x, y, w, h) end
+local par_old_init = _G[init_func_name]
+_G[init_func_name] = function(x, y, w, h)
+    if par_old_init then par_old_init(x, y, w, h) end
+
     if GetParallelWorldPosition(x, y) == 0 then return end
-    print("b")
 
-    local world_type = SessionNumbersGetValue("NEW_GAME_PLUS_COUNT") == "0" and "regular" or "ng_plus"
-    if #scenes[world_type] == 0 then print('FILEHERE') return end
-    print("c")
+    local map_width = BiomeMapGetSize()
+    local content = worlds[SessionNumbersGetValue("BIOME_MAP_PIXEL_SCENES") .. map_width]
+    if content == nil then return end
 
-    local chunk = {x = x * 0.001953125, y = y * 0.001953125}
-    chunk.x = ((chunk.x + half_width) % map_width) - half_width
-    print("d")
+    local half_width = map_width * .5
+    local chunk_x,chunk_y = x*0.001953125, y*0.001953125
+    chunk_x = ((chunk_x + half_width) % map_width) - half_width
 
-    local chunk_index = chunk.x .. "_" .. chunk.y
-    if scenes[world_type][chunk_index] then
-        for index, scene in ipairs(scenes[world_type][chunk_index]) do
+    local chunk_index = chunk_x .. "_" .. chunk_y
+    if content.scenes[chunk_index] then
+        for _, scene in ipairs(content.scenes[chunk_index]) do
             LoadPixelScene(
                 scene.materials,
                 scene.gfx,
-                x + scene.offset.x,
-                y + scene.offset.y,
+                x + scene.offset_x,
+                y + scene.offset_y,
                 scene.background,
                 true, nil, nil, nil, true
             )
         end
     end
 
-    if entities[world_type][chunk_index] then
-        for index, entity in ipairs(entities[chunk_index]) do
-            EntityLoad(entity.path, x + entity.offset.x, y + entity.offset.y )
+    if content.entities[chunk_index] then
+        for index, entity in ipairs(content.entities[chunk_index]) do
+            EntityLoad(entity.path, x + entity.offset_x, y + entity.offset_y )
         end
     end
 end

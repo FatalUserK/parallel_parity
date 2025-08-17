@@ -28,6 +28,10 @@ local current_language = languages[GameTextGetTranslatedOrNot("$current_language
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the languages table above
 local translation_strings = {
+    mod_compat_note = {
+        en = "Warning! Options for other mods will not show up here!",
+        en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods"
+    },
     general = {
         en = "General",
         en_desc = "Miscellaneous grouping of pixel scenes that don't fit any other category or earn their own",
@@ -42,7 +46,7 @@ local translation_strings = {
     },
     ng_plus = {
         en = "New Game+",
-        en_desc = "Should changes also apply to New Game+ iterations"
+        en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental!"
     },
     spliced_pixel_scenes = {
         en = "Spliced Pixel Scenes",
@@ -272,6 +276,9 @@ local translation_strings = {
 
 
 local settings = {
+    {
+        id = "mod_compat_note"
+    },
     {
         id = "general",
         value_default = true,
