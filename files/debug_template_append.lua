@@ -11,10 +11,6 @@ else
     return
 end
 
-if Parallel_Parity_InitOverridden then return end
-Parallel_Parity_InitOverridden = true
-Parallel_Parity_old_init = init
-
 --[[
 local worlds = {
     ["data/biome/_pixel_scenes.xml70"] = {
@@ -70,7 +66,7 @@ _G[init_func_name] = function(x, y, w, h)
     local marker = EntityLoad("data/entities/_debug/debug_marker.xml", x, y) --for debugging purposes
     local vsc = EntityAddComponent2(marker, "VariableStorageComponent") --for debugging purposes
     local attempted --for debugging purposes
-    local log = "false"
+    local log = "FILENAMEHERE"
 
     local half_width = map_width * .5
     local chunk_x,chunk_y = x*0.001953125, y*0.001953125 --get chunk coordinates (division is about 4% slower than multiplication, this is just dividing by 512)

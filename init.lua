@@ -1,3 +1,5 @@
+local start = GameGetRealWorldTimeSinceStarted()
+
 --global thingy so other mods can do stuff
 ParallelParity = {
     default_map_path = "data/biome_impl/biome_map.png",
@@ -24,6 +26,37 @@ par.worlds = {
         ["data/biome_impl/biome_map_newgame_plus.png"] = true
     },
 }
+
+--variable biomes that can be placed during ng+ map gen, this is for temporary NG Plus support wherein i just add the appends for pixel scenes to every variable biome as well as their regular base biome
+local ng_plus_biomescripts = {
+    "data/scripts/biomes/coalmine_alt.lua",
+    "data/scripts/biomes/fungicave.lua",
+    "data/scripts/biomes/excavationsite.lua",
+    "data/scripts/biomes/snowcave.lua",
+    "data/scripts/biomes/snowcastle.lua",
+    "data/scripts/biomes/rainforest.lua",
+    "data/scripts/biomes/vault.lua",
+    "data/scripts/biomes/sandcave.lua",
+    "data/scripts/biomes/vault_frozen.lua",
+    "data/scripts/biomes/wandcave.lua",
+    "data/scripts/biomes/crypt.lua",
+    "data/scripts/biomes/tower.lua",
+    "data/scripts/biomes/desert.lua",
+    "data/scripts/biomes/hills.lua",
+    "data/scripts/biomes/orbrooms/orbroom_05.lua",
+    "data/scripts/biomes/orbrooms/orbroom_06.lua",
+    "data/scripts/biomes/orbrooms/orbroom_07.lua",
+    "data/scripts/biomes/pyramid_top.lua",
+    "data/scripts/biomes/mountain/mountain_floating_island.lua",
+    "data/scripts/biomes/orbrooms/orbroom_02.lua",
+    "data/scripts/biomes/orbrooms/orbroom_04.lua",
+    "data/scripts/biomes/orbrooms/orbroom_08.lua",
+    "data/scripts/biomes/orbrooms/orbroom_09.lua",
+    "data/scripts/biomes/orbrooms/orbroom_10.lua",
+    "data/scripts/biomes/orbrooms/orbroom_03.lua",
+    "data/scripts/biomes/boss_victoryroom.lua",
+    "data/scripts/biomes/boss_arena.lua",
+} --god i hate the NG+ support its so wretched, when i make it proper, i will probably exile it to its own file
 
 --list of relevant biome scripts using biome xml as index key, vanilla biomescript data is pregenerated under the assumption surely no one would go out their way to alter the filepath of vanilla biomescripts.
 --Will probably empty the list if I run into a situation where someone does indeed altar the base-game biome script paths
@@ -298,7 +331,7 @@ par.pixel_scenes = {
     ["data/biome_impl/pyramid/boss_limbs.png"] =                    settings.pyramid_boss,
     ["data/biome_impl/greed_treasure.png"] =                        settings.avarice_diamond,
     ["data/biome_impl/overworld/essence_altar"] =                   settings.essence_eaters,
-    ["data/biome_impl/overworld/cliff_visual.png"] =                settings.visual,
+    ["data/biome_impl/overworld/cliff.png"] =                       settings.music_machines,
     ["data/biome_impl/overworld/music_machine_stand.png"] =         settings.music_machines,
 
     --backgrounds
@@ -376,280 +409,6 @@ par.portals = {
     ["data/entities/buildings/teleport_robot_egg_return.xml"] =             settings.portal_summon, --EoE return portal
 }
 
-local cached_maps = {}
---#endregion
-
-
---convenient functions
---#region
-
---get biomescript from biomexml. note: maybe merge with MapGetBiomeScript() at some point
-local function GetBiomeScript(biomepath, generate)
-    local biomexml = nxml.parse(ModTextFileGetContent(biomepath))
-
-    if not par.biome_scripts[biomepath] then
-        local toplogy = biomexml and biomexml:first_of("Topology")
-        if toplogy then
-            local script = toplogy.attr.lua_script
-            if generate and script == nil then
-                local filename
-                for str in string.gmatch(biomepath, "([^".."/".."]+)") do --i stole the gmatch string i still dont get string patterns 😭
-                    filename = str
-                end
-                local generated_script_path = ("mods/parallel_parity/files/biomescripts/") .. filename:sub(1, -4) .. "lua"
-                ModTextFileSetContent(generated_script_path, "") --yknow itd be really funny if i could just append empty nothingness and have that work without needing to make an entire script
-                toplogy.attr.lua_script = generated_script_path
-            end
-            par.biome_scripts[biomepath] = toplogy.attr.lua_script
-        end
-    end
-
-    return par.biome_scripts[biomepath]
-end
-
-local biomelist = {}
-local biomelist_xml = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
-if biomelist_xml then
-    for elem in biomelist_xml:each_child() do
-        biomelist[(elem.attr.color):lower():sub(3,-1)] = elem.attr.biome_filename
-        --print(("biomelist[%s] = %s"):format((elem.attr.color):lower():sub(3,-1), elem.attr.biome_filename))
-    end
-end
-
---get biomescript from chunk coordinate
-local function MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
-    local mdata = cached_maps[biome_map]
-
-    local map_pos_x = (chunk_pos_x + (mdata.w * .5))
-
-    local map_pos_y = chunk_pos_y + 14
-	map_pos_y = math.max(map_pos_y, 0)
-	map_pos_y = math.min(map_pos_y, mdata.h - 1)
-
-    local abgr_int = ModImageGetPixel(mdata.map, map_pos_x, map_pos_y) --get pixel colour as ABGR integer
-    local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
-    if hex == "000000" then return nil end
-    return GetBiomeScript(biomelist[hex], true)
-end
---#endregion
-
-
---special behaviour
---#region
-
---EoE Summoned Portal location and related hints in Underground Jungle
-if settings.portal_summon then
-    ModTextFileSetContent("data/scripts/biomes/rainforest.lua",
-        ModTextFileGetContent("data/scripts/biomes/rainforest.lua"
-            ):gsub(
-                "function init%(x, y, w, h%)",
-                "function init%(x, y, w, h%)\n    local pw_offset = GetParallelWorldPosition%(x, 0%) %* BiomeMapGetSize%(%) %* 512"
-            ):gsub(
-                "local function is_inside_tile%(pos_x, pos_y%)",
-                "local function is_inside_tile%(pos_x, pos_y%)\n        pos_x = pos_x %+ pw_offset"
-            ):gsub(
-                "EntityLoad%( \"data/entities/misc/summon_portal_target.xml\", portal_x, portal_y %)",
-                "EntityLoad%( \"data/entities/misc/summon_portal_target.xml\", portal_x %+ pw_offset, portal_y %)"
-            ):gsub(
-                "local function spawn_statue%(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y%)",
-                "local function spawn_statue%(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y%)\n        spawn_x = spawn_x %+ pw_offset"
-        )
-    )
-end
---#endregion
-
-
-
-for _, biome_maps in pairs(par.worlds) do
-    for biome_map, _ in pairs(biome_maps) do
-        if not cached_maps[biome_map] then
-            cached_maps[biome_map] = {}
-            cached_maps[biome_map].map, cached_maps[biome_map].w, cached_maps[biome_map].h = ModImageMakeEditable(biome_map, 0, 0)
-        end
-    end
-end
-
-
-
---Scraper
---#region
-local biome_appends = {}
-for pixel_scenes_path, biome_maps in pairs(par.worlds) do
-    local pixel_scenes_xml = nxml.parse(ModTextFileGetContent(pixel_scenes_path))
-
-    local ps_data = {
-        spliced = pixel_scenes_xml:first_of("PixelSceneFiles"),
-        backgrounds = pixel_scenes_xml:first_of("BackgroundImages"),
-        scenes = pixel_scenes_xml:first_of("mBufferedPixelScenes"),
-    }
-
-    for sps in ps_data.spliced:each_child() do
-        local sps_filepath = ""
-        for i = 1, #sps.content, 1 do
-            sps_filepath = sps_filepath .. sps.content[i] --get the filepath to the spliced pixel scene xml by building it from the content, idk nolla is weird.
-        end
-
-        if par.spliced_pixel_scenes[sps_filepath] then --check if pixel scene is flagged
-            if ModDoesFileExist(sps_filepath) then
-                local sps_xml = nxml.parse(ModTextFileGetContent(sps_filepath))
-                if sps_xml and sps_xml.children[1] then --this should generally just be one singular mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
-                    for chunk in sps_xml.children[1]:each_child() do
-                        local chunk_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
-                        local chunk_pos_y = math.floor(chunk.attr.pos_y * 0.001953125)
-
-                        for biome_map, _ in pairs(biome_maps) do
-                            local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
-
-                            if biomescript ~= nil then --definitely SHOULD NOT be nil
-                                local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
-
-                                local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky 
-                                biome_appends[biomescript] = biome_appends[biomescript] or {} --make sure biomescript table exists
-                                biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}} --make sure biomemap table exists
-
-                                local biome_scene_index = biome_appends[biomescript][map_scene_index] --shorten to local val so less indexing is required
-                                biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {} --make sure scene chunk table exists
-                                biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = { --add to scene chunk table
-                                    materials = chunk.attr.material_filename,
-                                    gfx = chunk.attr.colors_filename,
-                                    background = chunk.attr.background_filename,
-                                    offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
-                                    offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
-                                }
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    for bg in ps_data.backgrounds:each_child() do
-        if par.pixel_scenes[bg.attr.filename] then
-            local chunk_pos_x = math.floor(bg.attr.x * 0.001953125)
-            local chunk_pos_y = math.floor(bg.attr.y * 0.001953125)
-
-            for biome_map, _ in pairs(biome_maps) do
-                local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
-
-                if biomescript ~= nil then
-                    local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
-
-                    local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
-                    biome_appends[biomescript] = biome_appends[biomescript] or {}
-                    biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}}
-
-                    local biome_scene_index = biome_appends[biomescript][map_scene_index]
-                    biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
-                    biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
-                        materials = "",
-                        gfx = "",
-                        background = bg.attr.filename, --is background scene so other attributes are unnecessary
-                        offset_x = bg.attr.x - (chunk_pos_x * 512),
-                        offset_y = bg.attr.y - (chunk_pos_y * 512),
-                    }
-                end
-            end
-        end
-    end
-
-    for elem in ps_data.scenes:each_child() do
-        if par.pixel_scenes[elem.attr.just_load_an_entity]
-                or par.pixel_scenes[elem.attr.material_filename]
-                or par.pixel_scenes[elem.attr.colors_filename]
-                or par.pixel_scenes[elem.attr.background_filename]
-            then
-
-            local chunk_pos_x = math.floor(elem.attr.pos_x * 0.001953125)
-            local chunk_pos_y = math.floor(elem.attr.pos_y * 0.001953125)
-
-            for biome_map, _ in pairs(biome_maps) do
-                local biomescript = MapGetBiomeScript(biome_map,chunk_pos_x, chunk_pos_y)
-
-                if biomescript ~= nil then
-                    local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
-
-                    local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
-                    biome_appends[biomescript] = biome_appends[biomescript] or {}
-                    biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}}
-                    local biome_scene_index = biome_appends[biomescript][map_scene_index]
-                    if elem.attr.just_load_an_entity then
-                        biome_scene_index.entities[chunk_key] = biome_scene_index.entities[chunk_key] or {}
-                        biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = {
-                            path = elem.attr.just_load_an_entity,
-                            offset_x = elem.attr.pos_x - (chunk_pos_x * 512),
-                            offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
-                        }
-                    else
-                        biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
-                        biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
-                            materials = elem.attr.material_filename,
-                            gfx = elem.attr.colors_filename,
-                            background = elem.attr.background_filename,
-                            offset_x = elem.attr.pos_x - (chunk_pos_x * 512),
-                            offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
-                        }
-                    end
-                end
-            end
-        end
-    end
-end
---#endregion
-
-
---Compiler
---#region
-for script_path, biome in pairs(biome_appends) do
-    local table_insert = ""
-    for map_index, chunk_index in pairs(biome) do
-        table_insert = table_insert .. "    [\"" .. map_index .. "\"] = {\n        scenes = {\n"
-        for key, chunk in pairs(chunk_index.scenes) do
-            table_insert = table_insert .. "            [\"".. key .."\"] = {\n"
-            for _, scene in ipairs(chunk) do
-                if scene.materials == "" then scene.materials = "mods/parallel_parity/files/nil_materials.png" end
-                table_insert = table_insert .. ([[                {
-                    materials = "%s",
-                    gfx = "%s",
-                    background = "%s",
-                    offset_x = "%s",
-                    offset_y = "%s",
-                },
-]]):format(scene.materials, scene.gfx, scene.background, scene.offset_x, scene.offset_y)
-            end
-            table_insert = table_insert .. "            },\n"
-        end
-        table_insert = table_insert .. "        },\n"
-
-        table_insert = table_insert .. "        entities = {\n"
-        for key, chunk in pairs(chunk_index.entities) do
-            --do break end
-            table_insert = table_insert .. "            [\"".. key .."\"] = {\n"
-            for _, entity in ipairs(chunk) do
-                table_insert = table_insert .. ([[                {
-                    path = "%s",
-                    offset_x = "%s",
-                    offset_y = "%s",
-                },
-]]):format(entity.path, entity.offset_x, entity.offset_y)
-            end
-            table_insert = table_insert .. "            },\n"
-        end
-        table_insert = table_insert .. "        },\n    },\n"
-    end
-    --print(table_insert)
-    local append_path = "mods/parallel_parity/generated/biome_appends/" .. script_path
-    ModTextFileSetContent(append_path, ModTextFileGetContent("mods/parallel_parity/files/template_append.lua"):gsub("%-%-PARALLEL APPEND HERE!", table_insert))
-    ModLuaFileAppend(script_path, append_path)
-    --print(ModTextFileGetContent(append_path))
-
-    ModTextFileSetContent(script_path, ModTextFileGetContent("mods/parallel_parity/files/rsf_script_prepend.lua") .. ModTextFileGetContent(script_path))
-end
---#endregion
-
-
---Special Main-World Localisation
-
 par.localise = {
     ["data/scripts/biomes/lake_statue.lua"] = {
         settings.lake_island and not settings.island_boss and {
@@ -702,8 +461,416 @@ par.localise = {
 	EntityLoad( "data/entities/items/pickup/gourd.xml", x - 12, y )
 	EntityLoad( "data/entities/animals/shotgunner.xml", x + 24, y - 24 )]],
         } or nil,
-    }
+    },
 }
+--#endregion
+
+
+--convenient functions
+--#region
+
+--get biomescript from biomexml. note: maybe merge with MapGetBiomeScript() at some point
+local function GetBiomeScript(biomepath, generate)
+    local biomexml = nxml.parse(ModTextFileGetContent(biomepath))
+
+    if not par.biome_scripts[biomepath] then
+        local toplogy = biomexml and biomexml:first_of("Topology")
+        if toplogy then
+            local script = toplogy.attr.lua_script
+            if generate and script == nil then
+                local filename
+                for str in string.gmatch(biomepath, "([^".."/".."]+)") do --i stole the gmatch string i still dont get string patterns 😭
+                    filename = str
+                end
+                local generated_script_path = ("mods/parallel_parity/files/biomescripts/") .. filename:sub(1, -4) .. "lua"
+                ModTextFileSetContent(generated_script_path, "") --yknow itd be really funny if i could just append empty nothingness and have that work without needing to make an entire script
+                toplogy.attr.lua_script = generated_script_path
+            end
+            par.biome_scripts[biomepath] = toplogy.attr.lua_script
+        end
+    end
+
+    return par.biome_scripts[biomepath]
+end
+
+local biomelist = {} --create hex-indexed table for all biomes that exist
+local biomelist_xml = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
+if biomelist_xml then
+    for elem in biomelist_xml:each_child() do biomelist[(elem.attr.color):lower():sub(3,-1)] = elem.attr.biome_filename end
+else
+    print("could not find \"data/biome/_biomes_all.xml\", fuck.")
+end
+
+
+--automatically cache important map data
+local cached_maps = {}
+for _, biome_maps in pairs(par.worlds) do
+    for biome_map, _ in pairs(biome_maps) do
+        if not cached_maps[biome_map] then
+            cached_maps[biome_map] = {}
+            cached_maps[biome_map].map, cached_maps[biome_map].w, cached_maps[biome_map].h = ModImageMakeEditable(biome_map, 0, 0)
+        end
+    end
+end
+
+--get biomescript from chunk coordinate
+local function MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
+    local mdata = cached_maps[biome_map]
+
+    local map_pos_x = (chunk_pos_x + (mdata.w * .5))
+
+    local map_pos_y = chunk_pos_y + 14
+	map_pos_y = math.max(map_pos_y, 0)
+	map_pos_y = math.min(map_pos_y, mdata.h - 1)
+
+    local abgr_int = ModImageGetPixel(mdata.map, map_pos_x, map_pos_y) --get pixel colour as ABGR integer
+    local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
+    if hex == "000000" then return nil end
+    return GetBiomeScript(biomelist[hex], true)
+end
+
+
+local function dump(o) --handy func i stole that prints an entire table
+    if type(o) == 'table' then
+       local s = '{ '
+       for k,v in pairs(o) do
+          if type(k) ~= 'number' then k = '"'..k..'"' end
+          s = s .. '['..k..'] = ' .. dump(v) .. ','
+       end
+       return s .. '} '
+    else
+       return tostring(o)
+    end
+end
+--#endregion
+
+
+
+--Scraper
+--#region
+local biome_appends = {}
+for pixel_scenes_path, biome_maps in pairs(par.worlds) do
+    local pixel_scenes_xml = nxml.parse(ModTextFileGetContent(pixel_scenes_path))
+
+    local ps_data = {
+        spliced = pixel_scenes_xml:first_of("PixelSceneFiles"),
+        backgrounds = pixel_scenes_xml:first_of("BackgroundImages"),
+        scenes = pixel_scenes_xml:first_of("mBufferedPixelScenes"),
+    }
+
+    local remove_list = { --create remove list to cull target objects outside the world boundry
+        --spliced = {}, dont check for spliced ones cuz vanilla doesnt do this and i dont wanna have to think about this until some maniac actually does this
+        backgrounds = {},
+        scenes = {},
+    }
+
+    for sps in ps_data.spliced:each_child() do
+        local sps_filepath = ""
+        for i = 1, #sps.content, 1 do
+            sps_filepath = sps_filepath .. sps.content[i] --get the filepath to the spliced pixel scene xml by building it from the content, idk nolla is weird.
+        end
+
+        if par.spliced_pixel_scenes[sps_filepath] then --check if pixel scene is flagged
+            if ModDoesFileExist(sps_filepath) then
+                local sps_xml = nxml.parse(ModTextFileGetContent(sps_filepath))
+                if sps_xml and sps_xml.children[1] then --this should generally just be one singular mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
+                    for chunk in sps_xml.children[1]:each_child() do
+                        local chunk_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
+                        local chunk_pos_y = math.floor(chunk.attr.pos_y * 0.001953125)
+
+                        for biome_map, _ in pairs(biome_maps) do
+                            local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
+
+                            if biomescript ~= nil then --definitely SHOULD NOT be nil
+                                local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
+
+                                local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky
+                                --ng plus support code is temporary, I eventually wanna add special handling that predicts future permutations of the NG+ biome map and appends pixel scenes accordingly- even if its a bit overkill, it seems like good tech to have in my back-pocket
+                                -- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+                                local skip_scraping = false
+                                if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
+                                    if settings.ng_plus then
+                                        for _, ng_script in ipairs(ng_plus_biomescripts) do
+                                            if ng_script ~= biomescript then
+                                                biome_appends[ng_script] = biome_appends[ng_script] or {}
+                                                biome_appends[ng_script][map_scene_index] = biome_appends[ng_script][map_scene_index] or {scenes = {}, entities = {}}
+
+                                                local biome_scene_index = biome_appends[ng_script][map_scene_index]
+                                                biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
+                                                biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
+                                                    materials = chunk.attr.material_filename,
+                                                    gfx = chunk.attr.colors_filename,
+                                                    background = chunk.attr.background_filename,
+                                                    offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
+                                                    offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
+                                                }
+                                            end
+                                        end
+                                    else
+                                        skip_scraping = true --do this cuz I HATE NG+ WHY DO I NEED TO DO SO MUCH STUPID STUFF JUST TO ACCOUNT FOR IT AAAAAAAAAAAAAAAA
+                                    end
+                                end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+                                if not skip_scraping then
+                                    biome_appends[biomescript] = biome_appends[biomescript] or {} --make sure biomescript table exists
+                                    biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}} --make sure biomemap table exists
+
+                                    local biome_scene_index = biome_appends[biomescript][map_scene_index] --shorten to local val so less indexing is required
+                                    biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {} --make sure scene chunk table exists
+                                    biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = { --add to scene chunk table
+                                        materials = chunk.attr.material_filename,
+                                        gfx = chunk.attr.colors_filename,
+                                        background = chunk.attr.background_filename,
+                                        offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
+                                        offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
+                                    }
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    for bg in ps_data.backgrounds:each_child() do
+        if par.pixel_scenes[bg.attr.filename] then
+            local chunk_pos_x = math.floor(bg.attr.x * 0.001953125)
+            local chunk_pos_y = math.floor(bg.attr.y * 0.001953125)
+
+            for biome_map, _ in pairs(biome_maps) do
+                local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
+
+                if biomescript ~= nil then
+                    local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
+
+                    local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
+
+                    -- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+                    local skip_scraping = false
+                    if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
+                        if settings.ng_plus then
+                            for _, ng_script in ipairs(ng_plus_biomescripts) do
+                                if ng_script ~= biomescript then
+                                    biome_appends[ng_script] = biome_appends[ng_script] or {}
+                                    biome_appends[ng_script][map_scene_index] = biome_appends[ng_script][map_scene_index] or {scenes = {}, entities = {}}
+
+                                    local biome_scene_index = biome_appends[ng_script][map_scene_index]
+                                    biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
+                                    biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
+                                        materials = "",
+                                        gfx = "",
+                                        background = bg.attr.filename, --is background scene so other attributes are unnecessary
+                                        offset_x = bg.attr.x - (chunk_pos_x * 512),
+                                        offset_y = bg.attr.y - (chunk_pos_y * 512),
+                                    }
+                                end
+                            end
+                        else
+                            skip_scraping = true
+                        end
+                    end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+                    if not skip_scraping then
+                        biome_appends[biomescript] = biome_appends[biomescript] or {}
+                        biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}}
+
+                        local biome_scene_index = biome_appends[biomescript][map_scene_index]
+                        biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
+                        biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
+                            materials = "",
+                            gfx = "",
+                            background = bg.attr.filename, --is background scene so other attributes are unnecessary
+                            offset_x = bg.attr.x - (chunk_pos_x * 512),
+                            offset_y = bg.attr.y - (chunk_pos_y * 512),
+                        }
+                    end
+                else
+                    remove_list.backgrounds[#remove_list.backgrounds+1] = bg
+                end
+            end
+        end
+    end
+
+    for elem in ps_data.scenes:each_child() do
+
+
+        local file_name = "?"
+        for _, value in ipairs({"just_load_an_entity", "material_filename", "colors_filename", "background_filename"}) do
+            if elem.attr[value] ~= nil then
+                file_name = elem.attr[value] or "false"
+                break
+            end
+        end
+        local logging
+        --[[
+        if (file_name):find("cliff%.png") and pixel_scenes_path == "data/biome/_pixel_scenes.xml" then
+            logging = true
+            print("Targetting file: " .. file_name)
+        end--]]
+        if par.pixel_scenes[elem.attr.just_load_an_entity]
+                or par.pixel_scenes[elem.attr.material_filename]
+                or par.pixel_scenes[elem.attr.colors_filename]
+                or par.pixel_scenes[elem.attr.background_filename]
+            then
+
+            local chunk_pos_x = math.floor(elem.attr.pos_x * 0.001953125)
+            local chunk_pos_y = math.floor(elem.attr.pos_y * 0.001953125)
+            if logging then print(elem.attr.pos_x) print(chunk_pos_x) end
+
+            for biome_map, _ in pairs(biome_maps) do
+                local biomescript = MapGetBiomeScript(biome_map,chunk_pos_x, chunk_pos_y)
+                if logging then print("Biomescript: " .. tostring(biomescript)) end
+
+                if biomescript ~= nil then
+                    local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
+
+                    local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
+                    -- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+                    local skip_scraping = false
+                    if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
+                        if settings.ng_plus then
+                            for _, ng_script in ipairs(ng_plus_biomescripts) do
+                                if ng_script ~= biomescript then
+                                    biome_appends[ng_script] = biome_appends[ng_script] or {}
+                                    biome_appends[ng_script][map_scene_index] = biome_appends[ng_script][map_scene_index] or {scenes = {}, entities = {}}
+                                    local biome_scene_index = biome_appends[ng_script][map_scene_index]
+                                    if elem.attr.just_load_an_entity then
+                                        biome_scene_index.entities[chunk_key] = biome_scene_index.entities[chunk_key] or {}
+                                        biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = {
+                                            path = elem.attr.just_load_an_entity,
+                                            offset_x = elem.attr.pos_x - (chunk_pos_x * 512),
+                                            offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
+                                        }
+                                    else
+                                        biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
+                                        biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
+                                            materials = elem.attr.material_filename,
+                                            gfx = elem.attr.colors_filename,
+                                            background = elem.attr.background_filename,
+                                            offset_x = elem.attr.pos_x - (chunk_pos_x * 512),
+                                            offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
+                                        }
+                                    end
+                                end
+                            end
+                        else
+                            skip_scraping = true
+                        end
+                    end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+                    if not skip_scraping then
+                        biome_appends[biomescript] = biome_appends[biomescript] or {}
+                        biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}}
+                        local biome_scene_index = biome_appends[biomescript][map_scene_index]
+                        if elem.attr.just_load_an_entity then
+                            biome_scene_index.entities[chunk_key] = biome_scene_index.entities[chunk_key] or {}
+                            biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = {
+                                path = elem.attr.just_load_an_entity,
+                                offset_x = elem.attr.pos_x - (chunk_pos_x * 512),
+                                offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
+                            }
+                        else
+                            biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
+                            biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
+                                materials = elem.attr.material_filename,
+                                gfx = elem.attr.colors_filename,
+                                background = elem.attr.background_filename,
+                                offset_x = elem.attr.pos_x - (chunk_pos_x * 512),
+                                offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
+                            }
+                        end
+                        if logging then print("adding " .. file_name .. " to " .. biomescript .. " at chunk " .. chunk_key) end
+                    end
+                else
+                    if logging then print("added to remove list...") end
+                    remove_list.scenes[#remove_list.scenes+1] = elem
+                end
+            end
+        end
+    end
+
+    for target, remove in pairs(remove_list) do
+        for _, scene in ipairs(remove) do
+            ps_data[target]:remove_child(scene) --remove spliced pixel scenes from file
+        end
+    end
+    ModTextFileSetContent(pixel_scenes_path, tostring(pixel_scenes_xml)) --apply changes to file
+end
+--#endregion
+
+
+--Compiler
+--#region
+for script_path, biome in pairs(biome_appends) do
+    local table_insert = ""
+    for map_index, chunk_index in pairs(biome) do
+        table_insert = table_insert .. "    [\"" .. map_index .. "\"] = {\n        scenes = {\n"
+        for key, chunk in pairs(chunk_index.scenes) do
+            table_insert = table_insert .. "            [\"".. key .."\"] = {\n"
+            for _, scene in ipairs(chunk) do
+                if scene.materials == "" then scene.materials = "mods/parallel_parity/files/nil_materials.png" end
+                table_insert = table_insert .. ([[                {
+                    materials = "%s",
+                    gfx = "%s",
+                    background = "%s",
+                    offset_x = "%s",
+                    offset_y = "%s",
+                },
+]]):format(scene.materials, scene.gfx, scene.background, scene.offset_x, scene.offset_y)
+            end
+            table_insert = table_insert .. "            },\n"
+        end
+        table_insert = table_insert .. "        },\n"
+
+        table_insert = table_insert .. "        entities = {\n"
+        for key, chunk in pairs(chunk_index.entities) do
+            --do break end
+            table_insert = table_insert .. "            [\"".. key .."\"] = {\n"
+            for _, entity in ipairs(chunk) do
+                table_insert = table_insert .. ([[                {
+                    path = "%s",
+                    offset_x = "%s",
+                    offset_y = "%s",
+                },
+]]):format(entity.path, entity.offset_x, entity.offset_y)
+            end
+            table_insert = table_insert .. "            },\n"
+        end
+        table_insert = table_insert .. "        },\n    },\n"
+    end
+    local append_path = "mods/parallel_parity/generated/biome_appends/" .. script_path
+    ModTextFileSetContent(append_path, ModTextFileGetContent("mods/parallel_parity/files/debug_template_append.lua"):gsub("%-%-PARALLEL APPEND HERE!", table_insert):gsub("FILENAMEHERE", script_path))
+    ModLuaFileAppend(script_path, append_path)
+
+    ModTextFileSetContent(script_path, ModTextFileGetContent("mods/parallel_parity/files/rsf_script_prepend.lua") .. ModTextFileGetContent(script_path))
+end
+--#endregion
+
+
+--special behaviour
+--#region
+
+--EoE Summoned Portal location and related hints in Underground Jungle
+if settings.portal_summon then
+    ModTextFileSetContent("data/scripts/biomes/rainforest.lua",
+        ModTextFileGetContent("data/scripts/biomes/rainforest.lua"
+            ):gsub(
+                "function init%(x, y, w, h%)",
+                "function init%(x, y, w, h%)\n    local pw_offset = GetParallelWorldPosition%(x, 0%) %* BiomeMapGetSize%(%) %* 512"
+            ):gsub(
+                "local function is_inside_tile%(pos_x, pos_y%)",
+                "local function is_inside_tile%(pos_x, pos_y%)\n        pos_x = pos_x %+ pw_offset"
+            ):gsub(
+                "EntityLoad%( \"data/entities/misc/summon_portal_target.xml\", portal_x, portal_y %)",
+                "EntityLoad%( \"data/entities/misc/summon_portal_target.xml\", portal_x %+ pw_offset, portal_y %)"
+            ):gsub(
+                "local function spawn_statue%(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y%)",
+                "local function spawn_statue%(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y%)\n        spawn_x = spawn_x %+ pw_offset"
+        )
+    )
+end
+--#endregion
+
+--Special Main-World Localisation
+
 
 for path, biome in pairs(par.localise) do
     for _, targets in ipairs(biome) do
@@ -728,189 +895,4 @@ for path, value in pairs(par.portals) do
     end
 end
 
-do return end
-
-
---deprecated
---#region
-
-local pixel_scene_files = { --grab pixel scene files, all 2 of them
-    nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes.xml")),
-    --settings.ng_plus and nxml.parse(ModTextFileGetContent("data/biome/_pixel_scenes_newgame_plus.xml")),
-}
-
-for index, _pixel_scenes in ipairs(pixel_scene_files) do --iterate over like this cuz this seemed like the easiest way to slip NG+ pixel scenes into my script
-
-    local ps_file = index-- == 1 and "regular" or "ng_plus" --nathan would love this system
-
-    local ps_data = {
-        spliced = _pixel_scenes:first_of("PixelSceneFiles"),
-        backgrounds = _pixel_scenes:first_of("BackgroundImages"),
-        scenes = _pixel_scenes:first_of("mBufferedPixelScenes"),
-    }
-    local remove_list = { --create remove list- for some reason ig
-        spliced = {},
-        backgrounds = {},
-        scenes = {},
-    }
-    for sps in ps_data.spliced:each_child() do --run through spliced pixel scenes
-        local spliced_scene_id = sps.content[#sps.content]:sub(1,-5) --acquire the pixel scene file name minus the file extension
-        if par.spliced_pixel_scenes[spliced_scene_id] then --check if pixel scene is flagged
-            remove_list.spliced[#remove_list.spliced+1] = sps --add to list of spliced pixel scenes to remove
-
-            local sps_filepath = ""
-            for i = 1, #sps.content, 1 do
-                sps_filepath = sps_filepath .. sps.content[i]
-            end
-
-            if ModDoesFileExist(sps_filepath) then
-                local sps_data = nxml.parse(ModTextFileGetContent(sps_filepath))
-                if sps_data and sps_data.children[1] then --this should generally just be one singular mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
-                    for chunk in sps_data.children[1]:each_child() do
-                        local chunk_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
-                        local chunk_pos_y = math.floor(chunk.attr.pos_y * 0.001953125)
-
-                        local biomescript = MapGetBiomeScript(chunk_pos_x, chunk_pos_y)
-
-                        if biomescript ~= nil then
-                            local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky 
-                            biome_appends[ps_file][biomescript] = biome_appends[ps_file][biomescript] or {scenes = {}, entities = {}}
-                            biome_appends[ps_file][biomescript].scenes[chunk_key] = biome_appends[ps_file][biomescript].scenes[chunk_key] or {}
-                            biome_appends[ps_file][biomescript].scenes[chunk_key][#biome_appends[ps_file][biomescript].scenes[chunk_key] + 1] = {
-                                materials = chunk.attr.material_filename,
-                                gfx = chunk.attr.colors_filename,
-                                background = chunk.attr.background_filename,
-                                offset = {
-                                    x = chunk.attr.pos_x - (chunk_pos_x * 512),
-                                    y = chunk.attr.pos_y - (chunk_pos_y * 512),
-                                }
-                            } --add pixel scene to biome_appends table under biomexml path as a key
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    for bg in ps_data.backgrounds:each_child() do
-        if par.pixel_scenes[bg.attr.filename] then
-            remove_list.backgrounds[#remove_list.backgrounds+1] = bg
-            local chunk_pos_x = math.floor(bg.attr.x * 0.001953125)
-            local chunk_pos_y = math.floor(bg.attr.y * 0.001953125)
-
-            local biomescript = MapGetBiomeScript(chunk_pos_x, chunk_pos_y)
-
-            if biomescript ~= nil then
-                local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
-                biome_appends[ps_file][biomescript] = biome_appends[ps_file][biomescript] or {scenes = {}, entities = {}}
-                biome_appends[ps_file][biomescript].scenes[chunk_key] = biome_appends[ps_file][biomescript].scenes[chunk_key] or {}
-                biome_appends[ps_file][biomescript].scenes[chunk_key][#biome_appends[ps_file][biomescript].scenes[chunk_key] + 1] = {
-                    materials = "",
-                    gfx = "",
-                    background = bg.attr.filename,
-                    offset = {
-                        x = bg.attr.x - (chunk_pos_x * 512),
-                        y = bg.attr.y - (chunk_pos_y * 512),
-                    }
-                }
-            end
-        end
-    end
-
-    for elem in ps_data.scenes:each_child() do
-        if par.pixel_scenes[elem.attr.just_load_an_entity] or par.pixel_scenes[elem.attr.material_filename] or par.pixel_scenes[elem.attr.colors_filename] or par.pixel_scenes[elem.attr.background_filename] then
-            remove_list.scenes[#remove_list.scenes+1] = elem
-            local chunk_pos_x = math.floor(elem.attr.pos_x * 0.001953125)
-            local chunk_pos_y = math.floor(elem.attr.pos_y * 0.001953125)
-
-            local biomescript = MapGetBiomeScript(chunk_pos_x, chunk_pos_y)
-
-            if biomescript then --do this check cuz map x is no longer modulated, this is to cull additional scenes thrown in PWs, this might break compat with future mods that specifically want a pixel scene in a PW but i can burn that bridge when it comes to it
-                local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
-                biome_appends[ps_file][biomescript] = biome_appends[ps_file][biomescript] or {scenes = {}, entities = {}}
-                if elem.attr.just_load_an_entity then
-                    biome_appends[ps_file][biomescript].entities[chunk_key] = biome_appends[ps_file][biomescript].entities[chunk_key] or {}
-                    biome_appends[ps_file][biomescript].entities[chunk_key][#biome_appends[ps_file][biomescript].entities[chunk_key] + 1] = {
-                        path = elem.attr.just_load_an_entity,
-                        offset = {
-                            x = elem.attr.pos_x - (chunk_pos_x * 512),
-                            y = elem.attr.pos_y - (chunk_pos_y * 512),
-                        }
-                    }
-                else
-                    biome_appends[ps_file][biomescript].scenes[chunk_key] = biome_appends[ps_file][biomescript].scenes[chunk_key] or {}
-                    biome_appends[ps_file][biomescript].scenes[chunk_key][#biome_appends[ps_file][biomescript].scenes[chunk_key] + 1] = {
-                        materials = elem.attr.material_filename,
-                        gfx = elem.attr.colors_filename,
-                        background = elem.attr.background_filename,
-                        offset = {
-                            x = elem.attr.pos_x - (chunk_pos_x * 512),
-                            y = elem.attr.pos_y - (chunk_pos_y * 512),
-                        }
-                    }
-                    --print(("PS:\n    %s\n    %s\n    %s"):format(elem.attr.material_filename, elem.attr.colors_filename, elem.attr.background_filename))
-                end
-            end
-        end
-    end
-
-    for target, remove in pairs(remove_list) do
-        for _, scene in ipairs(remove) do
-            ps_data[target]:remove_child(scene) --remove spliced pixel scenes from file
-        end
-    end
-
-    ModTextFileSetContent("data/biome/_pixel_scenes.xml", tostring(_pixel_scenes)) --apply changes to file
-    print(tostring(_pixel_scenes))
-end
-
-
---print(dump(biome_appends))
-
-local map_width_prepend = "local map_width = " .. map_width
-for index, world in ipairs(biome_appends) do
-    local target_world = ({"--REGULAR", "--NG_PLUS"})[index]
-    print(target_world)
-
-    for biomescript, biome in pairs(world) do
-
-        local scenes_insert = ""
-        for chunk_index, chunk in pairs(biome.scenes) do
-            scenes_insert = scenes_insert .. "    [\"" .. chunk_index .. "\"] = {\n"
-            for _, pixel_scene in ipairs(chunk) do
-                if pixel_scene.materials == "" then pixel_scene.materials = "mods/parallel_parity/files/nil_materials.png" end
-                scenes_insert = scenes_insert .. "{materials = \"" .. pixel_scene.materials .. "\", gfx = \"" .. pixel_scene.gfx .. "\", background = \"" .. pixel_scene.background .. "\", offset = { x = " .. pixel_scene.offset.x .. ", y = " .. pixel_scene.offset.y .. " }},\n"
-            end
-            scenes_insert = scenes_insert .. "    },\n"
-        end
-
-        local entities_insert = ""
-        for chunk_index, chunk in pairs(biome.entities) do
-            entities_insert = entities_insert .. "    [\"" .. chunk_index .. "\"] = {\n"
-            for _, entity in ipairs(chunk) do
-                entities_insert = entities_insert .. "        {path = \"" .. entity.path .. "\", offset = { x = " .. entity.offset.x .. ", y = " .. entity.offset.y .. " }},\n"
-            end
-            entities_insert = entities_insert .. "    },\n"
-        end
-
-
-        local filename
-        for str in string.gmatch(biomescript, "([^/]+)") do --i stole the gmatch string, i still dont get string patterns 😭
-            filename = str
-        end
-
-        local append_path = "mods/parallel_parity/generated/append_" .. filename
-        ModTextFileSetContent(append_path,
-            map_width_prepend .. ModTextFileGetContent("mods/parallel_parity/files/debug_template_append.lua")
-                :gsub(target_world .. " PIXEL SCENE APPEND!", scenes_insert or "")
-                :gsub(target_world .. " ENTITIES APPEND!", entities_insert or "")
-                :gsub("FILEHERE", append_path)
-        )
-        ModLuaFileAppend(biomescript, append_path)
-        print(ModTextFileGetContent(append_path)) --uncomment this to get a full print of every generated append file
-    end
-end
-
---#endregion
-
-
+print("Parallel Parity init: " .. GameGetRealWorldTimeSinceStarted()-start)

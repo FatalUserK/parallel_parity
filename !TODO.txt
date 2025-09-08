@@ -1,5 +1,4 @@
 PRE-RELEASE:
-add temp toggle for NG+ to apply its changes to all biomes
 add mod setting modularity
 get translations for mod settings from emi
 verify everything works

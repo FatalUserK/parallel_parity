@@ -7,10 +7,6 @@ if RegisteredFunctions ~= nil then
     end
 end
 
-if Parallel_Parity_InitOverridden then return end
-Parallel_Parity_InitOverridden = true
-Parallel_Parity_old_init = init
-
 local worlds = {
 --PARALLEL APPEND HERE!
 }

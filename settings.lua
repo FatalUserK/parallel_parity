@@ -24,7 +24,7 @@ local languages = { --translation keys
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
-
+print("dofile: " .. tostring(GameGetFrameNum() > 0))
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the languages table above
 local translation_strings = {
@@ -46,7 +46,7 @@ local translation_strings = {
     },
     ng_plus = {
         en = "New Game+",
-        en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental!"
+        en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental, but should be functional!",
     },
     spliced_pixel_scenes = {
         en = "Spliced Pixel Scenes",
@@ -545,7 +545,8 @@ function ModSettingsUpdate(init_scope)
 
             local _len = GuiGetTextDimensions(dummy_gui, setting.label or "") + (15 * recursion) + 5
             setting.length = _len
-            if type(setting.value_default == "boolean") and _len > max_setting_offset then
+            setting.default_type = type(setting.value_default == "boolean")
+            if setting.default_type == "boolean" and _len > max_setting_offset then
                 max_setting_offset = _len
             end
 
@@ -601,13 +602,54 @@ function ModSettingsUpdate(init_scope)
     ModSettingSet(get_setting_id("_version"), mod_settings_version)
 end
 
+local id = 0
+local function get_id()
+    id = id + 1
+    return id
+end
+
+local function CreateText(gui, x_offset, type, name, description, action_click)
+
+    GuiText(gui, x_offset, 0, "")
+    local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+    local _, h = GuiGetTextDimensions(gui, name)
+    --GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
+    GuiImageNinePiece(gui, get_id(), x, y, max_setting_offset, h, 0)
+    local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+
+    local clicked, rclicked, highlighted
+    if guiPrev[3] then
+        highlighted = true
+        if InputIsMouseButtonJustDown(1) then clicked = true end
+        if InputIsMouseButtonJustDown(2) then rclicked = true end
+    end
+
+
+    if highlighted then GuiColorSetForNextWidget(gui, 1, 1, 0.7 , 1) end
+    GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+    GuiText(gui, offset, 0, setting.label)
+
+    if highlighted then
+        if description then GuiTooltip(gui, description, "") end
+        GuiColorSetForNextWidget(gui, 1, 1, 0.7 , 1)
+    end
+    local value = ModSettingGet(setting.path)
+    GuiText(gui, max_setting_offset, 0, value == true and "(*)" or "(  )")
+
+    if clicked then
+        GamePlaySound("ui", "ui/button_click", 0, 0)
+        ModSettingSet(setting.path, not value)
+        --ModSettingSetNextValue(setting.path, not next_value, false)
+        --print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
+    end
+    if rclicked then
+        GamePlaySound("ui", "ui/button_click", 0, 0)
+        ModSettingSet(setting.path, setting.value_default)
+    end
+end
+
 --mod settings code partially nabbed from Anvil of Destiny, thanks Horscht o/
 function ModSettingsGui(gui, in_main_menu)
-    local id = 0
-    local function get_id()
-        id = id + 1
-        return id
-    end
 
     local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, setting_name)
         offset = offset or 0
@@ -627,7 +669,7 @@ function ModSettingsGui(gui, in_main_menu)
 
                     RenderModSettingsGui(gui, in_main_menu, setting.items, offset + 15, setting.id) --i think recursion just works here
                 else
-                    if type(setting.value_default) == "boolean" then
+                    if setting.type == "boolean" then
                         local value = ModSettingGet(setting.path)
 
                         GuiText(gui, offset, 0, "")
@@ -663,13 +705,28 @@ function ModSettingsGui(gui, in_main_menu)
                         end
                         if rclicked then
                             GamePlaySound("ui", "ui/button_click", 0, 0)
-                            ModSettingSet(setting.path, not value)
+                            ModSettingSet(setting.path, setting.value_default)
                         end
-                    elseif type(setting.value_default) == "number" then
+                    elseif setting.type == "number" then
                         local next_value = ModSettingGet(setting.path)
                         local new_value = GuiSlider(gui, get_id(), offset, 0, setting.label .. " ", next_value, setting.value_min, setting.value_max, setting.value_default, setting.value_display_multiplier or 1, setting.value_display_formatting or " $0", 80)
                         if new_value ~= next_value then
                             ModSettingSet(setting.path, not next_value)
+                        end
+                    elseif setting.type == "nil" then
+                        GuiText(gui, offset, 0, "")
+                        local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+                        local w, h = GuiGetTextDimensions(gui, setting.label)
+                        --GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
+                        GuiImageNinePiece(gui, get_id(), x, y, w, h, 0)
+                        local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+                        local highlighted = guiPrev[3]
+
+                        GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+                        GuiText(gui, offset, 0, setting.label)
+
+                        if highlighted then
+                            if setting.description then GuiTooltip(gui, setting.description, "") end
                         end
                     end
 
