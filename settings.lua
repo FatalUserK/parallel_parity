@@ -30,7 +30,7 @@ print("dofile: " .. tostring(GameGetFrameNum() > 0))
 local translation_strings = {
 	mod_compat_note = {
 		en = "Warning! Options for other mods will not show up here!",
-		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods"
+		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE: THIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE ANY MOD COMPATIBILITY OPTIONS"
 	},
 	general = {
 		en = "General",
@@ -43,6 +43,10 @@ local translation_strings = {
 		en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering\nThe criteria for this group is decided at my own discretion",
 		ptbr = "Visuais",
 		ptbr_desc = "Dá uma limpeza em cenas de pixels visuais e backgrounds que não alteram significamente a jogabilidade\nOs critérios para este grupo são definidos a meu critério",
+	},
+	return_rift = {
+		en = "Return Rifts",
+		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return"
 	},
 	ng_plus = {
 		en = "New Game+",
@@ -270,10 +274,6 @@ local translation_strings = {
 			ptbr_desc = "Os portais para o Ovo da Tecnologia onde o feitiço \"O fim de tudo\" pode ser encontrado\nIsso também faz modificações adicionais ao bioma \"Selva Subterrânea\" para fazer\nas estátuas e o portal funcionarem em Mundos Paralelos",
 		},
 	},
-	return_rift = {
-		en = "Return Rifts",
-		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return"
-	},
 }
 
 --Brazilian Portuguese translations by Absent Friend
@@ -281,7 +281,9 @@ local translation_strings = {
 
 local settings = {
 	{
-		id = "mod_compat_note"
+		id = "mod_compat_note",
+		type = "warn",
+		items = {},
 	},
 	{
 		id = "general",
@@ -552,10 +554,10 @@ function ModSettingsUpdate(init_scope)
 			end
 
 
-			local _len = GuiGetTextDimensions(dummy_gui, setting.name or "") + (45 * recursion) + 15
+			local _len = GuiGetTextDimensions(dummy_gui, setting.name or "") + (15 * recursion) + 15
 			setting.length = _len
 			setting.default_type = type(setting.value_default == "boolean")
-			if setting.default_type == "boolean" and _len > max_setting_offset then
+			if setting.type == "boolean" and _len > max_setting_offset then
 				max_setting_offset = _len
 			end
 
@@ -698,9 +700,9 @@ local function BoolSetting(gui, x_offset, setting, c)
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 
 	if is_disabled then
-		GuiText(gui, w+5+x_offset, 0, "(X)")
+		GuiText(gui, max_setting_offset, 0, "(X)")
 	else
-		GuiText(gui, w+5+x_offset, 0, value == true and "(*)" or "(  )")
+		GuiText(gui, max_setting_offset, 0, value == true and "(*)" or "(  )")
 	end
 
 	if clicked then
@@ -743,6 +745,32 @@ function ModSettingsGui(gui, in_main_menu)
 							g = .7^recursion,
 							b = .7^recursion,
 						})
+
+					elseif setting.type == "warn" then
+						local c = {
+							r = 1,
+							g = .8,
+							b = .8,
+						}
+
+						GuiText(gui, 0, 0, "")
+						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+						local _, h = GuiGetTextDimensions(gui, setting.name)
+						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
+						GuiImageNinePiece(gui, create_id(), x, y, max_setting_offset, h, 0)
+						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+
+						if guiPrev[3] and setting.description then
+							c.b = c.b*.7
+							DrawTooltip(gui, setting.description, x, y+12)
+						end
+
+						GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+						GuiImage(gui, create_id(), -3, -3, "data/ui_gfx/inventory/icon_warning.png", 1, 1, 1)
+						GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+						GuiText(gui, 13, 0, setting.name)
+
+
 					end
 
 					if setting.dependents then

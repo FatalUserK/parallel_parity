@@ -548,6 +548,8 @@ end
 function OnModPreInit() --do misc stuff on mod preinit so other mods can append without mod load order issues
 	do_mod_appends("mods/parallel_parity/init.lua")
 
+	dofile("mods/parallel_parity/files/return_rift/return_rifts_init.lua")
+
 	--special behaviour
 	--#region
 
@@ -596,16 +598,10 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 
 	--Special Main-World Localisation
 
-	print("a")
 	for path, biome in pairs(par.localise) do
-		print("b")
 		for _, targets in ipairs(biome) do
-			print("c")
 			for _, code in ipairs(targets) do
-				print("d")
-				print(code)
-				ModTextFileSetContent(path, ModTextFileGetContent(path):modify(code, "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end; print(\"a\")"))
-				print("if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end")
+				ModTextFileSetContent(path, ModTextFileGetContent(path):modify(code, "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end;"))
 			end
 		end
 	end
