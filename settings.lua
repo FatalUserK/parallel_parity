@@ -22,12 +22,6 @@ local languages = { --translation keys
 	["한국어"] = "ko",
 }
 
-print("a")
-for index, value in ipairs(ModGetActiveModIDs()) do
-	print(value)
-end
-print("b")
-
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
 print("dofile: " .. tostring(GameGetFrameNum() > 0))
@@ -276,6 +270,10 @@ local translation_strings = {
 			ptbr_desc = "Os portais para o Ovo da Tecnologia onde o feitiço \"O fim de tudo\" pode ser encontrado\nIsso também faz modificações adicionais ao bioma \"Selva Subterrânea\" para fazer\nas estátuas e o portal funcionarem em Mundos Paralelos",
 		},
 	},
+	return_rift = {
+		en = "Return Rifts",
+		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return"
+	},
 }
 
 --Brazilian Portuguese translations by Absent Friend
@@ -293,6 +291,11 @@ local settings = {
 	{
 		id = "visuals",
 		value_default = true,
+		scope = MOD_SETTING_SCOPE_NEW_GAME,
+	},
+	{
+		id = "return_rift",
+		value_default = false,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
@@ -509,13 +512,12 @@ local settings = {
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 		},
-	}
+	},
 }
 
 
 
--- For the faint of heart, I ask that you turn back now. From here on out is a full, uncensored display of absolute mod setting lunacy. For the sake of any coder's sanity, I strongly urge thee to shield thyself from the coding crimes below.
-
+-- this code is p nasty tbh, flee all ye of weak heart 'n' all, may rewrite this entirely in the future
 
 
 
@@ -537,19 +539,20 @@ function ModSettingsUpdate(init_scope)
 		for key, setting in pairs(input_settings) do
 
 			setting.path = mod_id .. "." .. path .. setting.id
+			setting.type = setting.type or type(setting.value_default)
 
 			if input_translations[setting.id] then
-				setting.label = input_translations[setting.id][current_language] or input_translations[setting.id].en or setting.id
+				setting.name = input_translations[setting.id][current_language] or input_translations[setting.id].en or setting.id
 				if input_translations[setting.id].en_desc and not input_translations[setting.id][current_language] then --if there is english translation but no other translation
 					setting.description = input_translations[setting.id].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
 				else
-					setting.description = input_translations[setting.id][current_language .. "_desc"] or nil
+					setting.description = input_translations[setting.id][current_language .. "_desc"]
 				end
-				--print(tostring(setting.label) .. ": " .. tostring(setting.path))
+				--print(tostring(setting.name) .. ": " .. tostring(setting.path))
 			end
 
 
-			local _len = GuiGetTextDimensions(dummy_gui, setting.label or "") + (15 * recursion) + 5
+			local _len = GuiGetTextDimensions(dummy_gui, setting.name or "") + (45 * recursion) + 15
 			setting.length = _len
 			setting.default_type = type(setting.value_default == "boolean")
 			if setting.default_type == "boolean" and _len > max_setting_offset then
@@ -609,22 +612,48 @@ function ModSettingsUpdate(init_scope)
 end
 
 local id = 0
-local function get_id()
+local function create_id()
 	id = id + 1
 	return id
 end
 
-local function CreateText()
-
+local function DrawTooltip(gui, text, x, y, sprite, icon)
+	sprite = sprite or "data/ui_gfx/decorations/9piece0_gray.png"
+	local text_size = {GuiGetTextDimensions(gui, text)}
+	GuiLayoutBeginLayer(gui)
+	GuiZSetForNextWidget(gui, -200)
+	GuiImageNinePiece(gui, create_id(), x, y, text_size[1]+10, text_size[2]+2, 1, sprite)
+	local iteration = 0
+	for line in string.gmatch(text, '([^\n]+)') do
+		GuiZSetForNextWidget(gui, -210)
+		GuiText(gui, x + 5, y + 1 + (iteration * 13), line)
+		iteration = iteration + 1
+	end
+	GuiLayoutEndLayer(gui)
 end
 
-local function BoolSetting(gui, x_offset, type, text, description, action_click)
+local function BoolSetting(gui, x_offset, setting, c)
+	c = c or {
+		r = 1,
+		g = 1,
+		b = 1,
+	}
+	local is_disabled
+	if setting.requires and not ModSettingGet(setting.requires.id) == setting.requires.value then
+		is_disabled = true
+	end
+
+	local value = ModSettingGet(setting.path)
+
+	if value == true then
+		c.b = c.b
+	end
 
 	GuiText(gui, x_offset, 0, "")
 	local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-	local _, h = GuiGetTextDimensions(gui, text)
+	local w, h = GuiGetTextDimensions(gui, setting.name)
 	--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
-	GuiImageNinePiece(gui, get_id(), x, y, max_setting_offset, h, 0)
+	GuiImageNinePiece(gui, create_id(), x, y, max_setting_offset, h, 0)
 	local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 	local clicked, rclicked, highlighted
@@ -632,30 +661,53 @@ local function BoolSetting(gui, x_offset, type, text, description, action_click)
 		highlighted = true
 		if InputIsMouseButtonJustDown(1) then clicked = true end
 		if InputIsMouseButtonJustDown(2) then rclicked = true end
+		if (clicked or rclicked) and is_disabled then
+			GamePlaySound("ui", "ui/button_denied", 0, 0)
+			clicked = false
+			rclicked = false
+		end
+		c = {
+			r = 1,
+			g = 1,
+			b = .7,
+		}
 	end
 
-	local text_colour = {
-		r = 1,
-		g = 1,
-		b = 1,
-		a = 1,
-	}
-	if highlighted then text_colour.b = .7 end
+	if is_disabled then --dim if disabled
+		c = {
+			r = c.r * .5,
+			g = c.g * .5,
+			b = c.b * .5,
+		}
+	end
+
+
 	GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-	GuiText(gui, x_offset, 0, text)
+	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+	GuiText(gui, x_offset, 0, setting.name)
 
 	if highlighted then
-		if description then GuiTooltip(gui, description, "") end
-		GuiColorSetForNextWidget(gui, 1, 1, 0.7 , 1)
+		if setting.description then
+			--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+			--GuiText(gui, 0, 10, "")
+			--GuiTooltip(gui, setting.description, "")
+			--ADD CUSTOM TOOLTIP!
+			DrawTooltip(gui, setting.description, x, y+12)
+		end
 	end
-	local value = ModSettingGet(text)
-	GuiText(gui, max_setting_offset, 0, value == true and "(*)" or "(  )")
+	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+
+	if is_disabled then
+		GuiText(gui, w+5+x_offset, 0, "(X)")
+	else
+		GuiText(gui, w+5+x_offset, 0, value == true and "(*)" or "(  )")
+	end
 
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		ModSettingSet(setting.path, not value)
 		--ModSettingSetNextValue(setting.path, not next_value, false)
-		--print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
+		--print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.name, setting.path, ModSettingGet(setting.path)))
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
@@ -666,7 +718,8 @@ end
 --mod settings code partially nabbed from Anvil of Destiny, thanks Horscht o/
 function ModSettingsGui(gui, in_main_menu)
 
-	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, setting_name)
+	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, recursion)
+		recursion = recursion or 0
 		offset = offset or 0
 		_settings = _settings or settings
 
@@ -674,79 +727,26 @@ function ModSettingsGui(gui, in_main_menu)
 
 		for i, setting in ipairs(_settings) do
 			offset = offset + (setting.offset or 0)
-			if not setting.requires or setting.requires and ModSettingGet(setting.requires.id) == setting.requires.value then
+			if true then
 				if setting.type == "group" then
-					GuiOptionsAddForNextWidget(gui, GUI_OPTION.DrawSemiTransparent)
-					GuiText(gui, offset, 0, setting.label)
+					GuiColorSetForNextWidget(gui, .4, .4, .75, 1)
+					GuiText(gui, offset, 0, setting.name)
 					if setting.description then
 						GuiTooltip(gui, setting.description, "")
 					end
 
-					RenderModSettingsGui(gui, in_main_menu, setting.items, offset + 15, setting.id) --i think recursion just works here
+					RenderModSettingsGui(gui, in_main_menu, setting.items, offset + 15, recursion) --i think recursion just works here
 				else
 					if setting.type == "boolean" then
-						local value = ModSettingGet(setting.path)
-
-						GuiText(gui, offset, 0, "")
-						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-						local _, h = GuiGetTextDimensions(gui, setting.label)
-						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
-						GuiImageNinePiece(gui, get_id(), x, y, max_setting_offset, h, 0)
-						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
-
-						local clicked, rclicked, highlighted
-						if guiPrev[3] then
-							highlighted = true
-							if InputIsMouseButtonJustDown(1) then clicked = true end
-							if InputIsMouseButtonJustDown(2) then rclicked = true end
-						end
-
-
-						if highlighted then GuiColorSetForNextWidget(gui, 1, 1, 0.7 , 1) end
-						GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-						GuiText(gui, offset, 0, setting.label)
-
-						if highlighted then
-							if setting.description then GuiTooltip(gui, setting.description, "") end
-							GuiColorSetForNextWidget(gui, 1, 1, 0.7 , 1)
-						end
-						GuiText(gui, max_setting_offset, 0, value == true and "(*)" or "(  )")
-
-						if clicked then
-							GamePlaySound("ui", "ui/button_click", 0, 0)
-							ModSettingSet(setting.path, not value)
-							--ModSettingSetNextValue(setting.path, not next_value, false)
-							--print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.label, setting.path, ModSettingGet(setting.path)))
-						end
-						if rclicked then
-							GamePlaySound("ui", "ui/button_click", 0, 0)
-							ModSettingSet(setting.path, setting.value_default)
-						end
-					elseif setting.type == "number" then
-						local next_value = ModSettingGet(setting.path)
-						local new_value = GuiSlider(gui, get_id(), offset, 0, setting.label .. " ", next_value, setting.value_min, setting.value_max, setting.value_default, setting.value_display_multiplier or 1, setting.value_display_formatting or " $0", 80)
-						if new_value ~= next_value then
-							ModSettingSet(setting.path, not next_value)
-						end
-					elseif setting.type == "nil" then
-						GuiText(gui, offset, 0, "")
-						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-						local w, h = GuiGetTextDimensions(gui, setting.label)
-						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
-						GuiImageNinePiece(gui, get_id(), x, y, w, h, 0)
-						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
-						local highlighted = guiPrev[3]
-
-						GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-						GuiText(gui, offset, 0, setting.label)
-
-						if highlighted then
-							if setting.description then GuiTooltip(gui, setting.description, "") end
-						end
+						BoolSetting(gui, offset, setting, {
+							r = .7^recursion,
+							g = .7^recursion,
+							b = .7^recursion,
+						})
 					end
 
 					if setting.dependents then
-						RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + 15, setting.id)
+						RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + 15, recursion + 1)
 					end
 				end
 			end

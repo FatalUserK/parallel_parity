@@ -5,7 +5,7 @@ ParallelParity = {
 	default_map_path = "data/biome_impl/biome_map.png",
 	default_pixel_scenes_path = "data/biome/_pixel_scenes.xml",
 	settings = {},
-	force_true = true --use this to force enable everything for testing purposes
+	force_true = false --use this to force enable everything for testing purposes
 }
 
 local par = ParallelParity
@@ -478,17 +478,16 @@ end
 
 local function dump(o) --handy func i stole that prints an entire table
 	if type(o) == 'table' then
-	local s = '{ '
-	for k,v in pairs(o) do
-		if type(k) ~= 'number' then k = '"'..k..'"' end
-		s = s .. '['..k..'] = ' .. dump(v) .. ','
-	end
-	return s .. '} '
+		local s = '{ '
+		for k,v in pairs(o) do
+			if type(k) ~= 'number' then k = '"'..k..'"' end
+			s = s .. '['..k..'] = ' .. dump(v) .. ','
+		end
+		return s .. '} '
 	else
-	return tostring(o)
+		return tostring(o)
 	end
 end
-
 
 
 --get biomescript from biomexml. note: maybe merge with MapGetBiomeScript() at some point
@@ -515,29 +514,9 @@ local function GetBiomeScript(biomepath, generate)
 	return par.biome_scripts[biomepath]
 end
 
-local biomelist = {} --create hex-indexed table for all biomes that exist
-local biomelist_xml = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
-if biomelist_xml then
-	for elem in biomelist_xml:each_child() do biomelist[(elem.attr.color):lower():sub(3,-1)] = elem.attr.biome_filename end
-else
-	print("could not find \"data/biome/_biomes_all.xml\", fuck.")
-end
-
-
---automatically cache important map data
-local cached_maps = {}
-for _, biome_maps in pairs(par.worlds) do
-	for biome_map, _ in pairs(biome_maps) do
-		if not cached_maps[biome_map] then
-			cached_maps[biome_map] = {}
-			cached_maps[biome_map].map, cached_maps[biome_map].w, cached_maps[biome_map].h = ModImageMakeEditable(biome_map, 0, 0)
-		end
-	end
-end
-
 --get biomescript from chunk coordinate
 local function MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
-	local mdata = cached_maps[biome_map]
+	local mdata = par.cached_maps[biome_map]
 
 	local map_pos_x = (chunk_pos_x + (mdata.w * .5))
 
@@ -548,12 +527,116 @@ local function MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
 	local abgr_int = ModImageGetPixel(mdata.map, map_pos_x, map_pos_y) --get pixel colour as ABGR integer
 	local hex = ("%02x%02x%02x"):format(bit.band(abgr_int, 0xFF), bit.band(bit.rshift(abgr_int, 8), 0xFF), bit.band(bit.rshift(abgr_int, 16), 0xFF)) --convert it to something sane
 	if hex == "000000" then return nil end
-	return GetBiomeScript(biomelist[hex], true)
+	return GetBiomeScript(par.biomelist[hex], true)
 end
 --#endregion
 
 
+
+--automatically cache important map data
+par.cached_maps = {}
+for _, biome_maps in pairs(par.worlds) do
+	for biome_map, _ in pairs(biome_maps) do
+		if not par.cached_maps[biome_map] then
+			par.cached_maps[biome_map] = {}
+			par.cached_maps[biome_map].map, par.cached_maps[biome_map].w, par.cached_maps[biome_map].h = ModImageMakeEditable(biome_map, 0, 0)
+		end
+	end
+end
+
+
+function OnModPreInit() --do misc stuff on mod preinit so other mods can append without mod load order issues
+	do_mod_appends("mods/parallel_parity/init.lua")
+
+	--special behaviour
+	--#region
+
+	--EoE Summoned Portal location and related hints in Underground Jungle
+	if settings.portal_summon then
+		local summon_portal_biomes = {
+			"data/scripts/biomes/rainforest.lua",
+			"data/scripts/biomes/fungicave.lua",
+		}
+
+		for _, path in ipairs(summon_portal_biomes) do --statues and portal spot
+			ModTextFileSetContent(path, ModTextFileGetContent(path
+				):modify(
+					"function init(x, y, w, h)",
+					"function init(x, y, w, h)\n	local pw_offset = GetParallelWorldPosition(x, 0) * BiomeMapGetSize() * 512"
+				):modify(
+					"local function is_inside_tile(pos_x, pos_y)",
+					"local function is_inside_tile(pos_x, pos_y)\n		pos_x = pos_x + pw_offset"
+				):modify(
+					"EntityLoad( \"data/entities/misc/summon_portal_target.xml\", portal_x, portal_y )",
+					"EntityLoad( \"data/entities/misc/summon_portal_target.xml\", portal_x + pw_offset, portal_y )"
+				):modify(
+					"local function spawn_statue(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y)",
+					"local function spawn_statue(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y)\n		spawn_x = spawn_x + pw_offset"
+				)
+			)
+		end
+
+
+		local get_portal_position_targets = {
+			"data/scripts/buildings/teleport_robot_egg_return.lua",
+			"data/scripts/projectiles/summon_portal_position_check.lua",
+		}
+
+		for _, path in ipairs(get_portal_position_targets) do
+			ModTextFileSetContent(path, ModTextFileGetContent(path):modify("local portal_x, portal_y = get_portal_position()",
+	[[local portal_x, portal_y = get_portal_position()
+	do
+		local x,y = EntityGetTransform(GetUpdatedEntityID())
+		portal_x = portal_x + (GetParallelWorldPosition(x,y) * BiomeMapGetSize() * 512)
+	end]]))
+		end
+	end
+	--#endregion
+
+
+	--Special Main-World Localisation
+
+	print("a")
+	for path, biome in pairs(par.localise) do
+		print("b")
+		for _, targets in ipairs(biome) do
+			print("c")
+			for _, code in ipairs(targets) do
+				print("d")
+				print(code)
+				ModTextFileSetContent(path, ModTextFileGetContent(path):modify(code, "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end; print(\"a\")"))
+				print("if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end")
+			end
+		end
+	end
+
+
+	-- Parallel Portals
+
+	for path, value in pairs(par.portals) do
+		if value then
+			for portal in nxml.edit_file(path) do
+				portal:add_child(nxml.new_element("LuaComponent", {
+					script_source_file = "mods/parallel_parity/files/parallel_portals.lua",
+					execute_on_added = true,
+					remove_after_executed = true,
+				}))
+			end
+		end
+	end
+end
+
+
 function OnMagicNumbersAndWorldSeedInitialized()
+	par.biomelist = {} --list of every biome
+	local biomelist_xml = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml")) --create hex-indexed table for all biomes that exist
+	if biomelist_xml then
+		for elem in biomelist_xml:each_child() do par.biomelist[(elem.attr.color):lower():sub(3,-1)] = elem.attr.biome_filename end
+	else
+		print("could not find \"data/biome/_biomes_all.xml\", fuck.")
+	end
+
+
 	--Scraper
 	--#region
 	local biome_appends = {}
@@ -590,7 +673,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 								local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
 
 								if biomescript ~= nil then --definitely SHOULD NOT be nil
-									local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
+									local map_scene_index = pixel_scenes_path .. par.cached_maps[biome_map].w
 
 									local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky
 									--ng plus support code is temporary, I eventually wanna add special handling that predicts future permutations of the NG+ biome map and appends pixel scenes accordingly- even if its a bit overkill, it seems like good tech to have in my back-pocket
@@ -649,7 +732,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 					local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
 
 					if biomescript ~= nil then
-						local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
+						local map_scene_index = pixel_scenes_path .. par.cached_maps[biome_map].w
 
 						local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
 
@@ -729,7 +812,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 					if logging then print("Biomescript: " .. tostring(biomescript)) end
 
 					if biomescript ~= nil then
-						local map_scene_index = pixel_scenes_path .. cached_maps[biome_map].w
+						local map_scene_index = pixel_scenes_path .. par.cached_maps[biome_map].w
 
 						local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y
 						-- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
@@ -845,7 +928,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 			table_insert = table_insert .. "		},\n	},\n"
 		end
 		local append_path = "mods/parallel_parity/generated/biome_appends/" .. script_path
-		ModTextFileSetContent(append_path, ModTextFileGetContent("mods/parallel_parity/files/debug_template_append.lua"):modify("--PARALLEL APPEND HERE!", table_insert):modify("FILENAMEHERE", script_path))
+		ModTextFileSetContent(append_path, ModTextFileGetContent("mods/parallel_parity/files/template_append.lua"):modify("--PARALLEL APPEND HERE!", table_insert):modify("FILENAMEHERE", script_path))
 		ModLuaFileAppend(script_path, append_path)
 
 		local script = ModTextFileGetContent(script_path)
@@ -854,75 +937,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 	--#endregion
 end
 
---special behaviour
---#region
-
---EoE Summoned Portal location and related hints in Underground Jungle
-if settings.portal_summon then
-	local summon_portal_biomes = {
-		"data/scripts/biomes/rainforest.lua",
-		"data/scripts/biomes/fungicave.lua",
-	}
-
-	for _, path in ipairs(summon_portal_biomes) do --statues and portal spot
-		ModTextFileSetContent(path, ModTextFileGetContent(path
-			):modify(
-				"function init(x, y, w, h)",
-				"function init(x, y, w, h)\n	local pw_offset = GetParallelWorldPosition(x, 0) * BiomeMapGetSize() * 512"
-			):modify(
-				"local function is_inside_tile(pos_x, pos_y)",
-				"local function is_inside_tile(pos_x, pos_y)\n		pos_x = pos_x + pw_offset"
-			):modify(
-				"EntityLoad( \"data/entities/misc/summon_portal_target.xml\", portal_x, portal_y )",
-				"EntityLoad( \"data/entities/misc/summon_portal_target.xml\", portal_x + pw_offset, portal_y )"
-			):modify(
-				"local function spawn_statue(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y)",
-				"local function spawn_statue(statue_num, spawn_x, spawn_y, ray_dir_x, ray_dir_y)\n		spawn_x = spawn_x + pw_offset"
-			)
-		)
-	end
-
-
-	local get_portal_position_targets = {
-		"data/scripts/buildings/teleport_robot_egg_return.lua",
-		"data/scripts/projectiles/summon_portal_position_check.lua",
-	}
-
-	for _, path in ipairs(get_portal_position_targets) do
-		ModTextFileSetContent(path, ModTextFileGetContent(path):modify("local portal_x, portal_y = get_portal_position()",
-[[local portal_x, portal_y = get_portal_position()
-do
-	local x,y = EntityGetTransform(GetUpdatedEntityID())
-	portal_x = portal_x + (GetParallelWorldPosition(x,y) * BiomeMapGetSize() * 512)
-end]]))
-	end
-end
---#endregion
-
-
---Special Main-World Localisation
-
-for path, biome in pairs(par.localise) do
-	for _, targets in ipairs(biome) do
-		for _, code in ipairs(targets) do
-			ModTextFileSetContent(path, ModTextFileGetContent(path):modify(code, "local _ = GetParallelWorldPosition(x, y) if _ == 0 then " .. code .. " end"))
-		end
-	end
-end
-
-
--- Parallel Portals
-
-for path, value in pairs(par.portals) do
-	if value then
-		for portal in nxml.edit_file(path) do
-			portal:add_child(nxml.new_element("LuaComponent", {
-				script_source_file = "mods/parallel_parity/files/parallel_portals.lua",
-				execute_on_added = true,
-				remove_after_executed = true,
-			}))
-		end
-	end
-end
-
 print("Parallel Parity init: " .. GameGetRealWorldTimeSinceStarted()-start)
+
+return --block appends from running at end of file
