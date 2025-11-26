@@ -788,11 +788,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 				end
 			end
 			local logging
-			--[[
-			if (file_name):find("cliff.png") and pixel_scenes_path == "data/biome/_pixel_scenes.xml" then
-				logging = true
-				print("Targetting file: " .. file_name)
-			end--]]
 			if par.pixel_scenes[elem.attr.just_load_an_entity]
 					or par.pixel_scenes[elem.attr.material_filename]
 					or par.pixel_scenes[elem.attr.colors_filename]
