@@ -8,6 +8,6 @@ local tele_comps = EntityGetComponentIncludingDisabled(entity_id, "TeleportCompo
 if tele_comps == nil then return end
 
 for index, value in ipairs(tele_comps) do
-    local target = {ComponentGetValue2(value, "target")}
-    ComponentSetValue2(value, "target", target[1] + (x_offset * BiomeMapGetSize() * 512), target[2])
+	local target = {ComponentGetValue2(value, "target")}
+	ComponentSetValue2(value, "target", target[1] + (x_offset * BiomeMapGetSize() * 512), target[2])
 end

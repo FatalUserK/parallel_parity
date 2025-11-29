@@ -45,10 +45,10 @@ uniform vec4 END_OVERRIDE;
 #define END_PI32 0.09817477042
 
 mat2 rotate2d(float _angle){
-    return mat2(
-        cos(_angle),-sin(_angle),
-        sin(_angle),cos(_angle)
-    );
+	return mat2(
+		cos(_angle),-sin(_angle),
+		sin(_angle),cos(_angle)
+	);
 }
 
 
