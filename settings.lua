@@ -1,5 +1,6 @@
-dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("data/scripts/lib/mod_settings.lua")
+
+---@
 
 local mod_id = "parallel_parity"
 mod_settings_version = 1
@@ -7,6 +8,20 @@ mod_settings_version = 1
 local function get_setting_id(name)
 	return mod_id .. "." .. name
 end
+
+local is_ingame = GameGetFrameNum() > 0
+
+--global table so mods can add their own settings
+ParallelParity_Settings = {
+	custom_setting_types = {}
+}
+local ps = ParallelParity_Settings
+local mod_compat_settings = {
+	{
+		id = "mod_compat_restart",
+		type = "note",
+	},
+}
 
 local languages = { --translation keys
 	["English"] = "en",
@@ -24,11 +39,11 @@ local languages = { --translation keys
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
-print("dofile: " .. tostring(GameGetFrameNum() > 0))
+print("ingame?: " .. tostring(is_ingame))
 --To add translations, add them below the same way English (en) languages have been added.
---Translation Keys can be seen in the languages table above
-local translation_strings = {
-	mod_compat_note = {
+--Translation Keys can be seen in the `languages` table above
+ps.translation_strings = {
+	mod_ingame_warning = {
 		en = "Warning! Options for other mods will not show up here!",
 		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE: THIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE ANY MOD COMPATIBILITY OPTIONS"
 	},
@@ -44,13 +59,17 @@ local translation_strings = {
 		ptbr = "Visuais",
 		ptbr_desc = "Dá uma limpeza em cenas de pixels visuais e backgrounds que não alteram significamente a jogabilidade\nOs critérios para este grupo são definidos a meu critério",
 	},
-	return_rift = {
+	return_rifts = {
 		en = "Return Rifts",
 		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return"
 	},
 	ng_plus = {
 		en = "New Game+",
 		en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental, but should be functional!",
+	},
+	mods = {
+		en = "Mods",
+		en_desc = "Content added by various mods",
 	},
 	spliced_pixel_scenes = {
 		en = "Spliced Pixel Scenes",
@@ -274,16 +293,33 @@ local translation_strings = {
 			ptbr_desc = "Os portais para o Ovo da Tecnologia onde o feitiço \"O fim de tudo\" pode ser encontrado\nIsso também faz modificações adicionais ao bioma \"Selva Subterrânea\" para fazer\nas estátuas e o portal funcionarem em Mundos Paralelos",
 		},
 	},
+	reset = {
+		en = "[Reset]",
+		en_desc = "Resets all settings to default values"
+	}
 }
 
 --Brazilian Portuguese translations by Absent Friend
 
 
-local settings = {
+ps.settings = {
 	{
-		id = "mod_compat_note",
-		type = "warn",
-		items = {},
+		id = "mod_ingame_warning",
+		type = "note",
+		render_condition = not is_ingame,
+		c = {
+			r = .9,
+			g = .65,
+			b = .65,
+		},
+		icon = "data/ui_gfx/inventory/icon_warning.png",
+		icon_offset_x = -3,
+		icon_offset_y = -3,
+		text_offset_x = -3,
+		translations = {
+			en = "Warning! Options for other mods will not show up here!",
+			en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE: THIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE ANY MOD COMPATIBILITY OPTIONS"
+		}
 	},
 	{
 		id = "general",
@@ -296,7 +332,7 @@ local settings = {
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
-		id = "return_rift",
+		id = "return_rifts",
 		value_default = false,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
@@ -304,6 +340,12 @@ local settings = {
 		id = "ng_plus",
 		value_default = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
+	},
+	{
+		id = "mods",
+		type = "group",
+		items = mod_compat_settings,
+		render_condition = is_ingame,
 	},
 	{
 		id = "spliced_pixel_scenes",
@@ -515,20 +557,35 @@ local settings = {
 			},
 		},
 	},
+	{
+		id = "reset",
+		type = "reset_button",
+	},
 }
+local compat_settings = ps.settings[6] --shoud be the `mods` item in `ps.settings`
 
+if is_ingame then
+	for index, file in ipairs(ModLuaFileGetAppends("mods/parallel_parity/settings.lua")) do
+		local group = dofile(file)
+		if not (group.id and group.translation_strings and group.settings) then goto continue end
+		ps.translation_strings.mods[group.id] = group.translation_strings
+		compat_settings[#compat_settings+1] = group.settings
+	end
+    ::continue::
+end
 
 
 -- this code is p nasty tbh, flee all ye of weak heart 'n' all, may rewrite this entirely in the future
 
-
+print(tostring(dofile))
+print(tostring(dofile_once))
+print(tostring(ModTextFileSetContent))
 
 
 function ModSettingsGuiCount()
 	return 1
 end
 
-local max_setting_offset = 0
 function ModSettingsUpdate(init_scope)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
@@ -536,12 +593,13 @@ function ModSettingsUpdate(init_scope)
 	local function update_translations(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
 		path = path or ""
-		input_settings = input_settings or settings
-		input_translations = input_translations or translation_strings
+		input_settings = input_settings or ps.settings
+		input_translations = input_translations or ps.translation_strings
 		for key, setting in pairs(input_settings) do
 
 			setting.path = mod_id .. "." .. path .. setting.id
 			setting.type = setting.type or type(setting.value_default)
+			setting.text_offset_x = setting.text_offset_x or 0
 
 			if input_translations[setting.id] then
 				setting.name = input_translations[setting.id][current_language] or input_translations[setting.id].en or setting.id
@@ -550,16 +608,21 @@ function ModSettingsUpdate(init_scope)
 				else
 					setting.description = input_translations[setting.id][current_language .. "_desc"]
 				end
-				--print(tostring(setting.name) .. ": " .. tostring(setting.path))
+			else
+				setting.name = setting.id
+			end
+
+			if setting.description then
+				setting._description_lines = {}
+				for line in string.gmatch(setting.description, '([^\n]+)') do
+					setting._description_lines[#setting._description_lines+1] = line
+				end
 			end
 
 
-			local _len = GuiGetTextDimensions(dummy_gui, setting.name or "") + (15 * recursion) + 15
-			setting.length = _len
-			setting.default_type = type(setting.value_default == "boolean")
-			if setting.type == "boolean" and _len > max_setting_offset then
-				max_setting_offset = _len
-			end
+			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
+			setting.desc_w,setting.desc_h = GuiGetTextDimensions(dummy_gui, setting.description or "")
+			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
 
 			if setting.items then
 				update_translations(setting.items, input_translations[setting.id], path .. (not setting.items and (setting.id .. ".") or ""), recursion + 1)
@@ -568,7 +631,6 @@ function ModSettingsUpdate(init_scope)
 			end
 		end
 	end
-
 	update_translations()
 	GuiDestroy(dummy_gui)
 
@@ -606,34 +668,45 @@ function ModSettingsUpdate(init_scope)
 			end
 		end
 	end
-	for i, setting in ipairs(settings) do
+	for i, setting in ipairs(ps.settings) do
 		set_defaults(setting)
 		save_setting(setting)
 	end
 	ModSettingSet(get_setting_id("_version"), mod_settings_version)
 end
 
-local id = 0
+
+----Rendering:
+local max_id = 0
 local function create_id()
-	id = id + 1
-	return id
+	max_id = max_id + 1
+	return max_id
 end
 
-local function DrawTooltip(gui, text, x, y, sprite, icon)
+---Draws a tooltip at desired position
+---@param gui gui
+---@param setting table pass entire setting rather than raw text to take advantage of prebaked description string size
+---@param x number
+---@param y number
+---@param sprite string? custom 9piece sprite
+local function DrawTooltip(gui, setting, x, y, sprite)
+	local text_size = {setting.desc_w, setting.desc_h}
 	sprite = sprite or "data/ui_gfx/decorations/9piece0_gray.png"
-	local text_size = {GuiGetTextDimensions(gui, text)}
 	GuiLayoutBeginLayer(gui)
 	GuiZSetForNextWidget(gui, -200)
 	GuiImageNinePiece(gui, create_id(), x, y, text_size[1]+10, text_size[2]+2, 1, sprite)
-	local iteration = 0
-	for line in string.gmatch(text, '([^\n]+)') do
+	for i,line in ipairs(setting._description_lines) do
 		GuiZSetForNextWidget(gui, -210)
-		GuiText(gui, x + 5, y + 1 + (iteration * 13), line)
-		iteration = iteration + 1
-	end
+		GuiText(gui, x + 5, y + 1 + (i-1)*13, line)
+	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
 	GuiLayoutEndLayer(gui)
 end
 
+---Create boolean setting
+---@param gui gui
+---@param x_offset number indentation as a result of child settings
+---@param setting table setting data
+---@param c number[] colour data
 local function BoolSetting(gui, x_offset, setting, c)
 	c = c or {
 		r = 1,
@@ -647,15 +720,9 @@ local function BoolSetting(gui, x_offset, setting, c)
 
 	local value = ModSettingGet(setting.path)
 
-	if value == true then
-		c.b = c.b
-	end
-
 	GuiText(gui, x_offset, 0, "")
 	local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-	local w, h = GuiGetTextDimensions(gui, setting.name)
-	--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
-	GuiImageNinePiece(gui, create_id(), x, y, max_setting_offset, h, 0)
+	GuiImageNinePiece(gui, create_id(), x, y, 19+setting.w, setting.h, 0)
 	local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 	local clicked, rclicked, highlighted
@@ -686,30 +753,19 @@ local function BoolSetting(gui, x_offset, setting, c)
 
 	GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-	GuiText(gui, x_offset, 0, setting.name)
+	GuiText(gui, x_offset + 19, 0, setting.name)
 
-	if highlighted then
-		if setting.description then
-			--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-			--GuiText(gui, 0, 10, "")
-			--GuiTooltip(gui, setting.description, "")
-			--ADD CUSTOM TOOLTIP!
-			DrawTooltip(gui, setting.description, x, y+12)
-		end
-	end
+	if highlighted and setting.description then DrawTooltip(gui, setting, x, y+12) end
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 
-	if is_disabled then
-		GuiText(gui, max_setting_offset, 0, "(X)")
-	else
-		GuiText(gui, max_setting_offset, 0, value == true and "(*)" or "(  )")
-	end
+	local toggle_icon = ""
+	if is_disabled then toggle_icon = "(X)"
+	else toggle_icon = value == true and "(*)" or "(  )" end
+	GuiText(gui, x_offset, 0, toggle_icon)
 
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		ModSettingSet(setting.path, not value)
-		--ModSettingSetNextValue(setting.path, not next_value, false)
-		--print(("Setting Check C\n  Name: %s\n  Path: [%s]\n  Applied Value: %s"):format(setting.name, setting.path, ModSettingGet(setting.path)))
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
@@ -723,13 +779,12 @@ function ModSettingsGui(gui, in_main_menu)
 	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, recursion)
 		recursion = recursion or 0
 		offset = offset or 0
-		_settings = _settings or settings
+		_settings = _settings or ps.settings
 
 
 
-		for i, setting in ipairs(_settings) do
-			offset = offset + (setting.offset or 0)
-			if true then
+		for _, setting in ipairs(_settings) do
+			if setting.render_condition ~= false then
 				if setting.type == "group" then
 					GuiColorSetForNextWidget(gui, .4, .4, .75, 1)
 					GuiText(gui, offset, 0, setting.name)
@@ -746,31 +801,57 @@ function ModSettingsGui(gui, in_main_menu)
 							b = .7^recursion,
 						})
 
-					elseif setting.type == "warn" then
-						local c = {
-							r = 1,
-							g = .8,
-							b = .8,
+					elseif setting.type == "note" then
+						local c = setting.c and {
+							r = setting.c.r,
+							g = setting.c.g,
+							b = setting.c.b,
+						} or {
+							r = .7,
+							g = .7,
+							b = .7,
 						}
 
 						GuiText(gui, 0, 0, "")
 						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-						local _, h = GuiGetTextDimensions(gui, setting.name)
+
 						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
-						GuiImageNinePiece(gui, create_id(), x, y, max_setting_offset, h, 0)
+						GuiImageNinePiece(gui, create_id(), x, y, setting.w+setting.icon_w+setting.text_offset_x, setting.h, 0)
 						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 						if guiPrev[3] and setting.description then
-							c.b = c.b*.7
-							DrawTooltip(gui, setting.description, x, y+12)
+							c.r = math.min((c.r * 1.2)+.05, 1)
+							c.g = math.min((c.g * 1.2)+.05, 1)
+							c.b = math.min((c.b * 1.2)+.05, 1)
+							DrawTooltip(gui, setting, x, y+12)
 						end
 
 						GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-						GuiImage(gui, create_id(), -3, -3, "data/ui_gfx/inventory/icon_warning.png", 1, 1, 1)
+						if setting.icon then GuiImage(gui, create_id(), setting.icon_offset_x or 0, setting.icon_offset_y or 0, setting.icon, 1, 1, 1) end
 						GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-						GuiText(gui, 13, 0, setting.name)
+						GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+					elseif setting.type == "reset_button" then
+						GuiText(gui, 0, 0, "")
+						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+						GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
+						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
+						local c = {
+							r = 1,
+							g = 1,
+							b = 1,
+						}
+						if guiPrev[3] and setting.description then
+							c.g = .7
+							c.b = .7
+							GuiTooltip(gui, setting.description, "")
+						end
 
+						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+						GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+						GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+					elseif ps.custom_setting_types[setting.type] then
+						ps.custom_setting_types[setting.type](gui, offset, setting)
 					end
 
 					if setting.dependents then
@@ -783,3 +864,5 @@ function ModSettingsGui(gui, in_main_menu)
 
 	RenderModSettingsGui(gui, in_main_menu)
 end
+
+return --inhibit appends

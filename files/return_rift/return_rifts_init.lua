@@ -56,10 +56,10 @@ vec4 render_pic_layer(vec2 fragCoord, vec3 color, float direction, float scale )
 {
   vec2 size_image = vec2(END_ZOOM*scale, END_ZOOM*scale);
   vec2 uv = fragCoord/size_image; // Normalized pixel coordinates (from 0 to 1)
-  
+
   uv *= rotate2d(direction);
   uv += vec2(0.0,-1.0) * END_SPEED * scale * time;
-  
+
   vec4 col = texture2D(END_TEXTURE, uv);
 
   return vec4(col) * vec4(color, 1.0); // Output to screen
@@ -76,9 +76,9 @@ shader_append(
 	// get average color value of all channels
 	float end_color_avg = (end_color_ref.r + end_color_ref.g + end_color_ref.b) / 3.0;
 
-	// 
+	//
 
-	if (END_OVERRIDE.r > end_color_avg || (end_color_ref.r > 152.0 / 255.0 && end_color_ref.r < 154.0 / 255.0 && 
+	if (END_OVERRIDE.r > end_color_avg || (end_color_ref.r > 152.0 / 255.0 && end_color_ref.r < 154.0 / 255.0 &&
 		end_color_ref.g > 54.0 / 255.0 && end_color_ref.g < 56.0 / 255.0 &&
 		end_color_ref.b > 198.0 / 255.0 && end_color_ref.b < 200.0 / 255.0)) {
 
@@ -90,20 +90,20 @@ shader_append(
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.20, 0.28, 0.29), END_PI-END_PI8, 1.3);
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.07, 0.20, 0.21), END_PI +1.0*END_PI4, 1.0);
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.16, 0.17, 0.20), END_PI16, 0.8);
-		
+
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.16, 0.13, 0.18), -END_PI4, 0.9);
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.16, 0.13, 0.18), END_PI2-END_PI6, 0.3);
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.16, 0.13, 0.18), END_PI32, 0.2);
 		gl_FragColor += render_pic_layer(tex_coord, vec3(0.16, 0.13, 0.18), END_PI, 0.1);
-		
+
 		gl_FragColor *= END_LIGHT;
 
-		
+
 	}
 ]]
 )
 
-GameSetPostFxTextureParameter("END_TEXTURE", "mods/noita.fairmod/files/content/funky_portals/end.png", 2, 3)
+GameSetPostFxTextureParameter("END_TEXTURE", "mods/parallel_parity/files/return_rift/end.png", 2, 3)
 
 -- doing this fixes the color channels for some reason
-local _, _, _ = ModImageMakeEditable("mods/noita.fairmod/files/content/funky_portals/end.png", 0, 0)
+local _, _, _ = ModImageMakeEditable("mods/parallel_parity/files/return_rift/end.png", 0, 0)

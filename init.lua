@@ -9,7 +9,6 @@ ParallelParity = {
 }
 
 local par = ParallelParity
-local settings = par.settings
 local force_true = par.force_true
 
 ---@type nxml
@@ -58,183 +57,9 @@ local ng_plus_biomescripts = {
 	"data/scripts/biomes/boss_arena.lua",
 } --god i hate the NG+ support its so wretched, when i make it proper, i will probably exile it to its own file when i commit to it
 
---list of relevant biome scripts using biome xml as index key, vanilla biomescript data is pregenerated under the assumption surely no one would go out their way to alter the filepath of vanilla biomescripts.
---Will probably empty the list if I run into a situation where someone does indeed altar the base-game biome script paths
-par.biome_scripts = {
-	["data/biome/mountain_left_3.xml"] = "data/scripts/biomes/mountain/mountain_left_3.lua",
-	["data/biome/pyramid_left.xml"] = "data/scripts/biomes/pyramid_left.lua",
-	["data/biome/lava.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/mestari_secret.xml"] = "data/scripts/biomes/mestari_secret.lua",
-	["data/biome/the_sky.xml"] = "data/scripts/biomes/the_end.lua",
-	["data/biome/null_room.xml"] = "data/scripts/biomes/null_room.lua",
-	["data/biome/laboratory.xml"] = "data/scripts/biomes/laboratory.lua",
-	["data/biome/lake_blood.xml"] = "data/scripts/biomes/lake.lua",
-	["data/biome/gun_room.xml"] = "data/scripts/biomes/gun_room.lua",
-	["data/biome/secret_lab.xml"] = "data/scripts/biomes/secret_lab.lua",
-	["data/biome/desert.xml"] = "data/scripts/biomes/desert.lua",
-	["data/biome/boss_arena.xml"] = "data/scripts/biomes/boss_arena.lua",
-	["data/biome_impl/static_tile/biome_barren.xml"] = "data/biome_impl/static_tile/temples_common.lua",
-	["data/biome/tower/solid_wall_tower_10.xml"] = "data/scripts/biomes/tower_end.lua",
-	["data/biome/clouds.xml"] = "data/scripts/biomes/clouds.lua",
-	["data/biome/snowcave_tunnel.xml"] = "data/scripts/biomes/snowcave.lua",
-	["data/biome/lake_deep.xml"] = "data/scripts/biomes/lake_deep.lua",
-	["data/biome/temple_altar_right_snowcave.xml"] = "data/scripts/biomes/temple_altar_right_snowcave.lua",
-	["data/biome/mountain_right_entrance.xml"] = "data/scripts/biomes/mountain/mountain_right_entrance.lua",
-	["data/biome/gourd_room.xml"] = "data/scripts/biomes/gourd_room.lua",
-	["data/biome/empty.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/essenceroom_hell.xml"] = "data/scripts/biomes/essenceroom_hell.lua",
-	["data/biome/solid_wall_damage.xml"] = "data/scripts/biomes/solid_wall_tower.lua",
-	["data/biome/pyramid_top.xml"] = "data/scripts/biomes/pyramid_top.lua",
-	["data/biome/forest.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/snowcastle_cavern.xml"] = "data/scripts/biomes/snowcastle_cavern.lua",
-	["data/biome/excavationsite.xml"] = "data/scripts/biomes/excavationsite.lua",
-	["data/biome_impl/static_tile/biome_darkness.xml"] = "data/biome_impl/static_tile/temples_common.lua",
-	["data/biome/temple_altar_right_snowcastle.xml"] = "data/scripts/biomes/temple_altar_right_snowcastle.lua",
-	["data/biome/hills2.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/rock_room.xml"] = "data/scripts/biomes/rock_room.lua",
-	["data/biome/pyramid_hallway.xml"] = "data/scripts/biomes/pyramid_hallway.lua",
-	["data/biome/pyramid.xml"] = "data/scripts/biomes/pyramid.lua",
-	["data/biome/smokecave_middle.xml"] = "data/scripts/biomes/smokecave_middle.lua",
-	["data/biome/roadblock.xml"] = "data/scripts/biomes/roadblock.lua",
-	["data/biome/temple_altar_secret.xml"] = "data/scripts/biomes/temple_altar_secret.lua",
-	["data/biome/robobase.xml"] = "data/scripts/biomes/robobase.lua",
-	["data/biome/lavalake.xml"] = "data/scripts/biomes/lavalake.lua",
-	["data/biome/vault.xml"] = "data/scripts/biomes/vault.lua",
-	["data/biome/lava_90percent.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/niilo_testroom_b.xml"] = "data/scripts/biomes/niilo_testroom_b.lua",
-	["data/biome/smokecave_right.xml"] = "data/scripts/biomes/smokecave_right.lua",
-	["data/biome/magic_gate.xml"] = "data/scripts/biomes/magic_gate.lua",
-	["data/biome/mountain_hall_trailer.xml"] = "data/scripts/biomes/mountain/trailer/mountain_hall.lua",
-	["data/biome/rainforest_open.xml"] = "data/scripts/biomes/rainforest.lua",
-	["data/biome/ghost_secret.xml"] = "data/scripts/biomes/ghost_secret.lua",
-	["data/biome/snowcave_secret_chamber.xml"] = "data/scripts/biomes/snowcave_secret_chamber.lua",
-	["data/biome/friend_1.xml"] = "data/scripts/biomes/friend_1.lua",
-	["data/biome/lake_statue.xml"] = "data/scripts/biomes/lake_statue.lua",
-	["data/biome/funroom.xml"] = "data/scripts/biomes/funroom.lua",
-	["data/biome/winter_caves.xml"] = "data/scripts/biomes/winter.lua",
-	["data/biome/tower/solid_wall_tower.xml"] = "data/scripts/biomes/solid_wall_tower.lua",
-	["data/biome/mountain_left_entrance.xml"] = "data/scripts/biomes/mountain/mountain_left_entrance.lua",
-	["data/biome/essenceroom.xml"] = "data/scripts/biomes/essenceroom.lua",
-	["data/biome/bridge.xml"] = "data/scripts/biomes/bridge.lua",
-	["data/biome/moon_room.xml"] = "data/scripts/biomes/moon_room.lua",
-	["data/biome/fungicave.xml"] = "data/scripts/biomes/fungicave.lua",
-	["data/biome/temple_altar.xml"] = "data/scripts/biomes/temple_altar.lua",
-	["data/biome/mountain_tree.xml"] = "data/scripts/biomes/mountain_tree.lua",
-	["data/biome/rainforest.xml"] = "data/scripts/biomes/rainforest.lua",
-	["data/biome/wizardcave.xml"] = "data/scripts/biomes/wizardcave.lua",
-	["data/biome/hills_flat.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/snowcastle_hourglass_chamber.xml"] = "data/scripts/biomes/snowcastle_hourglass_chamber.lua",
-	["data/biome/mountain_right_stub.xml"] = "data/scripts/biomes/mountain/mountain_right_stub.lua",
-	["data/biome/town_under.xml"] = "data/scripts/biomes/town.lua",
-	["data/biome_impl/static_tile/biome_boss_sky.xml"] = "data/biome_impl/static_tile/temples_common.lua",
-	["data/biome/temple_altar_left.xml"] = "data/scripts/biomes/temple_altar_left.lua",
-	["data/biome_impl/static_tile/biome_potion_mimics.xml"] = "data/biome_impl/static_tile/temples_common.lua",
-	["data/biome_impl/static_tile/biome_watchtower.xml"] = "data/biome_impl/static_tile/watchtower.lua",
-	["data/biome/wandcave.xml"] = "data/scripts/biomes/wandcave.lua",
-	["data/biome/boss_arena_top.xml"] = "data/scripts/biomes/boss_arena_top.lua",
-	["data/biome/fungiforest.xml"] = "data/scripts/biomes/fungiforest.lua",
-	["data/biome/meat.xml"] = "data/scripts/biomes/meat.lua",
-	["data/biome/lavalake_pit.xml"] = "data/scripts/biomes/lavalake_pit.lua",
-	["data/biome/mountain_hall_2.xml"] = "data/scripts/biomes/mountain/mountain_hall_2.lua",
-	["data/biome/friend_6.xml"] = "data/scripts/biomes/friend_6.lua",
-	["data/biome/friend_5.xml"] = "data/scripts/biomes/friend_5.lua",
-	["data/biome/sandcave.xml"] = "data/scripts/biomes/sandcave.lua",
-	["data/biome/friend_4.xml"] = "data/scripts/biomes/friend_4.lua",
-	["data/biome/friend_3.xml"] = "data/scripts/biomes/friend_3.lua",
-	["data/biome/friend_2.xml"] = "data/scripts/biomes/friend_2.lua",
-	["data/biome/ending_placeholder.xml"] = "data/scripts/biomes/ending_placeholder.lua",
-	["data/biome/meatroom.xml"] = "data/scripts/biomes/meatroom.lua",
-	["data/biome/roboroom.xml"] = "data/scripts/biomes/roboroom.lua",
-	["data/biome/rainforest_dark.xml"] = "data/scripts/biomes/rainforest_dark.lua",
-	["data/biome/tower/solid_wall_tower_8.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/greed_room.xml"] = "data/scripts/biomes/greed_room.lua",
-	["data/biome/excavationsite_cube_chamber.xml"] = "data/scripts/biomes/excavationsite_cube_chamber.lua",
-	["data/biome/mountain_right_2.xml"] = "data/scripts/biomes/mountain/mountain_right_2.lua",
-	["data/biome/alchemist_secret.xml"] = "data/scripts/biomes/alchemist_secret.lua",
-	["data/biome/orbrooms/orbroom_11.xml"] = "data/scripts/biomes/orbrooms/orbroom_11.lua",
-	["data/biome/boss_limbs_arena.xml"] = "data/scripts/biomes/boss_limbs_arena.lua",
-	["data/biome/essenceroom_air.xml"] = "data/scripts/biomes/essenceroom_air.lua",
-	["data/biome/mystery_teleport.xml"] = "data/scripts/biomes/mystery_teleport.lua",
-	["data/biome/coalmine_alt.xml"] = "data/scripts/biomes/coalmine_alt.lua",
-	["data/biome/watercave.xml"] = "data/scripts/biomes/watercave.lua",
-	["data/biome/secret_entrance.xml"] = "data/scripts/biomes/secret_entrance.lua",
-	["data/biome/end_wall.xml"] = "data/scripts/biomes/end_wall.lua",
-	["data/biome/temple_wall.xml"] = "data/scripts/biomes/temple_wall.lua",
-	["data/biome/essenceroom_alc.xml"] = "data/scripts/biomes/essenceroom_alc.lua",
-	["data/biome/niilo_testroom_d.xml"] = "data/scripts/biomes/niilo_testroom_d.lua",
-	["data/biome/niilo_testroom_c.xml"] = "data/scripts/biomes/niilo_testroom_c.lua",
-	["data/biome/niilo_testroom.xml"] = "data/scripts/biomes/niilo_testroom.lua",
-	["data/biome/orbrooms/orbroom_10.xml"] = "data/scripts/biomes/orbrooms/orbroom_10.lua",
-	["data/biome/robot_egg.xml"] = "data/scripts/biomes/robot_egg.lua",
-	["data/biome/winter.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/solid_wall.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/ocarina.xml"] = "data/scripts/biomes/ocarina.lua",
-	["data/biome/mountain_hall_3.xml"] = "data/scripts/biomes/mountain/mountain_hall_3.lua",
-	["data/biome/temple_altar_right_snowcastle_empty.xml"] = "data/scripts/biomes/temple_altar_right_snowcastle_empty.lua",
-	["data/biome/lavalake_racing.xml"] = "data/scripts/biomes/lavalake_racing.lua",
-	["data/biome/teleroom.xml"] = "data/scripts/biomes/teleroom.lua",
-	["data/biome/snowcave.xml"] = "data/scripts/biomes/snowcave.lua",
-	["data/biome/mountain_left.xml"] = "data/scripts/biomes/mountain/mountain_left.lua",
-	["data/biome/mountain_hall.xml"] = "data/scripts/biomes/mountain/mountain_hall.lua",
-	["data/biome/orbrooms/orbroom_05.xml"] = "data/scripts/biomes/orbrooms/orbroom_05.lua",
-	["data/biome/orbrooms/orbroom_04.xml"] = "data/scripts/biomes/orbrooms/orbroom_04.lua",
-	["data/biome/hills.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/secret_altar.xml"] = "data/scripts/biomes/secret_altar.lua",
-	["data/biome/the_end.xml"] = "data/scripts/biomes/the_end.lua",
-	["data/biome/liquidcave.xml"] = "data/scripts/biomes/liquidcave.lua",
-	["data/biome/vault_entrance.xml"] = "data/scripts/biomes/vault_entrance.lua",
-	["data/biome/solid_wall_hidden_cavern.xml"] = "data/scripts/biomes/solid_wall_hidden_cavern.lua",
-	["data/biome/tower/solid_wall_tower_7.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/tower/solid_wall_tower_6.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/tower/solid_wall_tower_5.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/tower/solid_wall_tower_3.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/tower/solid_wall_tower_2.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/mountain_left_2.xml"] = "data/scripts/biomes/mountain/mountain_left_2.lua",
-	["data/biome/tower/solid_wall_tower_1.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/tower/solid_wall_tower_9.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/smokecave_left.xml"] = "data/scripts/biomes/smokecave_left.lua",
-	["data/biome/crypt.xml"] = "data/scripts/biomes/crypt.lua",
-	["data/biome/temple_altar_left_empty.xml"] = "data/scripts/biomes/temple_altar_left_empty.lua",
-	["data/biome/temple_altar_right_empty.xml"] = "data/scripts/biomes/temple_altar_right_empty.lua",
-	["data/biome/vault_frozen.xml"] = "data/scripts/biomes/vault_frozen.lua",
-	["data/biome/wizardcave_entrance.xml"] = "data/scripts/biomes/wizardcave_entrance.lua",
-	["data/biome/temple_altar_right.xml"] = "data/scripts/biomes/temple_altar_right.lua",
-	["data/biome/mountain_right_entrance_2.xml"] = "data/scripts/biomes/mountain/mountain_right_entrance_2.lua",
-	["data/biome/snowcastle.xml"] = "data/scripts/biomes/snowcastle.lua",
-	["data/biome/mountain_top.xml"] = "data/scripts/biomes/mountain/mountain_top.lua",
-	["data/biome/mountain_floating_island.xml"] = "data/scripts/biomes/mountain/mountain_floating_island.lua",
-	["data/biome/mountain_center.xml"] = "data/scripts/biomes/mountain/mountain_center.lua",
-	["data/biome/dragoncave.xml"] = "data/scripts/biomes/dragoncave.lua",
-	["data/biome/boss_victoryroom.xml"] = "data/scripts/biomes/boss_victoryroom.lua",
-	["data/biome/song_room.xml"] = "data/scripts/biomes/song_room.lua",
-	["data/biome/temple_altar_right_snowcave_empty.xml"] = "data/scripts/biomes/temple_altar_right_snowcave_empty.lua",
-	["data/biome/temple_altar_empty.xml"] = "data/scripts/biomes/temple_altar_empty.lua",
-	["data/biome/sandroom.xml"] = "data/scripts/biomes/sandroom.lua",
-	["data/biome/solid_wall_temple.xml"] = "data/scripts/biomes/hills.lua",
-	["data/biome/temple_wall_ending.xml"] = "data/scripts/biomes/temple_wall_ending.lua",
-	["data/biome/mountain_lake.xml"] = "data/scripts/biomes/mountain_lake.lua",
-	["data/biome/mountain_left_stub.xml"] = "data/scripts/biomes/mountain/mountain_left_stub.lua",
-	["data/biome/pyramid_right.xml"] = "data/scripts/biomes/pyramid_right.lua",
-	["data/biome/mountain_hall_4.xml"] = "data/scripts/biomes/mountain/mountain_hall_4.lua",
-	["data/biome/scale.xml"] = "data/scripts/biomes/scale.lua",
-	["data/biome/shop_room.xml"] = "data/scripts/biomes/shop_room.lua",
-	["data/biome/lake.xml"] = "data/scripts/biomes/lake.lua",
-	["data/biome/tower/solid_wall_tower_4.xml"] = "data/scripts/biomes/tower.lua",
-	["data/biome/orbrooms/orbroom_00.xml"] = "data/scripts/biomes/orbrooms/orbroom_00.lua",
-	["data/biome/orbrooms/orbroom_01.xml"] = "data/scripts/biomes/orbrooms/orbroom_01.lua",
-	["data/biome/orbrooms/orbroom_02.xml"] = "data/scripts/biomes/orbrooms/orbroom_02.lua",
-	["data/biome/orbrooms/orbroom_03.xml"] = "data/scripts/biomes/orbrooms/orbroom_03.lua",
-	["data/biome/coalmine.xml"] = "data/scripts/biomes/coalmine.lua",
-	["data/biome/mountain_right.xml"] = "data/scripts/biomes/mountain/mountain_right.lua",
-	["data/biome/orbrooms/orbroom_06.xml"] = "data/scripts/biomes/orbrooms/orbroom_06.lua",
-	["data/biome/orbrooms/orbroom_07.xml"] = "data/scripts/biomes/orbrooms/orbroom_07.lua",
-	["data/biome/orbrooms/orbroom_08.xml"] = "data/scripts/biomes/orbrooms/orbroom_08.lua",
-	["data/biome/orbrooms/orbroom_09.xml"] = "data/scripts/biomes/orbrooms/orbroom_09.lua",
-	["data/biome/pyramid_entrance.xml"] = "data/scripts/biomes/pyramid_entrance.lua",
-}
 
 --table used to cache all mod settings and flag stuff like that so i dont have to call ModSettingGet duplicates
-settings = {
+par.settings = {
 	--General
 	general =				ModSettingGet("parallel_parity.general") or force_true,
 	visual =				ModSettingGet("parallel_parity.visual") or force_true,
@@ -286,175 +111,176 @@ settings = {
 
 
 
-	--Special
-	ng_plus =				ModSettingGet("parallel_parity.ng_plus") or force_true
+	--Misc
+	ng_plus =				ModSettingGet("parallel_parity.ng_plus") or force_true,
+	return_rifts =			ModSettingGet("parallel_parity.return_rifts")
 }
 
 par.spliced_pixel_scenes = {
-	["data/biome_impl/spliced/lavalake2.xml"] =				settings.lava_lake,
-	["data/biome_impl/spliced/skull_in_desert.xml"] =		settings.lava_lake,
-	["data/biome_impl/spliced/boss_arena.xml"] =			settings.desert_skull,
-	["data/biome_impl/spliced/tree.xml"] =					settings.kolmi_arena,
-	["data/biome_impl/spliced/watercave.xml"] =				settings.tree,
-	["data/biome_impl/spliced/mountain_lake.xml"] =			settings.dark_cave,
-	["data/biome_impl/spliced/lake_statue.xml"] =			settings.mountain_lake,
-	["data/biome_impl/spliced/moon.xml"] =					settings.lake_island,
-	["data/biome_impl/spliced/moon_dark.xml"] =				settings.moons,
-	["data/biome_impl/spliced/lavalake_pit_bottom.xml"] =	settings.moons,
-	["data/biome_impl/spliced/gourd_room.xml"] =			settings.gourd_room,
-	["data/biome_impl/spliced/skull.xml"] =					settings.meat_skull,
+	["data/biome_impl/spliced/lavalake2.xml"] =				par.settings.lava_lake,
+	["data/biome_impl/spliced/skull_in_desert.xml"] =		par.settings.lava_lake,
+	["data/biome_impl/spliced/boss_arena.xml"] =			par.settings.desert_skull,
+	["data/biome_impl/spliced/tree.xml"] =					par.settings.kolmi_arena,
+	["data/biome_impl/spliced/watercave.xml"] =				par.settings.tree,
+	["data/biome_impl/spliced/mountain_lake.xml"] =			par.settings.dark_cave,
+	["data/biome_impl/spliced/lake_statue.xml"] =			par.settings.mountain_lake,
+	["data/biome_impl/spliced/moon.xml"] =					par.settings.lake_island,
+	["data/biome_impl/spliced/moon_dark.xml"] =				par.settings.moons,
+	["data/biome_impl/spliced/lavalake_pit_bottom.xml"] =	par.settings.moons,
+	["data/biome_impl/spliced/gourd_room.xml"] =			par.settings.gourd_room,
+	["data/biome_impl/spliced/skull.xml"] =					par.settings.meat_skull,
 }
 
 
 par.pixel_scenes = {
 	--materials
-	["data/biome_impl/temple/altar_vault_capsule.png"] =			settings.general,
-	["data/biome_impl/temple/altar_snowcastle_capsule.png"] =		settings.general,
-	["data/biome_impl/tower_start.png"] =							settings.general,
-	["data/biome_impl/the_end/the_end_shop.png"] =					settings.general,
-	["data/biome_impl/overworld/desert_ruins_base_01.png"] =		settings.general,
-	["data/biome_impl/snowcastle/forge.png"] =						settings.general,
-	["data/biome_impl/temple/altar_snowcave_capsule.png"] =			settings.general,
-	["data/biome_impl/huussi.png"] =								settings.general,
+	["data/biome_impl/temple/altar_vault_capsule.png"] =			par.settings.general,
+	["data/biome_impl/temple/altar_snowcastle_capsule.png"] =		par.settings.general,
+	["data/biome_impl/tower_start.png"] =							par.settings.general,
+	["data/biome_impl/the_end/the_end_shop.png"] =					par.settings.general,
+	["data/biome_impl/overworld/desert_ruins_base_01.png"] =		par.settings.general,
+	["data/biome_impl/snowcastle/forge.png"] =						par.settings.general,
+	["data/biome_impl/temple/altar_snowcave_capsule.png"] =			par.settings.general,
+	["data/biome_impl/huussi.png"] =								par.settings.general,
 
-	["data/biome_impl/overworld/essence_altar.png"] =				settings.essence_eaters,
-	["data/biome_impl/overworld/essence_altar_desert.png"] =		settings.essence_eaters,
+	["data/biome_impl/overworld/essence_altar.png"] =				par.settings.essence_eaters,
+	["data/biome_impl/overworld/essence_altar_desert.png"] =		par.settings.essence_eaters,
 
-	["data/biome_impl/overworld/snowy_ruins_eye_pillar.png"] =		settings.fungal_altars,
-	["data/biome_impl/rainbow_cloud.png"] =							settings.fungal_altars,
-	["data/biome_impl/eyespot.png"] =								settings.fungal_altars,
+	["data/biome_impl/overworld/snowy_ruins_eye_pillar.png"] =		par.settings.fungal_altars,
+	["data/biome_impl/rainbow_cloud.png"] =							par.settings.fungal_altars,
+	["data/biome_impl/eyespot.png"] =								par.settings.fungal_altars,
 
-	["data/biome_impl/fishing_hut.png"] =							settings.fishing_hut,
-	["data/biome_impl/bunker.png"] =								settings.fishing_hut and settings.fishing_bunkers, --requires fishing hut to exist as a prerequisite
-	["data/biome_impl/bunker2.png"] =								settings.fishing_hut and settings.fishing_bunkers,
+	["data/biome_impl/fishing_hut.png"] =							par.settings.fishing_hut,
+	["data/biome_impl/bunker.png"] =								par.settings.fishing_hut and par.settings.fishing_bunkers, --requires fishing hut to exist as a prerequisite
+	["data/biome_impl/bunker2.png"] =								par.settings.fishing_hut and par.settings.fishing_bunkers,
 
-	["data/biome_impl/pyramid/boss_limbs.png"] =					settings.pyramid_boss,
-	["data/biome_impl/greed_treasure.png"] =						settings.avarice_diamond,
-	["data/biome_impl/overworld/essence_altar"] =					settings.essence_eaters,
-	["data/biome_impl/overworld/cliff.png"] =						settings.music_machines,
-	["data/biome_impl/overworld/music_machine_stand.png"] =			settings.music_machines,
+	["data/biome_impl/pyramid/boss_limbs.png"] =					par.settings.pyramid_boss,
+	["data/biome_impl/greed_treasure.png"] =						par.settings.avarice_diamond,
+	["data/biome_impl/overworld/essence_altar"] =					par.settings.essence_eaters,
+	["data/biome_impl/overworld/cliff.png"] =						par.settings.music_machines,
+	["data/biome_impl/overworld/music_machine_stand.png"] =			par.settings.music_machines,
 
 	--backgrounds
 	--hidden backgrounds are for hidden messages, more info: https://noita.wiki.gg/wiki/Game_Lore#Secret_Messages
-	["data/biome_impl/hidden/boss_arena.png"] =						settings.visual,
-	["data/biome_impl/hidden/boss_arena_under.png"] =				settings.visual,
-	["data/biome_impl/hidden/boss_arena_under_right.png"] =			settings.visual,
-	["data/biome_impl/hidden/completely_random.png"] =				settings.visual,
-	["data/biome_impl/hidden/completely_random_2.png"] =			settings.visual,
-	["data/biome_impl/hidden/fungal_caverns_1.png"] =				settings.visual,
-	["data/biome_impl/hidden/holy_mountain_1.png"] =				settings.visual,
-	["data/biome_impl/hidden/jungle_right.png"] =					settings.visual,
-	["data/biome_impl/hidden/mountain_text.png"] =					settings.visual,
-	["data/biome_impl/hidden/under_the_wand_cave.png"] =			settings.visual,
-	["data/biome_impl/hidden/vault_inside.png"] =					settings.visual,
-	["data/biome_impl/hidden/crypt_left.png"] =						settings.visual,
+	["data/biome_impl/hidden/boss_arena.png"] =						par.settings.visual,
+	["data/biome_impl/hidden/boss_arena_under.png"] =				par.settings.visual,
+	["data/biome_impl/hidden/boss_arena_under_right.png"] =			par.settings.visual,
+	["data/biome_impl/hidden/completely_random.png"] =				par.settings.visual,
+	["data/biome_impl/hidden/completely_random_2.png"] =			par.settings.visual,
+	["data/biome_impl/hidden/fungal_caverns_1.png"] =				par.settings.visual,
+	["data/biome_impl/hidden/holy_mountain_1.png"] =				par.settings.visual,
+	["data/biome_impl/hidden/jungle_right.png"] =					par.settings.visual,
+	["data/biome_impl/hidden/mountain_text.png"] =					par.settings.visual,
+	["data/biome_impl/hidden/under_the_wand_cave.png"] =			par.settings.visual,
+	["data/biome_impl/hidden/vault_inside.png"] =					par.settings.visual,
+	["data/biome_impl/hidden/crypt_left.png"] =						par.settings.visual,
 
-	["data/biome_impl/liquidcave/liquidcave_corner.png"] =			settings.visual,
-	["data/biome_impl/liquidcave/liquidcave_top.png"] =				settings.visual,
-	["data/biome_impl/liquidcave/liquidcave_corner2.png"] =			settings.visual,
+	["data/biome_impl/liquidcave/liquidcave_corner.png"] =			par.settings.visual,
+	["data/biome_impl/liquidcave/liquidcave_top.png"] =				par.settings.visual,
+	["data/biome_impl/liquidcave/liquidcave_corner2.png"] =			par.settings.visual,
 
 
 	--entities
-	["data/entities/misc/platform_wide.xml"] =						settings.fungal_altars,
-	["data/entities/buildings/eyespot_a.xml"] =						settings.fungal_altars,
-	["data/entities/buildings/eyespot_b.xml"] =						settings.fungal_altars,
-	["data/entities/buildings/eyespot_c.xml"] =						settings.fungal_altars,
-	["data/entities/buildings/eyespot_d.xml"] =						settings.fungal_altars,
-	["data/entities/buildings/eyespot_e.xml"] =						settings.fungal_altars,
-	["data/entities/items/books/book_hint.xml"] =					settings.fungal_altars,
+	["data/entities/misc/platform_wide.xml"] =						par.settings.fungal_altars,
+	["data/entities/buildings/eyespot_a.xml"] =						par.settings.fungal_altars,
+	["data/entities/buildings/eyespot_b.xml"] =						par.settings.fungal_altars,
+	["data/entities/buildings/eyespot_c.xml"] =						par.settings.fungal_altars,
+	["data/entities/buildings/eyespot_d.xml"] =						par.settings.fungal_altars,
+	["data/entities/buildings/eyespot_e.xml"] =						par.settings.fungal_altars,
+	["data/entities/items/books/book_hint.xml"] =					par.settings.fungal_altars,
 
-	["data/entities/props/physics_fungus.xml"] =					settings.tree,
-	["data/entities/props/physics_fungus_big.xml"] =				settings.tree,
-	["data/entities/props/physics_fungus_small.xml"] =				settings.tree,
+	["data/entities/props/physics_fungus.xml"] =					par.settings.tree,
+	["data/entities/props/physics_fungus_big.xml"] =				par.settings.tree,
+	["data/entities/props/physics_fungus_small.xml"] =				par.settings.tree,
 
-	["data/entities/props/music_machines/music_machine_00.xml"] = 	settings.music_machines,
-	["data/entities/props/music_machines/music_machine_01.xml"] = 	settings.music_machines,
-	["data/entities/props/music_machines/music_machine_02.xml"] = 	settings.music_machines,
-	["data/entities/props/music_machines/music_machine_03.xml"] = 	settings.music_machines,
+	["data/entities/props/music_machines/music_machine_00.xml"] = 	par.settings.music_machines,
+	["data/entities/props/music_machines/music_machine_01.xml"] = 	par.settings.music_machines,
+	["data/entities/props/music_machines/music_machine_02.xml"] = 	par.settings.music_machines,
+	["data/entities/props/music_machines/music_machine_03.xml"] = 	par.settings.music_machines,
 
-	["data/entities/props/physics/bridge_spawner.xml"] =			settings.lava_lake,
-	["data/entities/buildings/essence_eater.xml"] =					settings.essence_eaters,
-	["data/entities/buildings/hut_check.xml"] =						settings.fishing_bunkers,
-	["data/entities/buildings/maggotspot.xml"] =					settings.meat_skull, --Tiny boss spawn
-	["data/entities/animals/boss_fish/fish_giga.xml"] =				settings.leviathan,
-	["data/entities/items/pickup/evil_eye.xml"] =					settings.evil_eye, --Paha Silma pedestal to left of Tree
+	["data/entities/props/physics/bridge_spawner.xml"] =			par.settings.lava_lake,
+	["data/entities/buildings/essence_eater.xml"] =					par.settings.essence_eaters,
+	["data/entities/buildings/hut_check.xml"] =						par.settings.fishing_bunkers,
+	["data/entities/buildings/maggotspot.xml"] =					par.settings.meat_skull, --Tiny boss spawn
+	["data/entities/animals/boss_fish/fish_giga.xml"] =				par.settings.leviathan,
+	["data/entities/items/pickup/evil_eye.xml"] =					par.settings.evil_eye, --Paha Silma pedestal to left of Tree
 }
 
 
 par.portals = {
-	["data/entities/buildings/teleport_bunker.xml"] =						settings.portal_general, --fishing bunker
-	["data/entities/buildings/teleport_bunker_back.xml"] =					settings.portal_general, --fishing bunker
-	["data/entities/buildings/teleport_bunker2.xml"] =						settings.portal_general, --fishing bunker
-	["data/entities/buildings/teleport_meditation_cube.xml"] =				settings.portal_general,
-	["data/entities/buildings/teleport_meditation_cube_return.xml"] =		settings.portal_general,
-	["data/entities/buildings/teleport_snowcave_buried_eye.xml"] =			settings.portal_general,
-	["data/entities/buildings/teleport_snowcave_buried_eye_return.xml"] =	settings.portal_general,
-	["data/entities/buildings/teleport_hourglass.xml"] =					settings.portal_general,
-	["data/entities/buildings/teleport_hourglass_return.xml"] =				settings.portal_general,
-	["data/entities/buildings/teleport_ending_victory.xml"] =				settings.portal_general, --kolmi death portal
-	["data/entities/buildings/teleport_start.xml"] =						settings.portal_general, --greed curse return portal
-	["data/entities/buildings/teleport_liquid_powered.xml"] =				settings.portal_holy_mountain, --holy mountain portal
-	["data/entities/buildings/teleport_ending.xml"] =						settings.portal_holy_mountain, --final holy mountain portal
-	["data/entities/buildings/teleport_teleroom.xml"] =						settings.portal_fast_travel, --fast travel portal room and co
-	["data/entities/buildings/teleport_teleroom_1.xml"] =					settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_2.xml"] =					settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_3.xml"] =					settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_4.xml"] =					settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_5.xml"] =					settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_6.xml"] =					settings.portal_fast_travel,
-	["data/entities/buildings/mystery_teleport.xml"] =						settings.portal_tower_entrance,
-	["data/entities/buildings/mystery_teleport_back.xml"] =					settings.portal_mountain, --tower exit + musical curiosity
-	["data/entities/buildings/teleport_lake.xml"] =							settings.portal_skull_island, --teleport to lake
-	["data/entities/buildings/teleport_desert.xml"] =						settings.portal_skull_island, --teleport to desert
-	["data/entities/projectiles/deck/summon_portal_teleport.xml"] =			settings.portal_summon, --EoE portal in underground jungle
-	["data/entities/buildings/teleport_robot_egg_return.xml"] =				settings.portal_summon, --EoE return portal
+	["data/entities/buildings/teleport_bunker.xml"] =						par.settings.portal_general, --fishing bunker
+	["data/entities/buildings/teleport_bunker_back.xml"] =					par.settings.portal_general, --fishing bunker
+	["data/entities/buildings/teleport_bunker2.xml"] =						par.settings.portal_general, --fishing bunker
+	["data/entities/buildings/teleport_meditation_cube.xml"] =				par.settings.portal_general,
+	["data/entities/buildings/teleport_meditation_cube_return.xml"] =		par.settings.portal_general,
+	["data/entities/buildings/teleport_snowcave_buried_eye.xml"] =			par.settings.portal_general,
+	["data/entities/buildings/teleport_snowcave_buried_eye_return.xml"] =	par.settings.portal_general,
+	["data/entities/buildings/teleport_hourglass.xml"] =					par.settings.portal_general,
+	["data/entities/buildings/teleport_hourglass_return.xml"] =				par.settings.portal_general,
+	["data/entities/buildings/teleport_ending_victory.xml"] =				par.settings.portal_general, --kolmi death portal
+	["data/entities/buildings/teleport_start.xml"] =						par.settings.portal_general, --greed curse return portal
+	["data/entities/buildings/teleport_liquid_powered.xml"] =				par.settings.portal_holy_mountain, --holy mountain portal
+	["data/entities/buildings/teleport_ending.xml"] =						par.settings.portal_holy_mountain, --final holy mountain portal
+	["data/entities/buildings/teleport_teleroom.xml"] =						par.settings.portal_fast_travel, --fast travel portal room and co
+	["data/entities/buildings/teleport_teleroom_1.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/teleport_teleroom_2.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/teleport_teleroom_3.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/teleport_teleroom_4.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/teleport_teleroom_5.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/teleport_teleroom_6.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/mystery_teleport.xml"] =						par.settings.portal_tower_entrance,
+	["data/entities/buildings/mystery_teleport_back.xml"] =					par.settings.portal_mountain, --tower exit + musical curiosity
+	["data/entities/buildings/teleport_lake.xml"] =							par.settings.portal_skull_island, --teleport to lake
+	["data/entities/buildings/teleport_desert.xml"] =						par.settings.portal_skull_island, --teleport to desert
+	["data/entities/projectiles/deck/summon_portal_teleport.xml"] =			par.settings.portal_summon, --EoE portal in underground jungle
+	["data/entities/buildings/teleport_robot_egg_return.xml"] =				par.settings.portal_summon, --EoE return portal
 }
 
 par.localise = {
 	["data/scripts/biomes/lake_statue.lua"] = {
-		settings.lake_island and not settings.island_boss and {
+		par.settings.lake_island and not par.settings.island_boss and {
 			[[EntityLoad( "data/entities/animals/boss_spirit/spawner.xml", x, y )]],
 		} or nil,
-		settings.lake_island and not settings.fire_essence and {
+		par.settings.lake_island and not par.settings.fire_essence and {
 			[[EntityLoad( "data/entities/items/pickup/essence_fire.xml", x, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/lake.lua"] = {
-		settings.fishing_hut and not settings.fishing_bunkers and {
+		par.settings.fishing_hut and not par.settings.fishing_bunkers and {
 			[[EntityLoad( "data/entities/buildings/bunker.xml", x, y )]],
 			[[EntityLoad( "data/entities/buildings/bunker2.xml", x, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/lavalake.lua"] = {
-		settings.lava_lake and not settings.lava_lake_orb and {
+		par.settings.lava_lake and not par.settings.lava_lake_orb and {
 			[[EntityLoad( "data/entities/items/orbs/orb_03.xml", x-10, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/boss_arena.lua"] = {
-		settings.kolmi_arena and not settings.spawn_kolmi and {
+		par.settings.kolmi_arena and not par.settings.spawn_kolmi and {
 			[[EntityLoad( "data/entities/animals/boss_centipede/boss_music_buildup_trigger.xml", x, y )]],
 			[[EntityLoad( "data/entities/animals/boss_centipede/boss_centipede.xml", x, y )
 	-- if game is not completed
 	if( GameHasFlagRun( "ending_game_completed" ) == false ) then
 		EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )
 	end
-	
+
 	EntityLoad( "data/entities/animals/boss_centipede/reference_point.xml", x, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/mountain_tree.lua"] = {
-		settings.tree and not settings.greed_curse and {
+		par.settings.tree and not par.settings.greed_curse and {
 			[[EntityLoad( "data/entities/items/pickup/greed_curse.xml", x, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/watercave.lua"] = {
-		settings.dark_cave and not settings.dark_cave_hp and {
+		par.settings.dark_cave and not par.settings.dark_cave_hp and {
 			[[EntityLoad( "data/entities/items/pickup/heart.xml", x, y )]],
 			[[EntityLoad( "data/entities/items/pickup/heart_fullhp.xml", x, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/gourd_room.lua"] = {
-		settings.gourd_room and not settings.spawn_gourds and {
+		par.settings.gourd_room and not par.settings.spawn_gourds and {
 			[[EntityLoad( "data/entities/items/pickup/gourd.xml", x, y )
 	EntityLoad( "data/entities/items/pickup/gourd.xml", x - 12, y )
 	EntityLoad( "data/entities/items/pickup/gourd.xml", x + 12, y )
@@ -489,12 +315,12 @@ local function dump(o) --handy func i stole that prints an entire table
 	end
 end
 
-
+local biome_scripts = {}
 --get biomescript from biomexml. note: maybe merge with MapGetBiomeScript() at some point
 local function GetBiomeScript(biomepath, generate)
 	local biomexml = nxml.parse(ModTextFileGetContent(biomepath))
 
-	if not par.biome_scripts[biomepath] then
+	if not biome_scripts[biomepath] then
 		local toplogy = biomexml and biomexml:first_of("Topology")
 		if toplogy then
 			local script = toplogy.attr.lua_script
@@ -507,11 +333,11 @@ local function GetBiomeScript(biomepath, generate)
 				ModTextFileSetContent(generated_script_path, "") --yknow itd be really funny if i could just append empty nothingness and have that work without needing to make an entire script
 				toplogy.attr.lua_script = generated_script_path
 			end
-			par.biome_scripts[biomepath] = toplogy.attr.lua_script
+			biome_scripts[biomepath] = toplogy.attr.lua_script
 		end
 	end
 
-	return par.biome_scripts[biomepath]
+	return biome_scripts[biomepath]
 end
 
 --get biomescript from chunk coordinate
@@ -548,13 +374,19 @@ end
 function OnModPreInit() --do misc stuff on mod preinit so other mods can append without mod load order issues
 	do_mod_appends("mods/parallel_parity/init.lua")
 
-	dofile("mods/parallel_parity/files/return_rift/return_rifts_init.lua")
+	ModTextFileSetContent("data/translations/common.csv",
+		(ModTextFileGetContent("data/translations/common.csv") .. "\n" ..
+		ModTextFileGetContent("mods/parallel_parity/standard.csv") .. "\n")
+			:gsub("\r", "")
+			:gsub("\n\n+", "\n"
+		)
+	)
 
 	--special behaviour
 	--#region
 
 	--EoE Summoned Portal location and related hints in Underground Jungle
-	if settings.portal_summon then
+	if par.settings.portal_summon then
 		local summon_portal_biomes = {
 			"data/scripts/biomes/rainforest.lua",
 			"data/scripts/biomes/fungicave.lua",
@@ -620,6 +452,8 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 			end
 		end
 	end
+
+	if par.settings.return_rifts then dofile("mods/parallel_parity/files/return_rift/return_rifts_init.lua") end
 end
 
 
@@ -676,7 +510,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 									-- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
 									local skip_scraping = false
 									if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
-										if settings.ng_plus then
+										if par.settings.ng_plus then
 											for _, ng_script in ipairs(ng_plus_biomescripts) do
 												if ng_script ~= biomescript then
 													biome_appends[ng_script] = biome_appends[ng_script] or {}
@@ -735,7 +569,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 						-- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
 						local skip_scraping = false
 						if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
-							if settings.ng_plus then
+							if par.settings.ng_plus then
 								for _, ng_script in ipairs(ng_plus_biomescripts) do
 									if ng_script ~= biomescript then
 										biome_appends[ng_script] = biome_appends[ng_script] or {}
@@ -809,7 +643,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 						-- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
 						local skip_scraping = false
 						if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
-							if settings.ng_plus then
+							if par.settings.ng_plus then
 								for _, ng_script in ipairs(ng_plus_biomescripts) do
 									if ng_script ~= biomescript then
 										biome_appends[ng_script] = biome_appends[ng_script] or {}
