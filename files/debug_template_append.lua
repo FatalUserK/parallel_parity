@@ -59,8 +59,8 @@ _G[init_func_name] = function(x, y, w, h)
 
 	if GetParallelWorldPosition(x, y) == 0 then return end --if this is not a PW, return
 
-	local map_width = BiomeMapGetSize()
-	local content = worlds[SessionNumbersGetValue("BIOME_MAP_PIXEL_SCENES") .. map_width] --index by [pixel scenes filepath .. biome width]
+	local mapw,maph = BiomeMapGetSize()
+	local content = worlds[SessionNumbersGetValue("BIOME_MAP_PIXEL_SCENES") .. "|" .. mapw .. "|" .. maph] --index by [pixel scenes filepath .. biome width]
 	if content == nil then return end
 
 	local marker = EntityLoad("data/entities/_debug/debug_marker.xml", x, y) --for debugging purposes
@@ -68,9 +68,9 @@ _G[init_func_name] = function(x, y, w, h)
 	local attempted --for debugging purposes
 	local log = "FILENAMEHERE"
 
-	local half_width = map_width * .5
+	local half_width = mapw * .5
 	local chunk_x,chunk_y = x*0.001953125, y*0.001953125 --get chunk coordinates (division is about 4% slower than multiplication, this is just dividing by 512)
-	chunk_x = ((chunk_x + half_width) % map_width) - half_width --code that relativises PWs (this is all Nolla needed to do :devastated:)
+	chunk_x = ((chunk_x + half_width) % mapw) - half_width --code that relativises PWs (this is all Nolla needed to do :devastated:)
 
 	local chunk_index = chunk_x .. "_" .. chunk_y --get chunk table
 	if content.scenes[chunk_index] then --if there is a chunk table

@@ -1,22 +1,14 @@
 <Entity>
 	<TeleportComponent
-		_enabled="0"
 		target_x_is_absolute_position="1"
 		target_y_is_absolute_position="1"
 	/>
-
-	<HitboxComponent 
-		aabb_min_x="-15" 
-		aabb_min_y="-15"
-		aabb_max_x="15" 
-		aabb_max_y="15" 
-	></HitboxComponent>
 
 	<SpriteComponent
 		image_file="mods/parallel_parity/files/return_rift/tear.png"
 		offset_x="40"
    		offset_y="33"
-		z_index="5"
+		z_index="1"
 	/>
 
 	<InteractableComponent
@@ -27,12 +19,59 @@
 
 	<UIInfoComponent name="$par_rift"/>
 
-	<LuaComponent
-		script_interacting="mods/parallel_parity/files/return_rift/return_handler.lua"
+	<ParticleEmitterComponent
+		_tags="enabled_in_hand"
+		emitted_material_name="spark_purple"
+		gravity.y="0.0"
+		lifetime_min=".3"
+		lifetime_max=".7"
+		count_min="15"
+		count_max="25"
+		render_on_grid="1"
+		fade_based_on_lifetime="1"
+		area_circle_radius.min="50"
+		area_circle_radius.max="50"
+		airflow_force="0.3"
+		airflow_time="0.01"
+		airflow_scale="0.05"
+		emission_interval_min_frames="0"
+		emission_interval_max_frames="0"
+		emit_cosmetic_particles="1"
+		is_emitting="1"
 	/>
 
-	<LifetimeComponent
-		lifetime="1800"
+	<ParticleEmitterComponent
+		_tags="enabled_in_hand"
+		emitted_material_name="spark_purple"
+		gravity.y="0.0"
+		lifetime_min="1"
+		lifetime_max="4"
+		count_min="15"
+		count_max="25"
+		render_on_grid="1"
+		fade_based_on_lifetime="1"
+		area_circle_radius.min="50"
+		area_circle_radius.max="50"
+		airflow_force="0.3"
+		airflow_time="0.01"
+		airflow_scale="0.05"
+		emission_interval_min_frames="0"
+		emission_interval_max_frames="0"
+		emit_cosmetic_particles="1"
+		is_emitting="1"
+	/>
+
+	<LuaComponent
+		script_interacting="mods/parallel_parity/files/return_rift/return_handler.lua"
+		script_source_file="mods/parallel_parity/files/return_rift/return_handler.lua"
+		execute_on_added="1"
+		call_init_function="1"
+	/>
+
+	<LuaComponent
+		script_source_file="mods/parallel_parity/files/return_rift/rift_death.lua"
+		execute_on_removed="1"
+		execute_every_n_frame="-1"
 	/>
 
 	<LightComponent

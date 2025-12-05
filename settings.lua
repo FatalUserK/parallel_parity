@@ -11,18 +11,6 @@ end
 
 local is_ingame = GameGetFrameNum() > 0
 
---global table so mods can add their own settings
-ParallelParity_Settings = {
-	custom_setting_types = {}
-}
-local ps = ParallelParity_Settings
-local mod_compat_settings = {
-	{
-		id = "mod_compat_restart",
-		type = "note",
-	},
-}
-
 local languages = { --translation keys
 	["English"] = "en",
 	["русский"] = "ru",
@@ -39,13 +27,18 @@ local languages = { --translation keys
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
-print("ingame?: " .. tostring(is_ingame))
+--global table so mods can add their own settings
+ParallelParity_Settings = {
+	custom_setting_types = {}
+}
+local ps = ParallelParity_Settings
+
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the `languages` table above
 ps.translation_strings = {
 	mod_ingame_warning = {
 		en = "Warning! Options for other mods will not show up here!",
-		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE: THIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE ANY MOD COMPATIBILITY OPTIONS"
+		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE:\nTHIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE MANY MOD COMPATIBILITY OPTIONS",
 	},
 	general = {
 		en = "General",
@@ -61,7 +54,7 @@ ps.translation_strings = {
 	},
 	return_rifts = {
 		en = "Return Rifts",
-		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return"
+		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return",
 	},
 	ng_plus = {
 		en = "New Game+",
@@ -70,6 +63,14 @@ ps.translation_strings = {
 	mods = {
 		en = "Mods",
 		en_desc = "Content added by various mods",
+		mod_compat_restart = {
+			en = "Restart to apply settings!",
+			en_desc = "It is highly recommended you restart your game to apply compatibility settings changes!\nSorry about the inconvenience, mod settings are inherently limited and things like this are necessary for this to work :(",
+		},
+		no_mods_detected = {
+			en = "No mod settings found!",
+			en_desc = "Sorgy, nothing here",
+		},
 	},
 	spliced_pixel_scenes = {
 		en = "Spliced Pixel Scenes",
@@ -295,13 +296,21 @@ ps.translation_strings = {
 	},
 	reset = {
 		en = "[Reset]",
-		en_desc = "Resets all settings to default values"
+		en_desc = "Resets all settings to default values",
 	}
 }
 
 --Brazilian Portuguese translations by Absent Friend
 
 
+ps.mod_compat_settings = {
+	{
+		id = "mod_compat_restart",
+		type = "note",
+	},
+}
+
+--translations are separated for translators' convenience
 ps.settings = {
 	{
 		id = "mod_ingame_warning",
@@ -316,10 +325,6 @@ ps.settings = {
 		icon_offset_x = -3,
 		icon_offset_y = -3,
 		text_offset_x = -3,
-		translations = {
-			en = "Warning! Options for other mods will not show up here!",
-			en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE: THIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE ANY MOD COMPATIBILITY OPTIONS"
-		}
 	},
 	{
 		id = "general",
@@ -344,12 +349,14 @@ ps.settings = {
 	{
 		id = "mods",
 		type = "group",
-		items = mod_compat_settings,
+		items = ps.mod_compat_settings,
 		render_condition = is_ingame,
+		collapsed = false,
 	},
 	{
 		id = "spliced_pixel_scenes",
 		type = "group",
+		collapsed = is_ingame,
 		items = {
 			{
 				id = "lava_lake",
@@ -460,6 +467,7 @@ ps.settings = {
 	{
 		id = "other_pixel_scenes",
 		type = "group",
+		collapsed = is_ingame,
 		items = {
 			{
 				id = "hidden",
@@ -519,6 +527,7 @@ ps.settings = {
 	{
 		id = "portals",
 		type = "group",
+		collapsed = is_ingame,
 		items = {
 			{
 				id = "portal_general",
@@ -562,25 +571,10 @@ ps.settings = {
 		type = "reset_button",
 	},
 }
-local compat_settings = ps.settings[6] --shoud be the `mods` item in `ps.settings`
-
-if is_ingame then
-	for index, file in ipairs(ModLuaFileGetAppends("mods/parallel_parity/settings.lua")) do
-		local group = dofile(file)
-		if not (group.id and group.translation_strings and group.settings) then goto continue end
-		ps.translation_strings.mods[group.id] = group.translation_strings
-		compat_settings[#compat_settings+1] = group.settings
-	end
-    ::continue::
-end
 
 
--- this code is p nasty tbh, flee all ye of weak heart 'n' all, may rewrite this entirely in the future
 
-print(tostring(dofile))
-print(tostring(dofile_once))
-print(tostring(ModTextFileSetContent))
-
+-- some of this code is p nasty tbh, flee all ye of weak heart 'n' all, may rewrite this entirely in the future
 
 function ModSettingsGuiCount()
 	return 1
@@ -588,6 +582,44 @@ end
 
 function ModSettingsUpdate(init_scope)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
+
+	if is_ingame then
+		if #ps.mod_compat_settings == 1 then
+			table.insert(ps.mod_compat_settings, {
+				id = "no_mods_detected",
+				type = "note",
+				c = {
+					r = .5,
+					g = .65,
+					b = .9,
+				}
+			})
+		end
+
+		local function add_modded_translation(setting, translation_path)
+			if setting.translations then
+				translation_path[setting.id] = setting.translations
+			else
+				translation_path[setting.id] = translation_path[setting.id] or {}
+			end
+
+			if setting.items then
+				for _, item in ipairs(setting.items) do
+					add_modded_translation(item, translation_path[setting.id])
+				end
+			end
+			if setting.dependents then
+				for _, dependent in ipairs(setting.dependents) do
+					add_modded_translation(dependent, translation_path[setting.id])
+				end
+			end
+		end
+
+		for _, mod_group in ipairs(ps.mod_compat_settings) do
+			mod_group.c = mod_group
+			add_modded_translation(mod_group, ps.translation_strings.mods)
+		end
+	end
 
 	local dummy_gui = GuiCreate()
 	local function update_translations(input_settings, input_translations, path, recursion)
@@ -675,6 +707,21 @@ function ModSettingsUpdate(init_scope)
 	ModSettingSet(get_setting_id("_version"), mod_settings_version)
 end
 
+
+local function reset_settings_to_default(group)
+	for _, setting in ipairs(group) do
+		if setting.value_default ~= nil then
+			ModSettingSet(setting.path, setting.value_default)
+		end
+
+		if setting.items then
+			reset_settings_to_default(setting.items)
+		end
+		if setting.dependents then
+			reset_settings_to_default(setting.dependents)
+		end
+	end
+end
 
 ----Rendering:
 local max_id = 0
@@ -776,7 +823,7 @@ end
 --mod settings code partially nabbed from Anvil of Destiny, thanks Horscht o/
 function ModSettingsGui(gui, in_main_menu)
 
-	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, recursion)
+	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, parent_is_disabled, recursion)
 		recursion = recursion or 0
 		offset = offset or 0
 		_settings = _settings or ps.settings
@@ -785,78 +832,121 @@ function ModSettingsGui(gui, in_main_menu)
 
 		for _, setting in ipairs(_settings) do
 			if setting.render_condition ~= false then
+				local setting_is_disabled = parent_is_disabled or (setting.requires and not ModSettingGet(setting.requires.id) == setting.requires.value)
 				if setting.type == "group" then
-					GuiColorSetForNextWidget(gui, .4, .4, .75, 1)
-					GuiText(gui, offset, 0, setting.name)
+					local c = setting.c and {
+						r = setting.c.r,
+						g = setting.c.g,
+						b = setting.c.b,
+					} or {
+						r = .4,
+						g = .4,
+						b = .75,
+					}
+
+					local collapse_icon
+					if setting.collapsed then
+						collapse_icon = "data/ui_gfx/button_fold_open.png"
+					else
+						collapse_icon = "data/ui_gfx/button_fold_close.png"
+					end
+					if setting_is_disabled then
+						c.r = c.r * .5
+						c.g = c.g * .5
+						c.b = c.b * .5
+					end
+
+					GuiText(gui, offset, 0, "")
+					local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+
+					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
+					GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
+					if ({GuiGetPreviousWidgetInfo(gui)})[3] and InputIsMouseButtonJustDown(1) then --check if element was clicked
+						GamePlaySound("ui", "ui/button_click", 0, 0)
+						setting.collapsed = not setting.collapsed
+					end
+
+					GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiImage(gui, create_id(), offset, 0, collapse_icon, 1, 1, 1)
+
+
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiText(gui, offset+10, 0, setting.name)
 					if setting.description then
 						GuiTooltip(gui, setting.description, "")
 					end
 
-					RenderModSettingsGui(gui, in_main_menu, setting.items, offset + 15, recursion) --i think recursion just works here
-				else
-					if setting.type == "boolean" then
-						BoolSetting(gui, offset, setting, {
-							r = .7^recursion,
-							g = .7^recursion,
-							b = .7^recursion,
-						})
+					--i think recursion just works here
+					if setting.collapsed ~= true then RenderModSettingsGui(gui, in_main_menu, setting.items, offset + 15, setting_is_disabled, recursion) end
+				elseif setting.type == "boolean" then
+					BoolSetting(gui, offset, setting, {
+						r = .7^recursion,
+						g = .7^recursion,
+						b = .7^recursion,
+					})
 
-					elseif setting.type == "note" then
-						local c = setting.c and {
-							r = setting.c.r,
-							g = setting.c.g,
-							b = setting.c.b,
-						} or {
-							r = .7,
-							g = .7,
-							b = .7,
-						}
+				elseif setting.type == "note" then
+					local c = setting.c and {
+						r = setting.c.r,
+						g = setting.c.g,
+						b = setting.c.b,
+					} or {
+						r = .7,
+						g = .7,
+						b = .7,
+					}
 
-						GuiText(gui, 0, 0, "")
-						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+					GuiText(gui, offset, 0, "")
+					local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
 
-						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
-						GuiImageNinePiece(gui, create_id(), x, y, setting.w+setting.icon_w+setting.text_offset_x, setting.h, 0)
-						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
+					GuiImageNinePiece(gui, create_id(), x, y, setting.w+(setting.icon_w or 0)+(setting.text_offset_x or 0), setting.h, 0)
+					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
-						if guiPrev[3] and setting.description then
-							c.r = math.min((c.r * 1.2)+.05, 1)
-							c.g = math.min((c.g * 1.2)+.05, 1)
-							c.b = math.min((c.b * 1.2)+.05, 1)
-							DrawTooltip(gui, setting, x, y+12)
-						end
+					if guiPrev[3] and setting.description then
+						c.r = math.min((c.r * 1.2)+.05, 1)
+						c.g = math.min((c.g * 1.2)+.05, 1)
+						c.b = math.min((c.b * 1.2)+.05, 1)
+						DrawTooltip(gui, setting, x, y+12)
+					end
 
+					if setting.icon then
 						GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-						if setting.icon then GuiImage(gui, create_id(), setting.icon_offset_x or 0, setting.icon_offset_y or 0, setting.icon, 1, 1, 1) end
-						GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-						GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
-					elseif setting.type == "reset_button" then
-						GuiText(gui, 0, 0, "")
-						local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-						GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
-						local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+						GuiImage(gui, create_id(), (setting.icon_offset_x or 0) + offset, setting.icon_offset_y or 0, setting.icon, 1, 1, 1)
+					end
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x + offset, 0, setting.name)
+				elseif setting.type == "reset_button" then
+					GuiText(gui, 0, 0, "")
+					local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+					GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
+					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
-						local c = {
-							r = 1,
-							g = 1,
-							b = 1,
-						}
-						if guiPrev[3] and setting.description then
-							c.g = .7
-							c.b = .7
-							GuiTooltip(gui, setting.description, "")
+					local c = {
+						r = 1,
+						g = 1,
+						b = 1,
+					}
+					if guiPrev[3] then
+						c.g = .7
+						c.b = .7
+						GuiTooltip(gui, setting.description, "")
+						if InputIsMouseButtonJustUp(1) then
+							GamePlaySound("ui", "ui/button_click", 0, 0)
+							reset_settings_to_default(ps.settings)
 						end
-
-						--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-						GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-						GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
-					elseif ps.custom_setting_types[setting.type] then
-						ps.custom_setting_types[setting.type](gui, offset, setting)
 					end
 
-					if setting.dependents then
-						RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + 15, recursion + 1)
-					end
+					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+				elseif ps.custom_setting_types[setting.type] then
+					ps.custom_setting_types[setting.type](gui, offset, setting)
+				end
+
+				if setting.dependents then
+					RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + 15, setting_is_disabled, recursion + 1)
 				end
 			end
 		end
@@ -864,5 +954,3 @@ function ModSettingsGui(gui, in_main_menu)
 
 	RenderModSettingsGui(gui, in_main_menu)
 end
-
-return --inhibit appends

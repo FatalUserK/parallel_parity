@@ -18,13 +18,13 @@ _G[init_func_name] = function(x, y, w, h)
 
 	if GetParallelWorldPosition(x, y) == 0 then return end
 
-	local map_width = BiomeMapGetSize()
-	local content = worlds[SessionNumbersGetValue("BIOME_MAP_PIXEL_SCENES") .. map_width]
+	local mapw,maph = BiomeMapGetSize()
+	local content = worlds[SessionNumbersGetValue("BIOME_MAP_PIXEL_SCENES") .. "|" .. mapw .. "|" .. maph]
 	if content == nil then return end
 
-	local half_width = map_width * .5
+	local half_width = mapw * .5
 	local chunk_x,chunk_y = x*0.001953125, y*0.001953125
-	chunk_x = ((chunk_x + half_width) % map_width) - half_width
+	chunk_x = ((chunk_x + half_width) % mapw) - half_width
 
 	local chunk_index = chunk_x .. "_" .. chunk_y
 	if content.scenes[chunk_index] then

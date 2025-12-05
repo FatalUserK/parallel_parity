@@ -1,4 +1,6 @@
+local old_OnPlayerSpawned = OnPlayerSpawned
 function OnPlayerSpawned(player)
+	if old_OnPlayerSpawned then old_OnPlayerSpawned(player) end
 	EntityAddComponent2(player, "LuaComponent", {
 		script_teleported = "mods/parallel_parity/files/return_rift/player_rift_check.lua",
 	})
