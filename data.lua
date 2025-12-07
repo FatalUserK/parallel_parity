@@ -1,4 +1,5 @@
 local par = ParallelParity
+local force_true = par.force_true
 --tables for stuff
 --#region
 par.worlds = {
@@ -97,7 +98,7 @@ par.settings = {
 
 	--Misc
 	ng_plus =				ModSettingGet("parallel_parity.ng_plus") or force_true,
-	return_rifts =			ModSettingGet("parallel_parity.return_rifts")
+	return_rifts =			ModSettingGet("parallel_parity.return_rifts") or force_true
 }
 
 par.spliced_pixel_scenes = {
@@ -205,13 +206,7 @@ par.portals = {
 	["data/entities/buildings/teleport_start.xml"] =						par.settings.portal_general, --greed curse return portal
 	["data/entities/buildings/teleport_liquid_powered.xml"] =				par.settings.portal_holy_mountain, --holy mountain portal
 	["data/entities/buildings/teleport_ending.xml"] =						par.settings.portal_holy_mountain, --final holy mountain portal
-	["data/entities/buildings/teleport_teleroom.xml"] =						par.settings.portal_fast_travel, --fast travel portal room and co
-	["data/entities/buildings/teleport_teleroom_1.xml"] =					par.settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_2.xml"] =					par.settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_3.xml"] =					par.settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_4.xml"] =					par.settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_5.xml"] =					par.settings.portal_fast_travel,
-	["data/entities/buildings/teleport_teleroom_6.xml"] =					par.settings.portal_fast_travel,
+	["data/entities/buildings/teleport_teleroom.xml"] =						par.settings.portal_fast_travel, --portal to fast-travel room
 	["data/entities/buildings/mystery_teleport.xml"] =						par.settings.portal_tower_entrance,
 	["data/entities/buildings/mystery_teleport_back.xml"] =					par.settings.portal_mountain, --tower exit + musical curiosity
 	["data/entities/buildings/teleport_lake.xml"] =							par.settings.portal_skull_island, --teleport to lake
@@ -219,6 +214,9 @@ par.portals = {
 	["data/entities/projectiles/deck/summon_portal_teleport.xml"] =			par.settings.portal_summon, --EoE portal in underground jungle
 	["data/entities/buildings/teleport_robot_egg_return.xml"] =				par.settings.portal_summon, --EoE return portal
 }
+for key, value in pairs(par.portals) do
+	print(key .. " = " .. tostring(value))
+end
 
 par.localise = {
 	["data/scripts/biomes/lake_statue.lua"] = {

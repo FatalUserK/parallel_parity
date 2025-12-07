@@ -89,7 +89,11 @@ end
 
 
 function OnModPreInit() --do misc stuff on mod preinit so other mods can append without mod load order issues
+	dofile_once("mods/parallel_parity/settings.lua")
+	ModSettingsUpdate(1) --do this to initialise and set default values for newly-appended mod settings
+
 	dofile_once("mods/parallel_parity/data.lua") --initialise data, we do it like this so mods can append their own or make changes
+
 
 	--automatically cache important map data
 	par.cached_maps = {}
@@ -349,7 +353,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 					break
 				end
 			end
-			local logging
 			if par.pixel_scenes[elem.attr.just_load_an_entity]
 					or par.pixel_scenes[elem.attr.material_filename]
 					or par.pixel_scenes[elem.attr.colors_filename]
@@ -358,11 +361,9 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
 				local chunk_pos_x = math.floor(elem.attr.pos_x * 0.001953125)
 				local chunk_pos_y = math.floor(elem.attr.pos_y * 0.001953125)
-				if logging then print(elem.attr.pos_x) print(chunk_pos_x) end
 
 				for _, biome_map in ipairs(biome_maps) do
 					local biomescript = MapGetBiomeScript(biome_map,chunk_pos_x, chunk_pos_y)
-					if logging then print("Biomescript: " .. tostring(biomescript)) end
 
 					if biomescript ~= nil then
 						local map_scene_index = pixel_scenes_path .. "|" .. par.cached_maps[biome_map].w .. "|" .. par.cached_maps[biome_map].h
@@ -421,10 +422,8 @@ function OnMagicNumbersAndWorldSeedInitialized()
 									offset_y = elem.attr.pos_y - (chunk_pos_y * 512),
 								}
 							end
-							if logging then print("adding " .. file_name .. " to " .. biomescript .. " at chunk " .. chunk_key) end
 						end
 					else
-						if logging then print("added to remove list...") end
 						remove_list.scenes[#remove_list.scenes+1] = elem
 					end
 				end

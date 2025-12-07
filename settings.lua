@@ -9,7 +9,7 @@ local function get_setting_id(name)
 	return mod_id .. "." .. name
 end
 
-local is_ingame = GameGetFrameNum() > 0
+local is_ingame = #ModGetActiveModIDs() > 0
 
 local languages = { --translation keys
 	["English"] = "en",
@@ -251,43 +251,43 @@ ps.translation_strings = {
 		en_desc = "Controls whether portals keep you in your current world or send you back to the Main World",
 		ptbr = "Portais Paralelos",
 		ptbr_desc = "Controla se os portais mantêm você no mundo atual ou o enviam de volta ao Mundo Principal",
-		portal_general = {
+		general = {
 			en = "General",
 			en_desc = "General portals that don't fall under the other categories",
 			ptbr = "Geral",
 			ptbr_desc = "Portais que não se enquadram nas outras categorias",
 		},
-		portal_holy_mountain = {
+		holy_mountain = {
 			en = "Holy Mountain",
 			en_desc = "The \"Portal Deeper\" that leads into Holy Mountain\nFinal Portal will likely dump you into lava if Kolmisilmä Arena is disabled",
 			ptbr = "Montanha Sagrada",
 			ptbr_desc = "O \"Portal para as profundezas\" que leva à Montanha Sagrada\nO Portal Final provavelmente jogará você na lava se a Arena de Kolmisilmä estiver desativada",
 		},
-		portal_fast_travel = {
-			en = "Portal Room",
-			en_desc = "The fast-travel portal room as well as the portal leading to it created by Syväolento (Leviathan)",
-			ptbr = "Sala dos Portais",
+		fast_travel = {
+			en = "To Portal Room",
+			en_desc = "The portal leading to the fast travel room created by Syväolento (Leviathan)\n(Fast Travel portals are already Parallel-World Local)",
+			ptbr = "Sala dos Portais", --@Absent Friend i made a mistake about the fast travel room! please correct translations here o/
 			ptbr_desc = "A sala de portais de viagem rápida, bem como o portal que leva a ela, criado por Syväolento (Leviatã)",
 		},
-		portal_tower_entrance = {
+		tower_entrance = {
 			en = "Tower Entrance",
 			en_desc = "Does not include Tower Exit, which is part of Return Portal",
 			ptbr = "Entrada da Torre",
 			ptbr_desc = "Não inclui Saída da Torre, que faz parte do Portal de Retorno",
 		},
-		portal_mountain = {
+		mountain = {
 			en = "Return Portal",
 			en_desc = "Portal leading to the mountain\nThis includes the one summoned by the Musical Curiosity and the Tower Exit",
 			ptbr = "Portal de Retorno",
 			ptbr_desc = "O portal que leva à Montanha\nIsso inclui os que são invocados pela Curiosidade Musical e a Saída da Torre",
 		},
-		portal_skull_island = {
+		skull_island = {
 			en = "Desert-Lake Portals",
 			en_desc = "The Desert Skull and Island Statue portals",
 			ptbr = "Portais Deserto-Lago",
 			ptbr_desc = "Os portais do Crânio do Deserto e da Estátua da Ilha",
 		},
-		portal_summon = {
+		summon = {
 			en = "Egg of Technology",
 			en_desc = "The portals for the Egg of Technology where the End of Everything spell can be found\nThis also does additional modifications to the jungle biome to make the statues and portal spot work\nin Parallel Worlds",
 			ptbr = "Ovo da Tecnologia",
@@ -348,6 +348,7 @@ ps.settings = {
 	},
 	{
 		id = "mods",
+		not_path = true,
 		type = "group",
 		items = ps.mod_compat_settings,
 		render_condition = is_ingame,
@@ -355,6 +356,7 @@ ps.settings = {
 	},
 	{
 		id = "spliced_pixel_scenes",
+		not_path = true,
 		type = "group",
 		collapsed = is_ingame,
 		items = {
@@ -466,6 +468,7 @@ ps.settings = {
 	},
 	{
 		id = "other_pixel_scenes",
+		not_path = true,
 		type = "group",
 		collapsed = is_ingame,
 		items = {
@@ -530,37 +533,37 @@ ps.settings = {
 		collapsed = is_ingame,
 		items = {
 			{
-				id = "portal_general",
+				id = "general",
 				value_default = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				id = "portal_holy_mountain",
+				id = "holy_mountain",
 				value_default = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				id = "portal_fast_travel",
+				id = "fast_travel",
 				value_default = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				id = "portal_tower_entrance",
+				id = "tower_entrance",
 				value_default = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				id = "portal_mountain",
+				id = "mountain",
 				value_default = false,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				id = "portal_skull_island",
+				id = "skull_island",
 				value_default = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
-				id = "portal_summon",
+				id = "summon",
 				value_default = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
@@ -616,7 +619,13 @@ function ModSettingsUpdate(init_scope)
 		end
 
 		for _, mod_group in ipairs(ps.mod_compat_settings) do
-			mod_group.c = mod_group
+			if mod_group.type == "group" and not mod_group.c then
+				mod_group.c = {
+					r = .2,
+					g = .6,
+					b = .2,
+				}
+			end
 			add_modded_translation(mod_group, ps.translation_strings.mods)
 		end
 	end
@@ -657,9 +666,9 @@ function ModSettingsUpdate(init_scope)
 			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
 
 			if setting.items then
-				update_translations(setting.items, input_translations[setting.id], path .. (not setting.items and (setting.id .. ".") or ""), recursion + 1)
+				update_translations(setting.items, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
 			elseif setting.dependents then
-				update_translations(setting.dependents, input_translations[setting.id], path .. (not setting.items and (setting.id .. ".") or ""), recursion + 1)
+				update_translations(setting.dependents, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
 			end
 		end
 	end
@@ -684,7 +693,7 @@ function ModSettingsUpdate(init_scope)
 		end
 	end
 	local function save_setting(setting)
-		if setting.type == "group" then
+		if setting.items == "group" then
 			for i, item in ipairs(setting.items) do
 				save_setting(item)
 			end
@@ -813,6 +822,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		ModSettingSet(setting.path, not value)
+		print(setting.path)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
@@ -861,9 +871,14 @@ function ModSettingsGui(gui, in_main_menu)
 
 					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
 					GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
-					if ({GuiGetPreviousWidgetInfo(gui)})[3] and InputIsMouseButtonJustDown(1) then --check if element was clicked
-						GamePlaySound("ui", "ui/button_click", 0, 0)
-						setting.collapsed = not setting.collapsed
+					if ({GuiGetPreviousWidgetInfo(gui)})[3] then --check if element was clicked
+						c.r = math.min((c.r * 1.2)+.05, 1)
+						c.g = math.min((c.g * 1.2)+.05, 1)
+						c.b = math.min((c.b * 1.2)+.05, 1)
+						if InputIsMouseButtonJustDown(1) then
+							GamePlaySound("ui", "ui/button_click", 0, 0)
+							setting.collapsed = not setting.collapsed
+						end
 					end
 
 					GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
