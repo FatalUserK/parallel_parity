@@ -87,10 +87,9 @@ local function MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
 end
 --#endregion
 
-
 function OnModPreInit() --do misc stuff on mod preinit so other mods can append without mod load order issues
-	dofile_once("mods/parallel_parity/settings.lua")
-	ModSettingsUpdate(1) --do this to initialise and set default values for newly-appended mod settings
+	dofile_once("mods/parallel_parity/settings.lua") --do this to initialise and set default values for newly-appended mod settings
+	ModSettingsUpdate(1, true) --second parameter indicates this is run from init, do this to skip Gui*() calls from crashing the game
 
 	dofile_once("mods/parallel_parity/data.lua") --initialise data, we do it like this so mods can append their own or make changes
 

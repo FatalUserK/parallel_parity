@@ -32,7 +32,7 @@ function interacting(entity_who_interacted, entity_interacted, interactable_name
 			end
 		end
 	end
-	if not (target_x and target_y) then print("ERR - NO RIFT COORDINATES IDENTIFIED") return end
+	if not (target_x and target_y) then return end
 
 	ComponentSetValue2(teleport_comp, "target", target_x + 25, target_y)
 	EntityAddComponent2(entity_id, "LifetimeComponent", {

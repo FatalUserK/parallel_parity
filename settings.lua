@@ -583,7 +583,7 @@ function ModSettingsGuiCount()
 	return 1
 end
 
-function ModSettingsUpdate(init_scope)
+function ModSettingsUpdate(init_scope, is_init)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
 	if is_ingame then
@@ -661,9 +661,11 @@ function ModSettingsUpdate(init_scope)
 			end
 
 
-			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
-			setting.desc_w,setting.desc_h = GuiGetTextDimensions(dummy_gui, setting.description or "")
-			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
+			if not is_init then
+				setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
+				setting.desc_w,setting.desc_h = GuiGetTextDimensions(dummy_gui, setting.description or "")
+				if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
+			end
 
 			if setting.items then
 				update_translations(setting.items, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
@@ -822,7 +824,6 @@ local function BoolSetting(gui, x_offset, setting, c)
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		ModSettingSet(setting.path, not value)
-		print(setting.path)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)

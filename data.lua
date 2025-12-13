@@ -214,9 +214,6 @@ par.portals = {
 	["data/entities/projectiles/deck/summon_portal_teleport.xml"] =			par.settings.portal_summon, --EoE portal in underground jungle
 	["data/entities/buildings/teleport_robot_egg_return.xml"] =				par.settings.portal_summon, --EoE return portal
 }
-for key, value in pairs(par.portals) do
-	print(key .. " = " .. tostring(value))
-end
 
 par.localise = {
 	["data/scripts/biomes/lake_statue.lua"] = {
