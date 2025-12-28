@@ -39,12 +39,14 @@ ps.translation_strings = {
 	mod_ingame_warning = {
 		en = "Warning! Options for other mods will not show up here!",
 		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE:\nTHIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE MANY MOD COMPATIBILITY OPTIONS",
+		ptbr = "Aviso! Opções para outros mods não iram aparecer aqui!",
+		ptbr_desc = "Por conta de limitações com a Modding API, mods não podem interagir um com o outro até que o jogo inicie.\nPor favor entre em uma run se deseja ver opções relacionadas a outros mods\nNOTA:\nESSE MOD É MUITO NOVO E, PORTANTO, NÃO POSSUI MUITAS CONFIGURAÇÕES DE COMPATIBILIDADE COM OUTROS MODS ATUALMENTE",
 	},
 	general = {
 		en = "General",
 		en_desc = "Miscellaneous grouping of pixel scenes that don't fit any other category or earn their own",
 		ptbr = "Geral",
-		ptbr_desc = "Grupo diverso de \"cenas de pixels\" que não se encaixam em qualquer outra categoria ou que não ganham sua propria categoria",
+		ptbr_desc = "Grupo diverso de \"cenas de pixels\" que não se encaixam em qualquer outra categoria ou que não possuem categoria própria.",
 	},
 	visuals = {
 		en = "Visuals",
@@ -55,21 +57,31 @@ ps.translation_strings = {
 	return_rifts = {
 		en = "Return Rifts",
 		en_desc = "When a Portal teleports Minä back to the main world, spawns a rift that allows them to return",
+		ptbr = "Riftes do Retorno",
+		ptbr_desc = "Quando um Portal teleportar Minä de volta para o Mundo Principal, gerar um rifte que torna possível retornar ao Mundo Paralelo",
 	},
 	ng_plus = {
 		en = "New Game+",
 		en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental, but should be functional!",
+		ptbr = "New Game+",
+		ptbr_desc = "As mudanças também devem ser aplicadas às iterações do New Game+?\nAviso! Essa funcionalidade está imcompleta e, portanto, é um pouco experimental, mas deve ser funcional!",
 	},
 	mods = {
 		en = "Mods",
 		en_desc = "Content added by various mods",
+		ptbr = "Mods",
+		ptbr_desc = "Conteúdo adicionado por vários mods",
 		mod_compat_restart = {
 			en = "Restart to apply settings!",
 			en_desc = "It is highly recommended you restart your game to apply compatibility settings changes!\nSorry about the inconvenience, mod settings are inherently limited and things like this are necessary for this to work :(",
+			ptbr = "Reinicie para aplicar as configurações!",
+			ptbr_desc = "É altamente recomendado reiniciar o jogo para aplicar as mudanças das configurações de compatibilidade!\nPeço desculpas pelo inconveniente, configurações de mods são por natureza limitadas e coisas desse tipo são necessárias para fazer isso tudo funcionar :(",
 		},
 		no_mods_detected = {
 			en = "No mod settings found!",
 			en_desc = "Sorgy, nothing here",
+			ptbr = "Nenhuma configuração de mod encontrada!",
+			ptbr_desc = "Descurpa, nada aqui",
 		},
 	},
 	spliced_pixel_scenes = {
@@ -297,6 +309,8 @@ ps.translation_strings = {
 	reset = {
 		en = "[Reset]",
 		en_desc = "Resets all settings to default values",
+		ptbr = "[Resetar]",
+		ptbr_desc = "Redefine todas as configurações para os valores padrão",
 	}
 }
 
