@@ -15,6 +15,29 @@ local force_true = par.force_true
 ---@type nxml
 local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
 nxml.error_handler = function() end
+
+--patch each_child to check for `nil`
+
+---Iterate over each child of the xml element, use like:
+---```lua
+---for child in elem:each_child() do
+---	print(child.name)
+---end
+---```
+---@return fun(): element?
+local function custom_each_child(target)
+	if target == nil then return function() end end
+	---@cast target element
+	local i = 0
+	local n = #target.children
+
+	return function()
+		while i < n do
+			i = i + 1
+			return target.children[i]
+		end
+	end
+end
 --#endregion
 
 
@@ -205,10 +228,10 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		local pixel_scenes_xml = nxml.parse(ModTextFileGetContent(pixel_scenes_path))
 
 		local ps_data = {
-			spliced = pixel_scenes_xml:first_of("PixelSceneFiles"),
-			backgrounds = pixel_scenes_xml:first_of("BackgroundImages"),
-			scenes = pixel_scenes_xml:first_of("mBufferedPixelScenes"),
-		}
+			spliced = pixel_scenes_xml:first_of("PixelSceneFiles") or nxml.new_element(""),
+			backgrounds = pixel_scenes_xml:first_of("BackgroundImages") or nxml.new_element(""),
+			scenes = pixel_scenes_xml:first_of("mBufferedPixelScenes") or nxml.new_element(""),
+		} --"or nxml.new_element" is haxx to account for lunatics *cough cough* (conjurers) *cough cough* who delete any of these parts of the pixel scenes file
 
 		local remove_list = { --create remove list to cull target objects outside the world boundry
 			--spliced = {}, dont check for spliced ones cuz vanilla doesnt do this and i dont wanna have to think about this until some maniac actually does this
@@ -222,60 +245,58 @@ function OnMagicNumbersAndWorldSeedInitialized()
 				sps_filepath = sps_filepath .. sps.content[i] --get the filepath to the spliced pixel scene xml by building it from the content, idk nolla is weird.
 			end
 
-			if par.spliced_pixel_scenes[sps_filepath] then --check if pixel scene is flagged
-				if ModDoesFileExist(sps_filepath) then
-					local sps_xml = nxml.parse(ModTextFileGetContent(sps_filepath))
-					if sps_xml and sps_xml.children[1] then --this should generally just be one singular mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
-						for chunk in sps_xml.children[1]:each_child() do
-							local chunk_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
-							local chunk_pos_y = math.floor(chunk.attr.pos_y * 0.001953125)
+			if par.spliced_pixel_scenes[sps_filepath] and ModDoesFileExist(sps_filepath) then --check if pixel scene is flagged
+				local sps_xml = nxml.parse(ModTextFileGetContent(sps_filepath))
+				if sps_xml and sps_xml.children[1] then --this should generally just be one singular mBufferedPixelScenes component. if theres more than one child in the file then i feel i cant really be blamed for the lunacy of other modders
+					for chunk in sps_xml.children[1]:each_child() do
+						local chunk_pos_x = math.floor(chunk.attr.pos_x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
+						local chunk_pos_y = math.floor(chunk.attr.pos_y * 0.001953125)
 
-							for _, biome_map in ipairs(biome_maps) do
-								local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
+						for _, biome_map in ipairs(biome_maps) do
+							local biomescript = MapGetBiomeScript(biome_map, chunk_pos_x, chunk_pos_y)
 
-								if biomescript ~= nil then --definitely SHOULD NOT be nil
-									local map_scene_index = pixel_scenes_path .. "|" .. par.cached_maps[biome_map].w .. "|" .. par.cached_maps[biome_map].h
+							if biomescript ~= nil then --definitely SHOULD NOT be nil
+								local map_scene_index = pixel_scenes_path .. "|" .. par.cached_maps[biome_map].w .. "|" .. par.cached_maps[biome_map].h
 
-									local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky
-									--ng plus support code is temporary, I eventually wanna add special handling that predicts future permutations of the NG+ biome map and appends pixel scenes accordingly- even if its a bit overkill, it seems like good tech to have in my back-pocket
-									-- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
-									local skip_scraping = false
-									if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
-										if par.settings.ng_plus then
-											for _, ng_script in ipairs(par.ng_plus_biomescripts) do
-												if ng_script ~= biomescript then
-													biome_appends[ng_script] = biome_appends[ng_script] or {}
-													biome_appends[ng_script][map_scene_index] = biome_appends[ng_script][map_scene_index] or {scenes = {}, entities = {}}
+								local chunk_key = chunk_pos_x .. "_" .. chunk_pos_y --hehe chunky
+								--ng plus support code is temporary, I eventually wanna add special handling that predicts future permutations of the NG+ biome map and appends pixel scenes accordingly- even if its a bit overkill, it seems like good tech to have in my back-pocket
+								-- [[ NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+								local skip_scraping = false
+								if biome_map == "data/biome_impl/biome_map_newgame_plus.png" then
+									if par.settings.ng_plus then
+										for _, ng_script in ipairs(par.ng_plus_biomescripts) do
+											if ng_script ~= biomescript then
+												biome_appends[ng_script] = biome_appends[ng_script] or {}
+												biome_appends[ng_script][map_scene_index] = biome_appends[ng_script][map_scene_index] or {scenes = {}, entities = {}}
 
-													local biome_scene_index = biome_appends[ng_script][map_scene_index]
-													biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
-													biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
-														materials = chunk.attr.material_filename,
-														gfx = chunk.attr.colors_filename,
-														background = chunk.attr.background_filename,
-														offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
-														offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
-													}
-												end
+												local biome_scene_index = biome_appends[ng_script][map_scene_index]
+												biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
+												biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
+													materials = chunk.attr.material_filename,
+													gfx = chunk.attr.colors_filename,
+													background = chunk.attr.background_filename,
+													offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
+													offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
+												}
 											end
-										else
-											skip_scraping = true --do this cuz I HATE NG+ WHY DO I NEED TO DO SO MUCH STUPID STUFF JUST TO ACCOUNT FOR IT AAAAAAAAAAAAAAAA
 										end
-									end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
-									if not skip_scraping then
-										biome_appends[biomescript] = biome_appends[biomescript] or {} --make sure biomescript table exists
-										biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}} --make sure biomemap table exists
-
-										local biome_scene_index = biome_appends[biomescript][map_scene_index] --shorten to local val so less indexing is required
-										biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {} --make sure scene chunk table exists
-										biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = { --add to scene chunk table
-											materials = chunk.attr.material_filename,
-											gfx = chunk.attr.colors_filename,
-											background = chunk.attr.background_filename,
-											offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
-											offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
-										}
+									else
+										skip_scraping = true --do this cuz I HATE NG+ WHY DO I NEED TO DO SO MUCH STUPID STUFF JUST TO ACCOUNT FOR IT AAAAAAAAAAAAAAAA
 									end
+								end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+								if not skip_scraping then
+									biome_appends[biomescript] = biome_appends[biomescript] or {} --make sure biomescript table exists
+									biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}} --make sure biomemap table exists
+
+									local biome_scene_index = biome_appends[biomescript][map_scene_index] --shorten to local val so less indexing is required
+									biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {} --make sure scene chunk table exists
+									biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = { --add to scene chunk table
+										materials = chunk.attr.material_filename,
+										gfx = chunk.attr.colors_filename,
+										background = chunk.attr.background_filename,
+										offset_x = chunk.attr.pos_x - (chunk_pos_x * 512),
+										offset_y = chunk.attr.pos_y - (chunk_pos_y * 512),
+									}
 								end
 							end
 						end
@@ -450,7 +471,8 @@ function OnMagicNumbersAndWorldSeedInitialized()
 				for _, scene in ipairs(chunk) do
 					log(scene.materials)
 					if scene.materials == "" then scene.materials = "mods/parallel_parity/files/nil_materials.png" end
-					table_insert = table_insert .. ([[				{
+					table_insert = table_insert .. (
+[[					{
 						materials = "%s",
 						gfx = "%s",
 						background = "%s",

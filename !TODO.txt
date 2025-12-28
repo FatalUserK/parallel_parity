@@ -1,4 +1,0 @@
-PRE-RELEASE:
-add mod setting modularity
-get translations for mod settings from emi
-verify everything works
