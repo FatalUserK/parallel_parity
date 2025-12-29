@@ -702,10 +702,9 @@ function ModSettingsUpdate(init_scope, is_init)
 			tlcr_data_ordered[#tlcr_data_ordered].translator.offset = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text) + 4
 			local curr_x = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text .. tlcr_data_ordered[#tlcr_data_ordered].translator[1]) + 4
 			if curr_x > max_len then max_len = curr_x end
-			max_height = max_height + 13
 		end
 	end
-	tlcr_data_ordered.size = {max_len, max_height}
+	tlcr_data_ordered.size = {max_len, 13 * #tlcr_data_ordered}
 
 	local function update_translations(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
@@ -916,7 +915,7 @@ local function draw_translation_credits(gui, x, y)
 			GuiColorSetForNextWidget(gui, 0.921875, 0.921875, 0.26171875, 1)
 		end
 
-		local pos_x,pos_y = x + 5, y + 1 + (i-1)*13
+		local pos_x,pos_y = x + 5, y + 2 + (i-1)*13
 		GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 		GuiZSetForNextWidget(gui, -210)
 		GuiText(gui, pos_x, pos_y , tl.text)
