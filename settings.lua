@@ -24,6 +24,19 @@ local languages = { --translation keys
 	["日本語"] = "jp",
 	["한국어"] = "ko",
 }
+local langs_in_order = { --do this cuz special-indexed tables wont keep this order
+	"en",
+	"ru",
+	"ptbr",
+	"eses",
+	"de",
+	"frfr",
+	"it",
+	"pl",
+	"zhcn",
+	"jp",
+	"ko",
+}
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
@@ -32,6 +45,8 @@ ParallelParity_Settings = {
 	custom_setting_types = {}
 }
 local ps = ParallelParity_Settings
+
+
 
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the `languages` table above
@@ -311,10 +326,36 @@ ps.translation_strings = {
 		en_desc = "Resets all settings to default values",
 		ptbr = "[Resetar]",
 		ptbr_desc = "Redefine todas as configurações para os valores padrão",
+	},
+	translation_credit = {
+		en = "Translation Credits",
+		ptbr = "Créditos de Tradução",
+	},
+}
+
+--TRANSLATOR NOTE! you dont have to worry about `translation_credit_data`, i can handle this myself
+-- just please provide the colour value you would like your name to be as well as the translation for "[your translation] by [you]"
+local translation_credit_data = {
+	ptbr = {
+		text = "Tradução para português brasileiro por",
+		translator = { --note to self, account for multiple translators at some point if that ends up happening
+			"Absent Friend",
+			r = 0.87890625,
+			g = 0.57421875,
+			b = 0.74609375,
+		}
+	},
+	de = {
+		text = "German Translation by",
+		translator = {
+			"Xplosy",
+			r = 1,
+			g = 0.06640625,
+			b = 0.94140625,
+		}
 	}
 }
 
---Brazilian Portuguese translations by Absent Friend
 
 
 ps.mod_compat_settings = {
@@ -584,6 +625,10 @@ ps.settings = {
 		},
 	},
 	{
+		id = "translation_credit",
+		type = "tl_credit",
+	},
+	{
 		id = "reset",
 		type = "reset_button",
 	},
@@ -597,6 +642,7 @@ function ModSettingsGuiCount()
 	return 1
 end
 
+local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
@@ -645,6 +691,22 @@ function ModSettingsUpdate(init_scope, is_init)
 	end
 
 	local dummy_gui = GuiCreate()
+
+	local max_len = 0
+	local max_height = 0
+	--translation_credit_data.de
+	for _, lang in ipairs(langs_in_order) do
+		if translation_credit_data[lang] then
+			tlcr_data_ordered[#tlcr_data_ordered+1] = translation_credit_data[lang]
+			tlcr_data_ordered[#tlcr_data_ordered].highlighted = lang == current_language
+			tlcr_data_ordered[#tlcr_data_ordered].translator.offset = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text) + 4
+			local curr_x = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text .. tlcr_data_ordered[#tlcr_data_ordered].translator[1]) + 4
+			if curr_x > max_len then max_len = curr_x end
+			max_height = max_height + 13
+		end
+	end
+	tlcr_data_ordered.size = {max_len, max_height}
+
 	local function update_translations(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
 		path = path or ""
@@ -845,6 +907,27 @@ local function BoolSetting(gui, x_offset, setting, c)
 	end
 end
 
+local function draw_translation_credits(gui, x, y)
+	GuiLayoutBeginLayer(gui)
+	GuiZSetForNextWidget(gui, -200)
+	GuiImageNinePiece(gui, create_id(), x, y, tlcr_data_ordered.size[1]+10, tlcr_data_ordered.size[2]+2, 1, "data/ui_gfx/decorations/9piece0_gray.png")
+	for i,tl in ipairs(tlcr_data_ordered) do
+		if tl.highlighted then
+			GuiColorSetForNextWidget(gui, 0.921875, 0.921875, 0.26171875, 1)
+		end
+
+		local pos_x,pos_y = x + 5, y + 1 + (i-1)*13
+		GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+		GuiZSetForNextWidget(gui, -210)
+		GuiText(gui, pos_x, pos_y , tl.text)
+		local c = tl.translator
+		GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+		GuiZSetForNextWidget(gui, -210)
+		GuiText(gui, pos_x + tl.translator.offset, pos_y, tl.translator[1])
+	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
+	GuiLayoutEndLayer(gui)
+end
+
 --mod settings code partially nabbed from Anvil of Destiny, thanks Horscht o/
 function ModSettingsGui(gui, in_main_menu)
 
@@ -971,6 +1054,29 @@ function ModSettingsGui(gui, in_main_menu)
 					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+
+				elseif setting.type == "tl_credit" then
+					GuiText(gui, 0, 0, "")
+					local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
+					GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
+					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+
+					local c = {
+						r = 0.21,
+						g = 0.5,
+						b = 0.21,
+					}
+					if guiPrev[3] then
+						c.r = math.min((c.r * 1.2)+.05, 1)
+						c.g = math.min((c.g * 1.2)+.05, 1)
+						c.b = math.min((c.b * 1.2)+.05, 1)
+						draw_translation_credits(gui, x, y+12)
+					end
+
+					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+
 				elseif ps.custom_setting_types[setting.type] then
 					ps.custom_setting_types[setting.type](gui, offset, setting)
 				end

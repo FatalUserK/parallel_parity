@@ -1,7 +1,7 @@
 <Mod
 	name="Parallel Parity"
 	description=""
-	tags="gameplay,quality of life,tweaks"
-	dont_upload_folders="workshop_ignore|.vscode"
+	tags="gameplay,quality of life,tweaks,english translation,tradução português brasileiro,deutsche übersetzung"
+	dont_upload_folders="workshop_ignore"
 />
 	
