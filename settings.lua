@@ -692,8 +692,8 @@ function ModSettingsUpdate(init_scope, is_init)
 
 	local dummy_gui = GuiCreate()
 
+	tlcr_data_ordered = {}
 	local max_len = 0
-	local max_height = 0
 	--translation_credit_data.de
 	for _, lang in ipairs(langs_in_order) do
 		if translation_credit_data[lang] then
