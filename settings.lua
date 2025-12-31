@@ -293,8 +293,8 @@ ps.translation_strings = {
 		fast_travel = {
 			en = "To Portal Room",
 			en_desc = "The portal leading to the fast travel room created by Syväolento (Leviathan)\n(Fast Travel portals are already Parallel-World Local)",
-			ptbr = "Sala dos Portais", --@Absent Friend i made a mistake about the fast travel room! please correct translations here o/
-			ptbr_desc = "A sala de portais de viagem rápida, bem como o portal que leva a ela, criado por Syväolento (Leviatã)",
+			ptbr = "Para a Sala dos Portais",
+			ptbr_desc = "O portal criado por Syväolento (Leviatã) que leva à sala de viagem rápida\n(Os portais de viagem rápida já são programados para funcionar em Mundos Paralelos)",
 		},
 		tower_entrance = {
 			en = "Tower Entrance",
