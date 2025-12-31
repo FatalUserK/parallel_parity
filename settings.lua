@@ -340,9 +340,9 @@ local translation_credit_data = {
 		text = "Tradução para português brasileiro por",
 		translator = { --note to self, account for multiple translators at some point if that ends up happening
 			"Absent Friend",
-			r = 0.87890625,
-			g = 0.57421875,
-			b = 0.74609375,
+			r = 0.878431373,
+			g = 0.57254902,
+			b = 0.745098039,
 		}
 	},
 	de = {
@@ -350,10 +350,10 @@ local translation_credit_data = {
 		translator = {
 			"Xplosy",
 			r = 1,
-			g = 0.06640625,
-			b = 0.94140625,
+			g = 0.062745098,
+			b = 0.941176471,
 		}
-	}
+	} and nil --translations coming tomorrow
 }
 
 
@@ -625,12 +625,12 @@ ps.settings = {
 		},
 	},
 	{
-		id = "translation_credit",
-		type = "tl_credit",
-	},
-	{
 		id = "reset",
 		type = "reset_button",
+	},
+	{
+		id = "translation_credit",
+		type = "tl_credit",
 	},
 }
 

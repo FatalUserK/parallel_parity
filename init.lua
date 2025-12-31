@@ -242,7 +242,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 		for sps in ps_data.spliced:each_child() do
 			local sps_filepath = ""
 			for i = 1, #sps.content, 1 do
-				sps_filepath = sps_filepath .. sps.content[i] --get the filepath to the spliced pixel scene xml by building it from the content, idk nolla is weird.
+				sps_filepath = sps_filepath .. sps.content[i] --get the filepath to the spliced pixel scene xml by building it from the content, idk nolla is weird and nxml doesnt provide raw string.
 			end
 
 			if par.spliced_pixel_scenes[sps_filepath] and ModDoesFileExist(sps_filepath) then --check if pixel scene is flagged
