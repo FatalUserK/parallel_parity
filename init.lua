@@ -182,7 +182,7 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 	end
 
 	--better PW counter for Spatial Awareness perk
-	if par.settings.pw_counter or true then
+	if par.settings.pw_counter then
 		local pw_char_minus = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/minus.png")
 		local pw_char_0 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/0.png")
 		local pw_char_1 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/1.png")
@@ -198,7 +198,6 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 		ModTextFileSetContent("data/scripts/perks/map.lua", ModTextFileGetContent("data/scripts/perks/map.lua")
 			:modify([[GameCreateSpriteForXFrames( "data/particles/" .. name .. ".png", mi_x + 6, mi_y - 92, true, 0, 0, 1, true )]],
 				[[local pw_str = tostring(pw)
-				pw_str = "-1234567890"
 				local pw_chars = {
 					["-"] = {]] .. pw_char_minus .. [[, "mods/parallel_parity/files/pw_counter/minus.png"},
 					["0"] = {]] .. pw_char_0 .. [[, "mods/parallel_parity/files/pw_counter/0.png"},
@@ -217,13 +216,22 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 					local curr_char = pw_chars[char] or pw_chars["-"]
 					pw_str_len = pw_str_len + curr_char[1]
 				end
-				local pw_str_x_origin = (pw_str_len * -.5) + mi_x --halve and make negative plus mi_x
+				local pw_str_x_origin = (pw_str_len * -.5) + mi_x + 9 --halve and make negative plus mi_x plus arbitrary offset
 				local pw_str_x_offset = 0
 				for char in string.gmatch(pw_str, ".") do
 					local curr_char = pw_chars[char] or pw_chars["-"]
 					GameCreateSpriteForXFrames(curr_char[2], pw_str_x_origin + pw_str_x_offset, mi_y - 92, true, 0, 0, 1, true )
 					pw_str_x_offset = pw_str_x_offset + curr_char[1]
-				end]]))
+				end]]
+			)
+		)
+	end
+
+	--fix moon radar to work in PWs if moons are in PWs
+	if par.settings.moons then
+		ModTextFileSetContent("data/scripts/perks/radar_moon.lua", ModTextFileGetContent("data/scripts/perks/radar_moon.lua")
+			:modify("local moon_x = 0 + 256", "local moon_x = 0 + 256 + (GetParallelWorldPosition(pos_x, pos_y) * BiomeMapGetSize() * 512)")
+		)
 	end
 	--#endregion
 

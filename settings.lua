@@ -75,6 +75,10 @@ ps.translation_strings = {
 		ptbr = "Riftes do Retorno",
 		ptbr_desc = "Quando um Portal teleportar Minä de volta para o Mundo Principal, gerar um rifte que torna possível retornar ao Mundo Paralelo",
 	},
+	pw_counter = {
+		en = "Spatial Awareness PW Counter",
+		en_desc = "Improves the Parallel World indicator for Spatial Awareness to display values outside the usual limited range",
+	},
 	ng_plus = {
 		en = "New Game+",
 		en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental, but should be functional!",
@@ -394,6 +398,11 @@ ps.settings = {
 	{
 		id = "return_rifts",
 		value_default = false,
+		scope = MOD_SETTING_SCOPE_NEW_GAME,
+	},
+	{
+		id = "pw_counter",
+		value_default = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
