@@ -15,6 +15,7 @@ local force_true = par.force_true
 ---@type nxml
 local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
 nxml.error_handler = function() end
+local gui = GuiCreate()
 
 --patch each_child to check for `nil`
 
@@ -178,6 +179,51 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 		portal_x = portal_x + (GetParallelWorldPosition(x,y) * BiomeMapGetSize() * 512)
 	end]]))
 		end
+	end
+
+	--better PW counter for Spatial Awareness perk
+	if par.settings.pw_counter or true then
+		local pw_char_minus = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/minus.png")
+		local pw_char_0 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/0.png")
+		local pw_char_1 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/1.png")
+		local pw_char_2 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/2.png")
+		local pw_char_3 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/3.png")
+		local pw_char_4 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/4.png")
+		local pw_char_5 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/5.png")
+		local pw_char_6 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/6.png")
+		local pw_char_7 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/7.png")
+		local pw_char_8 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/8.png")
+		local pw_char_9 = GuiGetImageDimensions(gui, "mods/parallel_parity/files/pw_counter/9.png")
+
+		ModTextFileSetContent("data/scripts/perks/map.lua", ModTextFileGetContent("data/scripts/perks/map.lua")
+			:modify([[GameCreateSpriteForXFrames( "data/particles/" .. name .. ".png", mi_x + 6, mi_y - 92, true, 0, 0, 1, true )]],
+				[[local pw_str = tostring(pw)
+				pw_str = "-1234567890"
+				local pw_chars = {
+					["-"] = {]] .. pw_char_minus .. [[, "mods/parallel_parity/files/pw_counter/minus.png"},
+					["0"] = {]] .. pw_char_0 .. [[, "mods/parallel_parity/files/pw_counter/0.png"},
+					["1"] = {]] .. pw_char_1 .. [[, "mods/parallel_parity/files/pw_counter/1.png"},
+					["2"] = {]] .. pw_char_2 .. [[, "mods/parallel_parity/files/pw_counter/2.png"},
+					["3"] = {]] .. pw_char_3 .. [[, "mods/parallel_parity/files/pw_counter/3.png"},
+					["4"] = {]] .. pw_char_4 .. [[, "mods/parallel_parity/files/pw_counter/4.png"},
+					["5"] = {]] .. pw_char_5 .. [[, "mods/parallel_parity/files/pw_counter/5.png"},
+					["6"] = {]] .. pw_char_6 .. [[, "mods/parallel_parity/files/pw_counter/6.png"},
+					["7"] = {]] .. pw_char_7 .. [[, "mods/parallel_parity/files/pw_counter/7.png"},
+					["8"] = {]] .. pw_char_8 .. [[, "mods/parallel_parity/files/pw_counter/8.png"},
+					["9"] = {]] .. pw_char_9 .. [[, "mods/parallel_parity/files/pw_counter/9.png"},
+				}
+				local pw_str_len = 0
+				for char in string.gmatch(pw_str, ".") do
+					local curr_char = pw_chars[char] or pw_chars["-"]
+					pw_str_len = pw_str_len + curr_char[1]
+				end
+				local pw_str_x_origin = (pw_str_len * -.5) + mi_x --halve and make negative plus mi_x
+				local pw_str_x_offset = 0
+				for char in string.gmatch(pw_str, ".") do
+					local curr_char = pw_chars[char] or pw_chars["-"]
+					GameCreateSpriteForXFrames(curr_char[2], pw_str_x_origin + pw_str_x_offset, mi_y - 92, true, 0, 0, 1, true )
+					pw_str_x_offset = pw_str_x_offset + curr_char[1]
+				end]]))
 	end
 	--#endregion
 

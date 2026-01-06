@@ -98,7 +98,8 @@ par.settings = {
 
 	--Misc
 	ng_plus =				ModSettingGet("parallel_parity.ng_plus") or force_true,
-	return_rifts =			ModSettingGet("parallel_parity.return_rifts") or force_true
+	return_rifts =			ModSettingGet("parallel_parity.return_rifts") or force_true,
+	pw_counter =			ModSettingGet("parallel_parity.pw_counter") or force_true,
 }
 
 par.spliced_pixel_scenes = {
