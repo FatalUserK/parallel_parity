@@ -1,0 +1,76 @@
+<Entity tags="teleportable_NOT,sampo_or_boss,this_is_sampo">
+	
+	<VelocityComponent/>
+
+	<SimplePhysicsComponent/>
+
+	<UIInfoComponent
+		name="MISSINGNO"
+	/>
+
+	<LuaComponent
+		script_item_picked_up="mods/parallel_parity/files/shadow_kolmi/sampo/sampo.lua"
+		script_source_file="mods/parallel_parity/files/shadow_kolmi/sampo/sampo.lua"
+		execute_every_n_frame="15"
+		execute_on_added="1"
+	/>
+	
+  	<ItemComponent
+		item_name="MISSINGNO"
+		is_pickable="1"
+		ui_description="YOU SHOULDNT HAVE THIS!!"
+		preferred_inventory="FULL"
+		play_spinning_animation="0"
+		play_hover_animation="1"
+		>
+	</ItemComponent>
+  
+	<InheritTransformComponent
+		_tags="enabled_in_world,enabled_in_hand,enabled_in_inventory"
+		use_root_parent="1" >
+	</InheritTransformComponent>
+
+	<SpriteComponent 
+		_tags="enabled_in_world,enabled_in_hand"
+		image_file="mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo_sprite.xml" 
+		offset_x="12"
+		offset_y="12" 
+		z_index="0.5"
+		>
+	</SpriteComponent>
+
+	<ParticleEmitterComponent
+		_enabled="0"
+		emitted_material_name="spark_blue"
+		gravity.y="0.0"
+		lifetime_min="1"
+		lifetime_max="3"
+		x_vel_min="-5"
+		x_vel_max="5"
+		y_vel_min="-20"
+		y_vel_max="5"
+		count_min="55"
+		count_max="55"
+		render_on_grid="1"
+		fade_based_on_lifetime="1"
+		cosmetic_force_create="1"
+		collide_with_grid="0"
+		airflow_force="0.151"
+		airflow_time="1.01"
+		airflow_scale="0.03"
+		emission_interval_min_frames="12"
+		emission_interval_max_frames="12"
+		emit_cosmetic_particles="1"
+		area_circle_radius.max="12"
+		render_back="1"
+		is_emitting="1"
+	/>
+
+	<MusicEnergyAffectorComponent
+		energy_target="1.0"
+		fade_range="600.0"
+		fog_of_war_threshold="255" 
+		energy_lerp_up_speed_multiplier="5.0"
+	/>
+	
+</Entity>

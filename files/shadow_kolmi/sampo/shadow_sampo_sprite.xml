@@ -1,0 +1,19 @@
+<Sprite 
+	filename="mods/parallel_parity/files/shadow_kolmi/sampo/shampo.png" 
+	offset_x="12" 
+	offset_y="12" 
+	default_animation="default"
+	>
+	
+	<RectAnimation
+		name="default"
+		pos_x="0"
+		pos_y="0"
+		frame_count="8"
+		frame_width="24"
+		frame_height="24"
+		frame_wait="0.12"
+		frames_per_row="10"
+		loop="1"
+	/>
+</Sprite>

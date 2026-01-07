@@ -76,7 +76,7 @@ ps.translation_strings = {
 		ptbr_desc = "Quando um Portal teleportar Minä de volta para o Mundo Principal, gerar um rifte que torna possível retornar ao Mundo Paralelo",
 	},
 	pw_counter = {
-		en = "Spatial Awareness PW Counter",
+		en = "Spatial Awareness Fix",
 		en_desc = "Improves the Parallel World indicator for Spatial Awareness to display values outside the usual limited range",
 	},
 	ng_plus = {
