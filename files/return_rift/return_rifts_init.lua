@@ -5,7 +5,7 @@ function OnPlayerSpawned(player)
 		script_teleported = "mods/parallel_parity/files/return_rift/player_rift_check.lua",
 	})
 
-	--EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo.xml", 0, -100)
+	EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo.xml", 0, -100)
 end
 
 local function escape(str)
