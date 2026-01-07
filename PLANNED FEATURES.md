@@ -8,3 +8,4 @@ These are just bonus features that I may or may not get around to, we'll see
   - has a purple shadowy/glitchy sampo which when you interact with it, it disappears and the fight starts (no sampo farming for you!!)
     - shadowy/glitchy like the purple tapes from FNaF: Help Wanted
 - other shadow bosses??
+- add Cauldron and Eyes
