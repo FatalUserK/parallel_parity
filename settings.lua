@@ -133,7 +133,7 @@ ps.translation_strings = {
 			ptbr_desc = "A arena do chefão final após o Templo da Arte, incluindo a Montanha Sagrada antes dela",
 			KOLMI = {
 				en = "Spawn Kolmisilmä Varjo",
-				en_desc = "Spawns a dark reflection of Kolmisilmä in Parallel Worlds which you can optionally fight",
+				en_desc = "Spawns a reflection of Kolmisilmä in Parallel Worlds which you can optionally fight\nSampo not included",
 				ptbr = "Gerar Kolmisilmä Varjo",
 				ptbr_desc = "O chefão final deve aparecer em Mundos Paralelos?\nÉ altamente desaconcelhável habilitar esta opção, eu não sei quais são as ramificações de gerar mais de um chefão final.",
 			},
@@ -696,6 +696,11 @@ function ModSettingsUpdate(init_scope, is_init)
 				}
 			end
 			add_modded_translation(mod_group, ps.translation_strings.mods)
+		end
+
+		for _, lang in ipairs(langs_in_order) do
+			ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI
+
 		end
 	end
 
