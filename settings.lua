@@ -132,9 +132,9 @@ ps.translation_strings = {
 			ptbr = "Arena de Kolmisilmä",
 			ptbr_desc = "A arena do chefão final após o Templo da Arte, incluindo a Montanha Sagrada antes dela",
 			KOLMI = {
-				en = "Spawn Kolmisilmä",
-				en_desc = "Should the final boss spawn in Parallel Worlds\nThis is highly advised against, I do not know the ramifications of spawning more than one final boss.",
-				ptbr = "Gerar Kolmisilmä",
+				en = "Spawn Kolmisilmä Varjo",
+				en_desc = "Spawns a dark reflection of Kolmisilmä in Parallel Worlds which you can optionally fight",
+				ptbr = "Gerar Kolmisilmä Varjo",
 				ptbr_desc = "O chefão final deve aparecer em Mundos Paralelos?\nÉ altamente desaconcelhável habilitar esta opção, eu não sei quais são as ramificações de gerar mais de um chefão final.",
 			},
 		},
@@ -449,7 +449,7 @@ ps.settings = {
 				dependents = {
 					{
 						id = "KOLMI",
-						value_default = false,
+						value_default = true,
 						requires = { id = "parallel_parity.kolmi_arena", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
