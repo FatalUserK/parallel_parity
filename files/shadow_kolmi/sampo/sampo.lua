@@ -1,56 +1,93 @@
--- todo - change the color of the sampo
 local entity_id = GetUpdatedEntityID()
+local x,y = EntityGetTransform(entity_id)
 local orb_count = math.min(GameGetOrbCountThisRun(), 33)
+local name
 
-local name = GameTextGet("$par_shampo", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orb_count))
 
+if EntityGetName(entity_id) == "shampo" then
+	name = GameTextGet("$par_shampo", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orb_count))
 
-local item_comp = EntityGetFirstComponent(entity_id, "ItemComponent")
-if item_comp then
-	ComponentSetValue2(item_comp, "item_name", name)
+	local item_comp = EntityGetFirstComponent(entity_id, "ItemComponent")
+	if item_comp then
+		ComponentSetValue2(item_comp, "item_name", name)
+	end
+
+	local ui_comp = EntityGetFirstComponent(entity_id, "UIInfoComponent")
+	if ui_comp then
+		ComponentSetValue2(ui_comp, "name", name)
+	end
 end
 
-local ui_comp = EntityGetFirstComponent(entity_id, "UIInfoComponent")
-if ui_comp then
-	ComponentSetValue2(ui_comp, "name", name)
+
+function init()
+	SetRandomSeed(x,y)
+	if Random(1, 100) == 100 then
+		EntitySetName(entity_id, "shampo_funny")
+		name = "$par_shampo_funny"
+
+		if Random(1, 10000) == 10000 then
+			EntitySetName(entity_id, "shampoo")
+			name = "$par_shampoo"
+
+			local sprite_comp = EntityGetFirstComponent(entity_id, "SpriteComponent")
+			if sprite_comp then
+				ComponentSetValue2(sprite_comp, "rect_animation", "shampoo")
+			end
+		end
+
+
+		local item_comp = EntityGetFirstComponent(entity_id, "ItemComponent")
+		if item_comp then
+			ComponentSetValue2(item_comp, "item_name", name)
+		end
+
+		local ui_comp = EntityGetFirstComponent(entity_id, "UIInfoComponent")
+		if ui_comp then
+			ComponentSetValue2(ui_comp, "name", name)
+		end
+	end
 end
+
 
 
 
 function item_pickup(_, taker)
 	--check for player in case of some bs like a diff entity picking it up (eg fairmod bs)
 	if EntityHasTag(taker, "player_unit") or EntityHasTag(taker, "player_polymorphed") then
-		GamePrint(GameTextGet("$par_shampo_pickup", name))
-		GameScreenshake(400)
-	else
-		GameScreenshake(150)
+		local ui_comp = EntityGetFirstComponent(entity_id, "UIInfoComponent")
+		if ui_comp then
+			GamePrint(GameTextGet("$par_shampo_pickup", GameTextGetTranslatedOrNot(ComponentGetValue2(ui_comp, "name"))))
+		end
 	end
 
 
-	local x,y = EntityGetTransform(entity_id)
 
 	GameTriggerMusicFadeOutAndDequeueAll(10.0)
-	GamePlaySound("data/audio/Desktop/event_cues.bank", "event_cues/sampo_pick/create", x, y)
+	GamePlaySound("data/audio/Desktop/event_cues.bank", "event_cues/rune/destroy", x, y)
 	GameTriggerMusicEvent("music/boss_arena/battle", false, x, y)
 	SetRandomSeed(x, y)
 
-	EntityLoad("data/entities/particles/image_emitters/chest_effect.xml", x, y)
+	if EntityGetName(entity_id) ~= "shampoo" then
+		EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shampo_effect.xml", x, y)
+	else
+		EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shampoo_effect.xml", x, y)
+	end
 
 	local entities = {}
 	for _, value in ipairs(EntityGetInRadiusWithTag(x, y, 500, "sampo_or_boss")) do
-		if EntityGetName(value) == "$par_shadow_kolmi" then
+		if EntityGetName(value) == "$animal_par_shadow_kolmi" then
 			entities[#entities+1] = value
 		end
 	end
 	if  #entities == 0  then
-		print_error("boss - couldn't find sampo")
+		print_error("shadow_kolmi - couldn't find sampo")
 		return
 	end
 
 	local reference = EntityGetClosestWithTag(x, y, "reference")
 
 	if reference == 0 then
-		print_error("boss - couldn't find reference")
+		print_error("shadow_kolmi - couldn't find reference")
 		return
 	end
 

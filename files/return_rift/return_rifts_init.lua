@@ -6,6 +6,7 @@ function OnPlayerSpawned(player)
 	})
 
 	EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo.xml", 0, -100)
+	EntityLoad("data/entities/animals/par_shadow_kolmi/par_shadow_kolmi.xml", 0, -150)
 end
 
 local function escape(str)

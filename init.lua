@@ -233,6 +233,37 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 			:modify("local moon_x = 0 + 256", "local moon_x = 0 + 256 + (GetParallelWorldPosition(pos_x, pos_y) * BiomeMapGetSize() * 512)")
 		)
 	end
+
+	--cool and awesome shadow kolmi
+	
+	if par.settings.kolmi_arena and par.settings.spawn_kolmi then
+		ModTextFileSetContent("data/scripts/biomes/boss_arena.lua", ModTextFileGetContent("data/scripts/biomes/boss_arena.lua")
+			:modify([[EntityLoad( "data/entities/animals/boss_centipede/boss_centipede.xml", x, y )]],
+	[[if GetParallelWorldPosition(x, y) == 0 then
+		EntityLoad( "data/entities/animals/boss_centipede/boss_centipede.xml", x, y )
+	else
+		EntityLoad( "data/entities/animals/par_shadow_kolmi/par_shadow_kolmi.xml", x, y )
+	end;]]
+			)
+		)
+
+		ModTextFileSetContent("data/scripts/biomes/boss_arena.lua", ModTextFileGetContent("data/scripts/biomes/boss_arena.lua")
+			:modify([[EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )]],
+	[[if GetParallelWorldPosition(x, y) == 0 then
+		EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )
+	else
+		EntityLoad( "mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo.xml", x, y + 80 )
+	end;]]
+			)
+		)
+
+		ModTextFileSetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua", ModTextFileGetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua")
+			:modify([[EntityLoad( "data/entities/buildings/teleport_ending_victory_delay.xml", x_portal, y_portal )]],
+				[[EntityLoad( "data/entities/buildings/teleport_ending_victory_delay.xml", x_portal + GetParallelWorldPosition(EntityGetTransform(GetUpdatedEntityID()), 0) * BiomeMapGetSize() * 512, y_portal )]]
+			)
+		)
+		
+	end
 	--#endregion
 
 

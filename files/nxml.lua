@@ -968,7 +968,7 @@ end
 ---Allows you to have an xml element which represents a file, with changes made in the xml element reflecting in the file when you exit the `edit_file()` scope.
 ---Use like:
 ---```lua
----for content in nxml.edit_file("data/entities/animals/boss_centipede/boss_centipede.xml") do
+---for content in nxml.edit_file("data/entities/animals/par_shadow_kolmi/boss_centipede.xml") do
 ---	content:first_of("DamageModelComponent"):set("hp", 2)
 ---end
 ----- Kolmis file is edited once we exit the for loop.

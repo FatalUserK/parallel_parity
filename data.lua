@@ -244,7 +244,7 @@ par.localise = {
 	if( GameHasFlagRun( "ending_game_completed" ) == false ) then
 		EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )
 	end
-
+	
 	EntityLoad( "data/entities/animals/boss_centipede/reference_point.xml", x, y )]],
 		} or nil,
 	},

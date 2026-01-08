@@ -1,4 +1,4 @@
-<Entity tags="teleportable_NOT,sampo_or_boss,this_is_sampo">
+<Entity name="shampo" tags="teleportable_NOT,sampo_or_boss,this_is_sampo">
 	
 	<VelocityComponent/>
 
@@ -13,6 +13,7 @@
 		script_source_file="mods/parallel_parity/files/shadow_kolmi/sampo/sampo.lua"
 		execute_every_n_frame="15"
 		execute_on_added="1"
+		call_init_function="1"
 	/>
 	
   	<ItemComponent
@@ -72,5 +73,7 @@
 		fog_of_war_threshold="255" 
 		energy_lerp_up_speed_multiplier="5.0"
 	/>
+
+	<VariableStorageComponent name="name_is_locked"/>
 	
 </Entity>

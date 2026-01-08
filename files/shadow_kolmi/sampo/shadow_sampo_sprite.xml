@@ -16,4 +16,13 @@
 		frames_per_row="10"
 		loop="1"
 	/>
+	
+	<RectAnimation
+		name="shampoo"
+		pos_x="0"
+		pos_y="24"
+		frame_count="1"
+		frame_width="24"
+		frame_height="24"
+	/>
 </Sprite>
