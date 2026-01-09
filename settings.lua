@@ -762,7 +762,7 @@ function ModSettingsUpdate(init_scope, is_init)
 		if init_scope > 1 then
 			orbs = GameGetOrbCountThisRun()
 			if orbs <33 then
-				if orbs ~= 14 then
+				if orbs ~= 14 then --"$item_mcguffin_14: Truest of Knowledge" is an unused name in the code, just a bit of fun if you have this exact number
 					orbs = math.min(orbs, 13)
 				end
 			else
