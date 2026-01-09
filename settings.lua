@@ -78,7 +78,7 @@ ps.translation_strings = {
 	pw_counter = {
 		en = "Spatial Awareness Fix",
 		en_desc = "Improves the Parallel World indicator for Spatial Awareness to display values outside the usual limited range",
-	},
+	}, --NEEDS PTBR TRANSLATION
 	ng_plus = {
 		en = "New Game+",
 		en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental, but should be functional!",
@@ -133,10 +133,10 @@ ps.translation_strings = {
 			ptbr_desc = "A arena do chefão final após o Templo da Arte, incluindo a Montanha Sagrada antes dela",
 			KOLMI = {
 				en = "Spawn Kolmisilmä Varjo",
-				en_desc = "Spawns a reflection of Kolmisilmä in Parallel Worlds which you can optionally fight\nSampo not included",
+				en_desc = "Spawns a reflection of Kolmisilmä in Parallel Worlds which you can optionally fight\nSAMPO not included",
 				ptbr = "Gerar Kolmisilmä Varjo",
 				ptbr_desc = "O chefão final deve aparecer em Mundos Paralelos?\nÉ altamente desaconcelhável habilitar esta opção, eu não sei quais são as ramificações de gerar mais de um chefão final.",
-			},
+			}, --NEEDS PTBR UPDATE
 		},
 		tree = {
 			en = "Tree",
@@ -331,6 +331,10 @@ ps.translation_strings = {
 		ptbr = "[Resetar]",
 		ptbr_desc = "Redefine todas as configurações para os valores padrão",
 	},
+	recommended = {
+		en = "[Recommended]",
+		en_desc = "Resets all settings to recommended values\nThese are just what I personally would recommend, feel free to play how you want o/ -UserK",
+	}, --NEEDS PTBR TRANSLATION
 	translation_credit = {
 		en = "Translation Credits",
 		ptbr = "Créditos de Tradução",
@@ -350,7 +354,7 @@ local translation_credit_data = {
 		}
 	},
 	de = {
-		text = "German Translation by",
+		text = "German Translation by", --translate this to german btw
 		translator = {
 			"Xplosy",
 			r = 1,
@@ -388,26 +392,31 @@ ps.settings = {
 	{
 		id = "general",
 		value_default = true,
+		value_recommended = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
 		id = "visuals",
 		value_default = true,
+		value_recommended = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
 		id = "return_rifts",
 		value_default = false,
+		value_recommended = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
 		id = "pw_counter",
 		value_default = true,
+		value_recommended = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
 		id = "ng_plus",
 		value_default = true,
+		value_recommended = true,
 		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
@@ -427,11 +436,13 @@ ps.settings = {
 			{
 				id = "lava_lake",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "ORB",
 						value_default = false,
+						value_recommended = true,
 						requires = { id = "parallel_parity.lava_lake", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -440,16 +451,19 @@ ps.settings = {
 			{
 				id = "desert_skull",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "kolmi_arena",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "KOLMI",
-						value_default = true,
+						value_default = false,
+						value_recommended = true,
 						requires = { id = "parallel_parity.kolmi_arena", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -458,11 +472,13 @@ ps.settings = {
 			{
 				id = "tree",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "GREED",
 						value_default = false,
+						value_recommended = true,
 						requires = { id = "parallel_parity.tree", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -471,11 +487,13 @@ ps.settings = {
 			{
 				id = "dark_cave",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "HP",
 						value_default = true,
+						value_recommended = true,
 						requires = { id = "parallel_parity.dark_cave", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -484,22 +502,26 @@ ps.settings = {
 			{
 				id = "mountain_lake",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "lake_island",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "FIRE_ESSENCE",
-						value_default = true,
+						value_default = false,
+						value_recommended = true,
 						requires = { id = "parallel_parity.lake_island", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
 					{
 						id = "BOSS",
 						value_default = false,
+						value_recommended = false,
 						requires = { id = "parallel_parity.lake_island", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -508,16 +530,19 @@ ps.settings = {
 			{
 				id = "moons",
 				value_default = false,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "gourd_room",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "GOURDS",
-						value_default = true,
+						value_default = false,
+						value_recommended = true,
 						requires = { id = "parallel_parity.gourd_room", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -526,6 +551,7 @@ ps.settings = {
 			{
 				id = "meat_skull",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 		},
@@ -539,21 +565,25 @@ ps.settings = {
 			{
 				id = "hidden",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "fungal_altars",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "fishing_hut",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 				dependents = {
 					{
 						id = "BUNKERS",
 						value_default = true,
+						value_recommended = true,
 						requires = { id = "parallel_parity.fishing_hut", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 					},
@@ -562,31 +592,37 @@ ps.settings = {
 			{
 				id = "pyramid_boss",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "leviathan",
 				value_default = false,
+				value_recommended = false,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "avarice_diamond",
 				value_default = false,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "essence_eaters",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "music_machines",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "evil_eye",
 				value_default = false,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 		},
@@ -599,36 +635,43 @@ ps.settings = {
 			{
 				id = "general",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "holy_mountain",
 				value_default = true,
+				value_recommended = false,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "fast_travel",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "tower_entrance",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "mountain",
 				value_default = false,
+				value_recommended = false,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "skull_island",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 			{
 				id = "summon",
 				value_default = true,
+				value_recommended = true,
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 		},
@@ -636,6 +679,23 @@ ps.settings = {
 	{
 		id = "reset",
 		type = "reset_button",
+		highlight_c = {
+			r = 1,
+			g = .7,
+			b = .7,
+		},
+		render_condition = function() return not (InputIsKeyDown(225) or InputIsKeyDown(229)) end, --is not hold lshift or rshift
+	},
+	{
+		id = "recommended",
+		type = "reset_button",
+		reset_target = "value_recommended",
+		render_condition = function() return InputIsKeyDown(225) or InputIsKeyDown(229) end, --is holding lshift or rshift
+		c = {
+			r = 85/255,
+			g = 23/255,
+			b = 187/255,
+		},
 	},
 	{
 		id = "translation_credit",
@@ -725,7 +785,7 @@ function ModSettingsUpdate(init_scope, is_init)
 		local template_descs = ps.translation_strings.shadow_kolmi_desc_template
 		for _, lang in ipairs(langs_in_order) do
 			local lang_desc = lang .. "_desc"
-			if template_descs[lang] then shadow_kolmi_tl[lang_desc] = template_descs[lang]:gsub("Sampo", sampo_name) end
+			if template_descs[lang] then shadow_kolmi_tl[lang_desc] = template_descs[lang]:gsub("SAMPO", sampo_name) end
 		end
 	end
 
@@ -833,17 +893,18 @@ function ModSettingsUpdate(init_scope, is_init)
 end
 
 
-local function reset_settings_to_default(group)
+local function reset_settings_to_default(group, target)
+	target = target or "value_default"
 	for _, setting in ipairs(group) do
-		if setting.value_default ~= nil then
-			ModSettingSet(setting.path, setting.value_default)
+		if setting[target] ~= nil then
+			ModSettingSet(setting.path, setting[target]) --else print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
 		end
 
 		if setting.items then
-			reset_settings_to_default(setting.items)
+			reset_settings_to_default(setting.items, target)
 		end
 		if setting.dependents then
-			reset_settings_to_default(setting.dependents)
+			reset_settings_to_default(setting.dependents, target)
 		end
 	end
 end
@@ -977,7 +1038,14 @@ function ModSettingsGui(gui, in_main_menu)
 
 
 		for _, setting in ipairs(_settings) do
-			if setting.render_condition ~= false then
+
+			local render_setting
+			if type(setting.render_condition) == "function" then
+				render_setting = setting.render_condition() --stupid fuckin bullshit, needing me to use functions, lua should just update conditions in real-time :(
+			else
+				render_setting = setting.render_condition ~= false
+			end
+			if render_setting then
 				local setting_is_disabled = parent_is_disabled or (setting.requires and not ModSettingGet(setting.requires.id) == setting.requires.value)
 				if setting.type == "group" then
 					local c = setting.c and {
@@ -1074,18 +1142,22 @@ function ModSettingsGui(gui, in_main_menu)
 					GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
-					local c = {
+
+					local c = setting.c or {
 						r = 1,
 						g = 1,
 						b = 1,
 					}
 					if guiPrev[3] then
-						c.g = .7
-						c.b = .7
-						GuiTooltip(gui, setting.description, "")
+						c = setting.highlight_c or {
+							r = math.min((c.r * 1.2)+.05, 1),
+							g = math.min((c.g * 1.2)+.05, 1),
+							b = math.min((c.b * 1.2)+.05, 1),
+						}
+						DrawTooltip(gui, setting, x, y+12)
 						if InputIsMouseButtonJustUp(1) then
 							GamePlaySound("ui", "ui/button_click", 0, 0)
-							reset_settings_to_default(ps.settings)
+							reset_settings_to_default(ps.settings, setting.reset_target)
 						end
 					end
 
