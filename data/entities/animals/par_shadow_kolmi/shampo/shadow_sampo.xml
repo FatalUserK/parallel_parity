@@ -9,8 +9,8 @@
 	/>
 
 	<LuaComponent
-		script_item_picked_up="mods/parallel_parity/files/shadow_kolmi/sampo/sampo.lua"
-		script_source_file="mods/parallel_parity/files/shadow_kolmi/sampo/sampo.lua"
+		script_item_picked_up="data/entities/animals/par_shadow_kolmi/shampo/sampo.lua"
+		script_source_file="data/entities/animals/par_shadow_kolmi/shampo/sampo.lua"
 		execute_every_n_frame="15"
 		execute_on_added="1"
 		call_init_function="1"
@@ -33,7 +33,7 @@
 
 	<SpriteComponent 
 		_tags="enabled_in_world,enabled_in_hand"
-		image_file="mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo_sprite.xml" 
+		image_file="data/entities/animals/par_shadow_kolmi/shampo/shadow_sampo_sprite.xml" 
 		offset_x="12"
 		offset_y="12" 
 		z_index="0.5"

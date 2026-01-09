@@ -18,7 +18,7 @@
 		emission_interval_min_frames="1"
 		emission_interval_max_frames="1"
 		emit_cosmetic_particles="1"
-		image_animation_file="mods/parallel_parity/files/shadow_kolmi/sampo/shampo_effect.png"
+		image_animation_file="data/entities/animals/par_shadow_kolmi/shampo/shampo_effect.png"
 		emitter_lifetime_frames="90"
 	/>
 
@@ -45,7 +45,7 @@
 		emission_interval_min_frames="1"
 		emission_interval_max_frames="1"
 		emit_cosmetic_particles="1"
-		image_animation_file="mods/parallel_parity/files/shadow_kolmi/sampo/shampo_effect.png"
+		image_animation_file="data/entities/animals/par_shadow_kolmi/shampo/shampo_effect.png"
 		collide_with_grid="0"
 		emitter_lifetime_frames="20"
 	/>

@@ -1,0 +1,11 @@
+<Entity tags="hittable" >
+
+	<Base file="data/entities/animals/boss_centipede/body_chunks.xml">
+		<PhysicsImageShapeComponent image_file="data/entities/animals/par_shadow_kolmi/body_chunk_01.png"/>
+
+		<PhysicsImageShapeComponent image_file="data/entities/animals/par_shadow_kolmi/body_chunk_02.png"/>
+
+		<PhysicsImageShapeComponent image_file="data/entities/animals/par_shadow_kolmi/body_chunk_03.png"/>
+	</Base>
+
+</Entity>

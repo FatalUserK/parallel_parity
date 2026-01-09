@@ -1,5 +1,5 @@
 <Sprite 
-	filename="mods/parallel_parity/files/shadow_kolmi/sampo/shampo.png" 
+	filename="data/entities/animals/par_shadow_kolmi/shampo/shampo.png" 
 	offset_x="12" 
 	offset_y="12" 
 	default_animation="default"

@@ -1,0 +1,15 @@
+<Entity>
+
+	<Base file="data/entities/animals/par_shadow_kolmi/shampo/shampo_effect.xml">
+
+		<ParticleEmitterComponent
+			image_animation_file="data/entities/animals/par_shadow_kolmi/shampo/shampoo_effect.png"
+		/>
+
+		<ParticleEmitterComponent
+			image_animation_file="data/entities/animals/par_shadow_kolmi/shampo/shampoo_effect.png"
+		/>
+
+	</Base>
+
+</Entity>

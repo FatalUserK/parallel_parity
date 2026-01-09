@@ -252,7 +252,7 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 	[[if GetParallelWorldPosition(x, y) == 0 then
 		EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )
 	else
-		EntityLoad( "mods/parallel_parity/files/shadow_kolmi/sampo/shadow_sampo.xml", x, y + 80 )
+		EntityLoad( "data/entities/animals/par_shadow_kolmi/shampo/shadow_sampo.xml", x, y + 80 )
 	end;]]
 			)
 		)
@@ -263,6 +263,13 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 			)
 		)
 		
+		ModTextFileSetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua", ModTextFileGetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua")
+			:modify([[local o = EntityLoad( "data/entities/animals/boss_centipede/body_chunks.xml", x, y)]],
+				[[local o = EntityGetName(GetUpdatedEntityID()) == "$animal_par_shadow_kolmi" and
+					EntityLoad("data/entities/animals/par_shadow_kolmi/body_chunks.xml", x, y)
+					or EntityLoad( "data/entities/animals/boss_centipede/body_chunks.xml", x, y)]]
+			)
+		)
 	end
 	--#endregion
 

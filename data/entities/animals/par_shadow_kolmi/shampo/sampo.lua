@@ -74,9 +74,9 @@ function item_pickup(_, taker)
 	SetRandomSeed(x, y)
 
 	if EntityGetName(entity_id) ~= "shampoo" then
-		EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shampo_effect.xml", x, y)
+		EntityLoad("data/entities/animals/par_shadow_kolmi/shampo/shampo_effect.xml", x, y)
 	else
-		EntityLoad("mods/parallel_parity/files/shadow_kolmi/sampo/shampoo_effect.xml", x, y)
+		EntityLoad("data/entities/animals/par_shadow_kolmi/shampo/shampoo_effect.xml", x, y)
 	end
 
 	local entities = {}
@@ -91,7 +91,6 @@ function item_pickup(_, taker)
 	end
 
 	local reference = EntityGetClosestWithTag(x, y, "reference")
-
 	if reference == 0 then
 		print_error("shadow_kolmi - couldn't find reference")
 		return
