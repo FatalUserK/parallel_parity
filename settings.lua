@@ -700,18 +700,33 @@ function ModSettingsUpdate(init_scope, is_init)
 
 		local orbs = 12
 		if init_scope > 1 then
-			orbs = math.min(GameGetOrbCountThisRun(), 33)
+			orbs = GameGetOrbCountThisRun()
+			if orbs <33 then
+				if orbs ~= 14 then
+					orbs = math.min(orbs, 13)
+				end
+			else
+				orbs = 33
+			end
 		end
 
 		local sampo_name = GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs)
+		--kinda also wanted to add bs like pressing the [reset] button increments the orbcount, but i should leave it for now.
 
+		if not ps.translation_strings.shadow_kolmi_desc_template then
+			ps.translation_strings.shadow_kolmi_desc_template = {}
+
+			for _, lang in ipairs(langs_in_order) do
+				ps.translation_strings.shadow_kolmi_desc_template[lang] = ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI[lang .. "_desc"]
+			end
+		end
+
+		local shadow_kolmi_tl = ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI
+		local template_descs = ps.translation_strings.shadow_kolmi_desc_template
 		for _, lang in ipairs(langs_in_order) do
 			local lang_desc = lang .. "_desc"
-			local shadow_kolmi_tl = ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI
-			if shadow_kolmi_tl[lang_desc] then
-				shadow_kolmi_tl[lang_desc] = shadow_kolmi_tl[lang_desc]:gsub("Sampo", sampo_name)
-			end
-		end --kinda also wanted to add bs like pressing the [reset] button increments the orbcount, but i should leave it for now.
+			if template_descs[lang] then shadow_kolmi_tl[lang_desc] = template_descs[lang]:gsub("Sampo", sampo_name) end
+		end
 	end
 
 	local dummy_gui = GuiCreate()

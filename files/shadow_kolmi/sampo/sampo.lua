@@ -1,10 +1,16 @@
 local entity_id = GetUpdatedEntityID()
 local x,y = EntityGetTransform(entity_id)
-local orb_count = math.min(GameGetOrbCountThisRun(), 33)
 local name
 
 
 if EntityGetName(entity_id) == "shampo" then
+	local orb_count = GameGetOrbCountThisRun()
+	if orb_count <33 then
+		orb_count = math.min(orb_count, 13)
+	else
+		orb_count = 33
+	end
+
 	name = GameTextGet("$par_shampo", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orb_count))
 
 	local item_comp = EntityGetFirstComponent(entity_id, "ItemComponent")
