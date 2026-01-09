@@ -698,10 +698,20 @@ function ModSettingsUpdate(init_scope, is_init)
 			add_modded_translation(mod_group, ps.translation_strings.mods)
 		end
 
-		for _, lang in ipairs(langs_in_order) do
-			ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI
-
+		local orbs = 12
+		if init_scope > 1 then
+			orbs = math.min(GameGetOrbCountThisRun(), 33)
 		end
+
+		local sampo_name = GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs)
+
+		for _, lang in ipairs(langs_in_order) do
+			local lang_desc = lang .. "_desc"
+			local shadow_kolmi_tl = ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI
+			if shadow_kolmi_tl[lang_desc] then
+				shadow_kolmi_tl[lang_desc] = shadow_kolmi_tl[lang_desc]:gsub("Sampo", sampo_name)
+			end
+		end --kinda also wanted to add bs like pressing the [reset] button increments the orbcount, but i should leave it for now.
 	end
 
 	local dummy_gui = GuiCreate()
