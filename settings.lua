@@ -1035,8 +1035,6 @@ function ModSettingsGui(gui, in_main_menu)
 		offset = offset or 0
 		_settings = _settings or ps.settings
 
-
-
 		for _, setting in ipairs(_settings) do
 
 			local render_setting
