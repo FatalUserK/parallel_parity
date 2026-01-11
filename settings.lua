@@ -377,10 +377,6 @@ ps.mod_compat_settings = {
 --translations are separated for translators' convenience
 ps.settings = {
 	{
-		id = "test",
-		value_default = true
-	},
-	{
 		id = "mod_ingame_warning",
 		type = "note",
 		render_condition = not is_ingame,
