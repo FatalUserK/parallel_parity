@@ -40,9 +40,10 @@ local langs_in_order = { --do this cuz special-indexed tables wont keep this ord
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
---global table so mods can add their own settings
+--global table so mods can add their own settings or modify global magic numbers
 ParallelParity_Settings = {
-	custom_setting_types = {}
+	custom_setting_types = {},
+	offset_amount = 15,
 }
 local ps = ParallelParity_Settings
 
@@ -375,6 +376,10 @@ ps.mod_compat_settings = {
 
 --translations are separated for translators' convenience
 ps.settings = {
+	{
+		id = "test",
+		value_default = true
+	},
 	{
 		id = "mod_ingame_warning",
 		type = "note",
@@ -715,6 +720,26 @@ local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
+	local dummy_gui = not is_init and GuiCreate()
+	local screen_w,screen_h
+	local description_start_pos
+	local arbitrary_description_buffer = 11
+	if dummy_gui then
+		GuiStartFrame(dummy_gui)
+		screen_w,screen_h = GuiGetScreenDimensions(dummy_gui)
+
+		--[[ source for magic number -160 below
+		local inner_gui_width = 342
+		local category_offset = 3
+		local mod_setting_offset = 3
+		local mod_setting_desc_offset = 5
+		local start_pos_offset = (inner_gui_width * -.5) + category_offset + mod_setting_offset + mod_setting_desc_offset
+		--]]
+
+		description_start_pos = (screen_w * .5) - 160
+	end
+
+
 	if is_ingame then
 		if #ps.mod_compat_settings == 1 then
 			table.insert(ps.mod_compat_settings, {
@@ -789,32 +814,41 @@ function ModSettingsUpdate(init_scope, is_init)
 		end
 	end
 
-	local dummy_gui = GuiCreate()
-
-	tlcr_data_ordered = {}
-	local max_len = 0
-	--translation_credit_data.de
-	for _, lang in ipairs(langs_in_order) do
-		if translation_credit_data[lang] then
-			tlcr_data_ordered[#tlcr_data_ordered+1] = translation_credit_data[lang]
-			tlcr_data_ordered[#tlcr_data_ordered].highlighted = lang == current_language
-			tlcr_data_ordered[#tlcr_data_ordered].translator.offset = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text) + 4
-			local curr_x = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text .. tlcr_data_ordered[#tlcr_data_ordered].translator[1]) + 4
-			if curr_x > max_len then max_len = curr_x end
+	if dummy_gui then
+		tlcr_data_ordered = {}
+		local max_len = 0
+		for _, lang in ipairs(langs_in_order) do
+			if translation_credit_data[lang] then
+				tlcr_data_ordered[#tlcr_data_ordered+1] = translation_credit_data[lang]
+				tlcr_data_ordered[#tlcr_data_ordered].highlighted = lang == current_language
+				tlcr_data_ordered[#tlcr_data_ordered].translator.offset = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text) + 4
+				local curr_x = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text .. tlcr_data_ordered[#tlcr_data_ordered].translator[1]) + 4
+				if curr_x > max_len then max_len = curr_x end
+			end
 		end
+		tlcr_data_ordered.size = {max_len, 13 * #tlcr_data_ordered}
 	end
-	tlcr_data_ordered.size = {max_len, 13 * #tlcr_data_ordered}
 
-	local function update_translations(input_settings, input_translations, path, recursion)
+
+
+	local function update_translations_and_path(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
 		path = path or ""
 		input_settings = input_settings or ps.settings
 		input_translations = input_translations or ps.translation_strings
 		for key, setting in pairs(input_settings) do
-
 			setting.path = mod_id .. "." .. path .. setting.id
 			setting.type = setting.type or type(setting.value_default)
 			setting.text_offset_x = setting.text_offset_x or 0
+
+			if setting.items then
+				update_translations_and_path(setting.items, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
+			elseif setting.dependents then
+				update_translations_and_path(setting.dependents, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
+			end
+
+
+			if not dummy_gui then return end
 
 			if input_translations[setting.id] then
 				setting.name = input_translations[setting.id][current_language] or input_translations[setting.id].en or setting.id
@@ -829,27 +863,47 @@ function ModSettingsUpdate(init_scope, is_init)
 
 			if setting.description then
 				setting._description_lines = {}
+				local line_length_max = screen_w - description_start_pos - arbitrary_description_buffer - (recursion * ps.offset_amount)
+				local max_line_length = 0
 				for line in string.gmatch(setting.description, '([^\n]+)') do
-					setting._description_lines[#setting._description_lines+1] = line
+					local line_w = GuiGetTextDimensions(dummy_gui, setting.description or "")
+					if line_w > line_length_max then
+    					local split_lines = {}
+    					local current_line = ""
+    					for word in line:gmatch(".") do
+    					    local test_line = (current_line == "") and word or current_line .. "" .. word
+    					    local test_line_w = GuiGetTextDimensions(dummy_gui, test_line)
+    					    if test_line_w > line_length_max then
+    					        split_lines[#split_lines + 1] = current_line
+    					        current_line = word
+    					    else
+								if test_line_w > max_line_length then max_line_length = test_line_w end
+    					        current_line = test_line
+    					    end
+    					end
+    					-- Add the last line if it's not empty
+    					if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
+
+						local a = #setting._description_lines
+						for i, split_line in ipairs(split_lines) do
+							setting._description_lines[a+i] = split_line
+						end
+					else
+						if line_w > max_line_length then max_line_length = line_w end
+						setting._description_lines[#setting._description_lines+1] = line
+					end
+
+					setting.desc_w = max_line_length
+					setting.desc_h = (#setting._description_lines * 13) - 1
 				end
 			end
 
 
-			if not is_init then
-				setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
-				setting.desc_w,setting.desc_h = GuiGetTextDimensions(dummy_gui, setting.description or "")
-				if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
-			end
-
-			if setting.items then
-				update_translations(setting.items, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
-			elseif setting.dependents then
-				update_translations(setting.dependents, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
-			end
+			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
+			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
 		end
 	end
-	update_translations()
-	GuiDestroy(dummy_gui)
+	update_translations_and_path()
 
 	local function set_defaults(setting)
 		if setting.type == "group" then
@@ -889,7 +943,9 @@ function ModSettingsUpdate(init_scope, is_init)
 		set_defaults(setting)
 		save_setting(setting)
 	end
+
 	ModSettingSet(get_setting_id("_version"), mod_settings_version)
+	if dummy_gui then GuiDestroy(dummy_gui) end
 end
 
 
@@ -1095,7 +1151,7 @@ function ModSettingsGui(gui, in_main_menu)
 					end
 
 					--i think recursion just works here
-					if setting.collapsed ~= true then RenderModSettingsGui(gui, in_main_menu, setting.items, offset + 15, setting_is_disabled, recursion) end
+					if setting.collapsed ~= true then RenderModSettingsGui(gui, in_main_menu, setting.items, offset + ps.offset_amount, setting_is_disabled, recursion) end
 				elseif setting.type == "boolean" then
 					BoolSetting(gui, offset, setting, {
 						r = .7^recursion,
@@ -1190,7 +1246,7 @@ function ModSettingsGui(gui, in_main_menu)
 				end
 
 				if setting.dependents then
-					RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + 15, setting_is_disabled, recursion + 1)
+					RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + ps.offset_amount, setting_is_disabled, recursion + 1)
 				end
 			end
 		end
