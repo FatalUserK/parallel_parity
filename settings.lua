@@ -459,7 +459,7 @@ local translation_credit_data = {
 			g = 0.062745098,
 			b = 0.941176471,
 		}
-	} and nil --translations coming tomorrow
+	}
 }
 
 
