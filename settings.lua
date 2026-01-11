@@ -429,7 +429,7 @@ ps.translation_strings = {
 		en = "[Recommended]",
 		en_desc = "Resets all settings to recommended values\nThese are just what I personally would recommend, feel free to play how you want o/ -UserK",
 		de = "[Empfohlen]",
-		de_desc = "Setzt alle Einstellungen auf die empfohlenen Werte\nDiese Werte sind, was ich persönlich empfehlen würde, spiele aber wie Du möchtest! o/ -UserL",
+		de_desc = "Setzt alle Einstellungen auf die empfohlenen Werte\nDiese Werte sind, was ich persönlich empfehlen würde, spiele aber wie Du möchtest! o/ -UserK",
 	}, --NEEDS PTBR TRANSLATION
 	translation_credit = {
 		en = "Translation Credits",
