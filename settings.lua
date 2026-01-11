@@ -870,8 +870,8 @@ function ModSettingsUpdate(init_scope, is_init)
 					if line_w > line_length_max then
     					local split_lines = {}
     					local current_line = ""
-    					for word in line:gmatch(".") do
-    					    local test_line = (current_line == "") and word or current_line .. "" .. word
+    					for word in line:gmatch("%S+") do
+    					    local test_line = (current_line == "") and word or current_line .. " " .. word
     					    local test_line_w = GuiGetTextDimensions(dummy_gui, test_line)
     					    if test_line_w > line_length_max then
     					        split_lines[#split_lines + 1] = current_line
