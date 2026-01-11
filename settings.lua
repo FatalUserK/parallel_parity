@@ -844,7 +844,7 @@ function ModSettingsUpdate(init_scope, is_init)
 			end
 
 
-			if not dummy_gui then return end
+			if not dummy_gui then goto continue end
 
 			if input_translations[setting.id] then
 				setting.name = input_translations[setting.id][current_language] or input_translations[setting.id].en or setting.id
@@ -897,6 +897,8 @@ function ModSettingsUpdate(init_scope, is_init)
 
 			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
 			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
+
+			::continue::
 		end
 	end
 	update_translations_and_path()
