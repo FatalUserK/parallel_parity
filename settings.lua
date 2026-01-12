@@ -468,6 +468,8 @@ local translation_credit_data = {
 
 
 
+local function shift_is_down() return InputIsKeyDown(225) or InputIsKeyDown(229) end
+
 ps.mod_compat_settings = {
 	{
 		id = "mod_compat_restart",
@@ -1160,7 +1162,11 @@ local function BoolSetting(gui, x_offset, setting, c)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
-		ModSettingSet(setting.path, setting.value_default)
+		if shift_is_down() then
+			ModSettingSet(setting.path, setting.value_recommended)
+		else
+			ModSettingSet(setting.path, setting.value_default)
+		end
 	end
 end
 
