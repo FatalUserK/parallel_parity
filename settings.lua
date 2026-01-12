@@ -169,7 +169,7 @@ ps.translation_strings = {
 				ptbr_desc = "Gera uma cópia de Kolmisilmä em Mundos Paralelos, o qual você pode opcionalmente enfrentar\nSAMPO não incluído",
 				de = "Beschwöre Kolmisilmä Varjo",
 				de_desc = "Beschwört eine reflektion von Kolmisilmä in parallelen Welten, welche optional bekämpft werden kann\nSAMPO nicht inklusive",
-			},
+			}, --if in-game, "SAMPO" is replaced with current sampo name based on orb count, else it is replaced with "Sampo"
 		},
 		tree = {
 			en = "Tree",
