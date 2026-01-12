@@ -87,9 +87,11 @@ ps.translation_strings = {
 	pw_counter = {
 		en = "Spatial Awareness Fix",
 		en_desc = "Improves the Parallel World indicator for Spatial Awareness to display values outside the usual limited range",
+		ptbr = "Percepção Espacial (Correção)",
+		ptbr_desc = "Aprimora o indicador do Mundo Paralelo da Percepção Espacial, exibindo valores fora do limite normal",
 		de = "Räumliches Bewusstsein-Fix",
 		de_desc = "Verbessert den Parallelwelt-Indikator für Räumliches Bewusstsein um Werte außerhalb des üblichen Umfangs anzuzeigen",
-	}, --NEEDS PTBR TRANSLATION
+	},
 	ng_plus = {
 		en = "New Game+",
 		en_desc = "Should changes also apply to New Game+ iterations\nWarning! This feature is incomplete and is thus somewhat experimental, but should be functional!",
@@ -164,10 +166,10 @@ ps.translation_strings = {
 				en = "Spawn Kolmisilmä Varjo",
 				en_desc = "Spawns a reflection of Kolmisilmä in Parallel Worlds which you can optionally fight\nSAMPO not included",
 				ptbr = "Gerar Kolmisilmä Varjo",
-				ptbr_desc = "O chefão final deve aparecer em Mundos Paralelos?\nÉ altamente desaconcelhável habilitar esta opção, eu não sei quais são as ramificações de gerar mais de um chefão final.",
+				ptbr_desc = "Gera uma cópia de Kolmisilmä em Mundos Paralelos, o qual você pode opcionalmente enfrentar\nSAMPO não incluído",
 				de = "Beschwöre Kolmisilmä Varjo",
 				de_desc = "Beschwört eine reflektion von Kolmisilmä in parallelen Welten, welche optional bekämpft werden kann\nSAMPO nicht inklusive",
-			}, --NEEDS PTBR UPDATE --if in-game, "SAMPO" is replaced with current sampo name, else it is replaced with "Sa"
+			},
 		},
 		tree = {
 			en = "Tree",
@@ -429,9 +431,11 @@ ps.translation_strings = {
 	recommended = {
 		en = "[Recommended]",
 		en_desc = "Resets all settings to recommended values\nThese are just what I personally would recommend, feel free to play how you want o/ -UserK",
+		ptbr = "[Recomendado]",
+		ptbr_desc = "Redefine todas as configurações para os valores recomendados\nEssas são as que eu pessoalmente recomendo, sinta-se livre para jogar como quiser o/ -UserK",
 		de = "[Empfohlen]",
 		de_desc = "Setzt alle Einstellungen auf die empfohlenen Werte\nDiese Werte sind, was ich persönlich empfehlen würde, spiele aber wie Du möchtest! o/ -UserK",
-	}, --NEEDS PTBR TRANSLATION
+	},
 	translation_credit = {
 		en = "Translation Credits",
 		ptbr = "Créditos de Tradução",
