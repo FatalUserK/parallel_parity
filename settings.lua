@@ -813,12 +813,12 @@ function ModSettingsGuiCount()
 	return 1
 end
 
+local screen_w,screen_h
 local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
 
 	local dummy_gui = not is_init and GuiCreate()
-	local screen_w,screen_h
 	local description_start_pos
 	local arbitrary_description_buffer = 11
 	if dummy_gui then
@@ -1048,6 +1048,9 @@ function ModSettingsUpdate(init_scope, is_init)
 end
 
 
+--RENDERING
+local mouse_is_valid
+
 local function reset_settings_to_default(group, target)
 	target = target or "value_default"
 	for _, setting in ipairs(group) do
@@ -1114,7 +1117,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 	local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 	local clicked, rclicked, highlighted
-	if guiPrev[3] then
+	if guiPrev[3] and mouse_is_valid then
 		highlighted = true
 		if InputIsMouseButtonJustDown(1) then clicked = true end
 		if InputIsMouseButtonJustDown(2) then rclicked = true end
@@ -1182,8 +1185,15 @@ local function draw_translation_credits(gui, x, y)
 	GuiLayoutEndLayer(gui)
 end
 
---mod settings code partially nabbed from Anvil of Destiny, thanks Horscht o/
 function ModSettingsGui(gui, in_main_menu)
+	GuiLayoutBeginLayer(gui)
+	local x_orig,y_orig = (screen_w*.5) - 171.5, 49+.5
+	GuiZSetForNextWidget(gui, 1000)
+	GuiImageNinePiece(gui, create_id(), x_orig, y_orig, 340-1, 251-1, 0, "") --"data/temp/edge_c2_0.png", for debugging
+	mouse_is_valid = ({GuiGetPreviousWidgetInfo(gui)})[3]
+	--GuiZSetForNextWidget(gui, 1000)
+	--GuiImageNinePiece(gui, create_id(), x_orig, y_orig, 1, 1, 1, "data/temp/edge_c2_1.png") --"data/temp/edge_c2_0.png", for debugging
+	GuiLayoutEndLayer(gui)
 
 	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, parent_is_disabled, recursion)
 		recursion = recursion or 0
@@ -1228,7 +1238,7 @@ function ModSettingsGui(gui, in_main_menu)
 
 					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.ForceFocusable)
 					GuiImageNinePiece(gui, create_id(), x, y, setting.w, setting.h, 0)
-					if ({GuiGetPreviousWidgetInfo(gui)})[3] then --check if element was clicked
+					if ({GuiGetPreviousWidgetInfo(gui)})[3] and mouse_is_valid then --check if element was clicked
 						c.r = math.min((c.r * 1.2)+.05, 1)
 						c.g = math.min((c.g * 1.2)+.05, 1)
 						c.b = math.min((c.b * 1.2)+.05, 1)
@@ -1276,7 +1286,7 @@ function ModSettingsGui(gui, in_main_menu)
 					GuiImageNinePiece(gui, create_id(), x, y, setting.w+(setting.icon_w or 0)+(setting.text_offset_x or 0), setting.h, 0)
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
-					if guiPrev[3] and setting.description then
+					if guiPrev[3] and mouse_is_valid and setting.description then
 						c.r = math.min((c.r * 1.2)+.05, 1)
 						c.g = math.min((c.g * 1.2)+.05, 1)
 						c.b = math.min((c.b * 1.2)+.05, 1)
@@ -1301,7 +1311,7 @@ function ModSettingsGui(gui, in_main_menu)
 						g = 1,
 						b = 1,
 					}
-					if guiPrev[3] then
+					if guiPrev[3] and mouse_is_valid then
 						c = setting.highlight_c or {
 							r = math.min((c.r * 1.2)+.05, 1),
 							g = math.min((c.g * 1.2)+.05, 1),
@@ -1329,7 +1339,7 @@ function ModSettingsGui(gui, in_main_menu)
 						g = 0.5,
 						b = 0.21,
 					}
-					if guiPrev[3] then
+					if guiPrev[3] and mouse_is_valid then
 						c.r = math.min((c.r * 1.2)+.05, 1)
 						c.g = math.min((c.g * 1.2)+.05, 1)
 						c.b = math.min((c.b * 1.2)+.05, 1)

@@ -48,7 +48,7 @@ end
 local function escape(str) return str:gsub("[%(%)%.%%%+%-%*%?%[%^%$%]]", "%%%1") end
 
 string.modify = function(s, pattern, repl)
-	return s:gsub(escape(pattern), repl)
+	return s:gsub("\r\n", "\n"):gsub(escape(pattern), repl)
 end
 
 local function dump(o) --handy func i stole that prints an entire table
@@ -277,12 +277,8 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 	--Special Main-World Localisation
 
 	for path, biome in pairs(par.localise) do
-		for _, targets in ipairs(biome) do
+		for _, targets in pairs(biome) do --do pairs here cuz gaps in the table mess up ipairs i think
 			for _, code in ipairs(targets) do
-				print(code)
-				print(path)
-				print(tostring(ModTextFileGetContent(path):find(escape(code))))
-				ModTextFileSetContent(path, ModTextFileGetContent(path):gsub(escape(code), "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end;"))
 				ModTextFileSetContent(path, ModTextFileGetContent(path):modify(code, "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end;"))
 			end
 		end

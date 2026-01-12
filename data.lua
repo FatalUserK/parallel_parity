@@ -239,13 +239,9 @@ par.localise = {
 	["data/scripts/biomes/boss_arena.lua"] = {
 		par.settings.kolmi_arena and not par.settings.spawn_kolmi and {
 			[[EntityLoad( "data/entities/animals/boss_centipede/boss_music_buildup_trigger.xml", x, y )]],
-			[[EntityLoad( "data/entities/animals/boss_centipede/boss_centipede.xml", x, y )
-	-- if game is not completed
-	if( GameHasFlagRun( "ending_game_completed" ) == false ) then
-		EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )
-	end
-	
-	EntityLoad( "data/entities/animals/boss_centipede/reference_point.xml", x, y )]],
+			[[EntityLoad( "data/entities/animals/boss_centipede/boss_centipede.xml", x, y )]],
+			[[EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )]],
+			[[EntityLoad( "data/entities/animals/boss_centipede/reference_point.xml", x, y )]],
 		} or nil,
 	},
 	["data/scripts/biomes/mountain_tree.lua"] = {
