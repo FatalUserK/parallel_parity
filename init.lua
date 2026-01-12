@@ -279,6 +279,10 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 	for path, biome in pairs(par.localise) do
 		for _, targets in ipairs(biome) do
 			for _, code in ipairs(targets) do
+				print(code)
+				print(path)
+				print(tostring(ModTextFileGetContent(path):find(escape(code))))
+				ModTextFileSetContent(path, ModTextFileGetContent(path):gsub(escape(code), "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end;"))
 				ModTextFileSetContent(path, ModTextFileGetContent(path):modify(code, "if GetParallelWorldPosition(x, y) == 0 then " .. code .. " end;"))
 			end
 		end
