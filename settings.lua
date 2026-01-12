@@ -167,7 +167,7 @@ ps.translation_strings = {
 				ptbr_desc = "O chefão final deve aparecer em Mundos Paralelos?\nÉ altamente desaconcelhável habilitar esta opção, eu não sei quais são as ramificações de gerar mais de um chefão final.",
 				de = "Beschwöre Kolmisilmä Varjo",
 				de_desc = "Beschwört eine reflektion von Kolmisilmä in parallelen Welten, welche optional bekämpft werden kann\nSAMPO nicht inklusive",
-			}, --NEEDS PTBR UPDATE
+			}, --NEEDS PTBR UPDATE --if in-game, "SAMPO" is replaced with current sampo name, else it is replaced with "Sa"
 		},
 		tree = {
 			en = "Tree",
