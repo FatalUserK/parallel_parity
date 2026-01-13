@@ -9,8 +9,9 @@ and then
 ----append.lua
 local par = Parallel_Parity --i recommend doing this just for readability and whatnot, allows you to use `par.` instead of `Parallel_Parity.` for everything
 
-par.settings.mymodid = { --i would recommend creating your own space here to avoid name clashes
-	big_pixel_scene = ModSettingGet("parallel_parity.mymodid.my_big_awesome_spliced_pixel_scene")
+--i would recommend creating your own namespace here to avoid name clashes
+par.settings.mymodid = {
+	big_pixel_scene = ModSettingGet("parallel_parity.mods.mymodid.big_pixel_scene")
 } --setting path will be parallel_parity.(your settings path by ID separated by '.')
 
 --feel free to browse `mods/parallel_parity/data.lua` to see how i structure and connect the data used for the mod
@@ -27,7 +28,7 @@ for key,value in pairs(my_pixel_scenes) do
 end
 
 --or add single ones like this
-par.spliced_pixel_scenes["mods/modid/path/to/your/spliced/pixel_scene.xml"] = par.settings.mymodid.big_pixel_scene,
+par.spliced_pixel_scenes["mods/modid/path/to/your/spliced/pixel_scene.xml"] = par.settings.mods.mymodid.big_pixel_scene,
 --here we also use the setting space we grabbed earlier (though you will need to append settings.lua for this to work!)
 
 

@@ -561,7 +561,6 @@ ps.settings = {
 	},
 	{
 		id = "mods",
-		not_path = true,
 		type = "group",
 		items = ps.mod_compat_settings,
 		render_condition = is_ingame,
