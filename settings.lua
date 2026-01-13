@@ -436,6 +436,14 @@ ps.translation_strings = {
 		de = "[Empfohlen]",
 		de_desc = "Setzt alle Einstellungen auf die empfohlenen Werte\nDiese Werte sind, was ich persönlich empfehlen würde, spiele aber wie Du möchtest! o/ -UserK",
 	},
+	off = {
+		en = "[Off]",
+		en_desc = "Turns off all settings!\nLiterally why wouldn't you just turn off the mod?!?",
+	},
+	on = {
+		en = "[On]",
+		en_desc = "Turns on all settings!\nSurely intended",
+	},
 	translation_credit = {
 		en = "Translation Credits",
 		ptbr = "Créditos de Tradução",
@@ -450,25 +458,31 @@ local translation_credit_data = {
 		text = "Tradução para português brasileiro por",
 		translator = { --note to self, account for multiple translators at some point if that ends up happening
 			"Absent Friend",
-			r = 0.878431373,
-			g = 0.57254902,
-			b = 0.745098039,
+			r = 190/255,
+			g = 146/255,
+			b = 190/255,
 		}
 	},
 	de = {
 		text = "Deutsche Übersetzung von",
 		translator = {
 			"Xplosy",
-			r = 1,
-			g = 0.062745098,
-			b = 0.941176471,
+			r = 255/255,
+			g = 16/255,
+			b = 240/255,
 		}
 	}
 }
 
 
 
-local function shift_is_down() return InputIsKeyDown(225) or InputIsKeyDown(229) end
+local keyboard_state = 0
+local orbs = 0
+local original_orbs
+local orb_offset = 0
+local shadow_kolmi_desc_path
+local shadow_kolmi_template_desc
+local shadow_kolmi_desc = ""
 
 ps.mod_compat_settings = {
 	{
@@ -788,18 +802,70 @@ ps.settings = {
 			g = .7,
 			b = .7,
 		},
-		render_condition = function() return not (InputIsKeyDown(225) or InputIsKeyDown(229)) end, --is not hold lshift or rshift
+		render_condition = function() return keyboard_state == 0 end,
 	},
 	{
 		id = "recommended",
 		type = "reset_button",
 		reset_target = "value_recommended",
-		render_condition = function() return InputIsKeyDown(225) or InputIsKeyDown(229) end, --is holding lshift or rshift
+		render_condition = function() return keyboard_state == 1 end,
 		c = {
 			r = 85/255,
 			g = 23/255,
 			b = 187/255,
 		},
+	},
+	{
+		id = "off",
+		type = "reset_button",
+		reset_target = "value_false",
+		reset_target_default = false,
+		render_condition = function() return keyboard_state == 2 end,
+		c = {
+			r = 241/255,
+			g = 55/255,
+			b = 55/255,
+		},
+		click_func = function()
+			orbs = (orbs - 1) % 34
+			orb_offset = orbs - original_orbs
+
+			local _orbs = orbs
+			if _orbs > 14 then
+				_orbs = 33
+			end
+
+			local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. _orbs)
+			if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%+d)"):format(orb_offset) end
+
+			shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
+		end,
+	},
+	{
+		id = "on",
+		type = "reset_button",
+		reset_target = "value_true",
+		reset_target_default = true,
+		render_condition = function() return keyboard_state == 3 end,
+		c = {
+			r = 122/255,
+			g = 147/255,
+			b = 225/255,
+		},
+		click_func = function()
+			orbs = (orbs + 1) % 34
+			orb_offset = orbs - original_orbs
+
+			local _orbs = orbs
+			if _orbs > 14 then
+				_orbs = 33
+			end
+
+			local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. _orbs)
+			if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%+d)"):format(orb_offset) end
+
+			shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
+		end,
 	},
 	{
 		id = "translation_credit",
@@ -819,6 +885,7 @@ local screen_w,screen_h
 local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
+	orbs = 12
 
 	local dummy_gui = not is_init and GuiCreate()
 	local description_start_pos
@@ -881,37 +948,12 @@ function ModSettingsUpdate(init_scope, is_init)
 			end
 			add_modded_translation(mod_group, ps.translation_strings.mods)
 		end
-
-		local orbs = 12
 		if init_scope > 1 then
-			orbs = GameGetOrbCountThisRun()
-			if orbs <33 then
-				if orbs ~= 14 then --"$item_mcguffin_14: Truest of Knowledge" is an unused name in the code, just a bit of fun if you have this exact number
-					orbs = math.min(orbs, 13)
-				end
-			else
-				orbs = 33
-			end
-		end
-
-		local sampo_name = GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs)
-		--kinda also wanted to add bs like pressing the [reset] button increments the orbcount, but i should leave it for now.
-
-		if not ps.translation_strings.shadow_kolmi_desc_template then
-			ps.translation_strings.shadow_kolmi_desc_template = {}
-
-			for _, lang in ipairs(langs_in_order) do
-				ps.translation_strings.shadow_kolmi_desc_template[lang] = ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI[lang .. "_desc"]
-			end
-		end
-
-		local shadow_kolmi_tl = ps.translation_strings.spliced_pixel_scenes.kolmi_arena.KOLMI
-		local template_descs = ps.translation_strings.shadow_kolmi_desc_template
-		for _, lang in ipairs(langs_in_order) do
-			local lang_desc = lang .. "_desc"
-			if template_descs[lang] then shadow_kolmi_tl[lang_desc] = template_descs[lang]:gsub("SAMPO", sampo_name) end
+			orbs = math.min(GameGetOrbCountThisRun(), 15)
+			if orbs == 15 then orbs = 33 end
 		end
 	end
+	original_orbs = orbs
 
 	if dummy_gui then
 		tlcr_data_ordered = {}
@@ -997,6 +1039,19 @@ function ModSettingsUpdate(init_scope, is_init)
 				end
 			end
 
+			if setting.path == "parallel_parity.kolmi_arena.KOLMI" then
+				for i, desc_line in ipairs(setting._description_lines) do
+					if string.find(desc_line, "SAMPO") then
+						shadow_kolmi_desc_path = setting._description_lines
+						shadow_kolmi_template_desc = {
+							str = setting._description_lines[i],
+							num = i
+						}
+						shadow_kolmi_desc = string.gsub(desc_line, "SAMPO", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs))
+						break
+					end
+				end
+			end
 
 			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
 			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
@@ -1053,18 +1108,22 @@ end
 --RENDERING
 local mouse_is_valid
 
-local function reset_settings_to_default(group, target)
+local function reset_settings_to_default(group, target, default_value)
 	target = target or "value_default"
 	for _, setting in ipairs(group) do
-		if setting[target] ~= nil then
-			ModSettingSet(setting.path, setting[target]) --else print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
+		local target_value = setting[target]
+		if target_value == nil and type(default_value) == type(setting.value_default) then
+			target_value = default_value
+		end
+		if target_value ~= nil then
+			ModSettingSet(setting.path, target_value) else --print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
 		end
 
 		if setting.items then
-			reset_settings_to_default(setting.items, target)
+			reset_settings_to_default(setting.items, target, default_value)
 		end
 		if setting.dependents then
-			reset_settings_to_default(setting.dependents, target)
+			reset_settings_to_default(setting.dependents, target, default_value)
 		end
 	end
 end
@@ -1162,7 +1221,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
-		if shift_is_down() then
+		if keyboard_state == 1 then
 			ModSettingSet(setting.path, setting.value_recommended)
 		else
 			ModSettingSet(setting.path, setting.value_default)
@@ -1192,6 +1251,14 @@ local function draw_translation_credits(gui, x, y)
 end
 
 function ModSettingsGui(gui, in_main_menu)
+	keyboard_state = 0
+	if InputIsKeyDown(225) or InputIsKeyDown(229) then
+		keyboard_state = 1
+	end
+	if InputIsKeyDown(224) or InputIsKeyDown(228) then
+		keyboard_state = keyboard_state + 2
+	end
+
 	GuiLayoutBeginLayer(gui)
 	local x_orig,y_orig = (screen_w*.5) - 171.5, 49+.5
 	GuiZSetForNextWidget(gui, 1000)
@@ -1200,6 +1267,10 @@ function ModSettingsGui(gui, in_main_menu)
 	--GuiZSetForNextWidget(gui, 1000)
 	--GuiImageNinePiece(gui, create_id(), x_orig, y_orig, 1, 1, 1, "data/temp/edge_c2_1.png") --"data/temp/edge_c2_0.png", for debugging
 	GuiLayoutEndLayer(gui)
+
+	if shadow_kolmi_template_desc then
+		shadow_kolmi_desc_path[shadow_kolmi_template_desc.num] = shadow_kolmi_desc
+	end
 
 	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, parent_is_disabled, recursion)
 		recursion = recursion or 0
@@ -1325,8 +1396,11 @@ function ModSettingsGui(gui, in_main_menu)
 						}
 						DrawTooltip(gui, setting, x, y+12)
 						if InputIsMouseButtonJustUp(1) then
+							if setting.click_func then
+								setting.click_func()
+							end
 							GamePlaySound("ui", "ui/button_click", 0, 0)
-							reset_settings_to_default(ps.settings, setting.reset_target)
+							reset_settings_to_default(ps.settings, setting.reset_target, setting.reset_target_default)
 						end
 					end
 
