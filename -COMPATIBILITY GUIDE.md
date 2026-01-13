@@ -69,6 +69,7 @@ table.insert(ParallelParity_Settings.mod_compat_settings, {
 				en = "Custom Pixel Scenes!",
 				en_desc = "These are my custom pixel scenes!"
 				--if you provide a description for the current language like this, a tooltip will be displayed, otherwise there will be no tooltip.
+				--unless there is an english description, in which case it will display that and note that it is not translated into the current language
 			},
 		},
 		{
