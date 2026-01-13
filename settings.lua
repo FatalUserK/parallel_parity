@@ -440,7 +440,7 @@ ps.translation_strings = {
 		en = "[Off]",
 		en_desc = "Turns off all settings!\nLiterally why wouldn't you just turn off the mod?!?",
 		ptbr = "[Desl.]",
-		ptbr_desc = "Desativa todas as configurações!\nPor que não desativar o mod inteiro então, né?!?",
+		ptbr_desc = "Desativa todas as configurações!\nPor que não simplesmente desativar o mod inteiro, né?!?",
 	},
 	on = {
 		en = "[On]",
