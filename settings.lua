@@ -442,7 +442,7 @@ ps.translation_strings = {
 	},
 	on = {
 		en = "[On]",
-		en_desc = "Turns on all settings!\nSurely intended",
+		en_desc = "Turns on all settings!\nSurely how the mod was meant to be played.",
 	},
 	translation_credit = {
 		en = "Translation Credits",
