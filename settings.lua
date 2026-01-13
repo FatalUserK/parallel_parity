@@ -442,7 +442,7 @@ ps.translation_strings = {
 	},
 	on = {
 		en = "[On]",
-		en_desc = "Turns on all settings!\nSurely how the mod was meant to be played.",
+		en_desc = "Turns on all settings!\nThis is surely how the mod was meant to be played.",
 	},
 	translation_credit = {
 		en = "Translation Credits",
@@ -483,6 +483,24 @@ local orb_offset = 0
 local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
 local shadow_kolmi_desc = ""
+
+local function change_orb_count(amount)
+	orbs = (orbs + amount) % 37 --max orb count of 36
+	orb_offset = orbs - original_orbs
+
+	local _orbs = orbs
+	if _orbs > 13 then
+		_orbs = 33
+		if orbs == original_orbs == 14 then
+			_orbs = 14
+		end
+	end
+
+	local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. _orbs)
+	if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%+d)"):format(orb_offset) end
+
+	shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
+end
 
 ps.mod_compat_settings = {
 	{
@@ -584,6 +602,11 @@ ps.settings = {
 						value_recommended = true,
 						requires = { id = "parallel_parity.kolmi_arena", value = true },
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						hover_func = function()
+							if shadow_kolmi_template_desc then
+								shadow_kolmi_desc_path[shadow_kolmi_template_desc.num] = shadow_kolmi_desc
+							end
+						end,
 					},
 				},
 			},
@@ -827,18 +850,7 @@ ps.settings = {
 			b = 55/255,
 		},
 		click_func = function()
-			orbs = (orbs - 1) % 34
-			orb_offset = orbs - original_orbs
-
-			local _orbs = orbs
-			if _orbs > 14 then
-				_orbs = 33
-			end
-
-			local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. _orbs)
-			if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%+d)"):format(orb_offset) end
-
-			shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
+			change_orb_count(-1)
 		end,
 	},
 	{
@@ -853,18 +865,7 @@ ps.settings = {
 			b = 225/255,
 		},
 		click_func = function()
-			orbs = (orbs + 1) % 34
-			orb_offset = orbs - original_orbs
-
-			local _orbs = orbs
-			if _orbs > 14 then
-				_orbs = 33
-			end
-
-			local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. _orbs)
-			if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%+d)"):format(orb_offset) end
-
-			shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
+			change_orb_count(1)
 		end,
 	},
 	{
@@ -1180,6 +1181,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 	local clicked, rclicked, highlighted
 	if guiPrev[3] and mouse_is_valid then
 		highlighted = true
+		if setting.hover_func then setting.hover_func() end
 		if InputIsMouseButtonJustDown(1) then clicked = true end
 		if InputIsMouseButtonJustDown(2) then rclicked = true end
 		if (clicked or rclicked) and is_disabled then
@@ -1223,7 +1225,11 @@ local function BoolSetting(gui, x_offset, setting, c)
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		if keyboard_state == 1 then
 			ModSettingSet(setting.path, setting.value_recommended)
-		else
+		elseif keyboard_state == 2 then
+			ModSettingSet(setting.path, false)
+		elseif keyboard_state == 3 then
+			ModSettingSet(setting.path, true)
+		else --if 0
 			ModSettingSet(setting.path, setting.value_default)
 		end
 	end
@@ -1268,9 +1274,6 @@ function ModSettingsGui(gui, in_main_menu)
 	--GuiImageNinePiece(gui, create_id(), x_orig, y_orig, 1, 1, 1, "data/temp/edge_c2_1.png") --"data/temp/edge_c2_0.png", for debugging
 	GuiLayoutEndLayer(gui)
 
-	if shadow_kolmi_template_desc then
-		shadow_kolmi_desc_path[shadow_kolmi_template_desc.num] = shadow_kolmi_desc
-	end
 
 	local function RenderModSettingsGui(gui, in_main_menu, _settings, offset, parent_is_disabled, recursion)
 		recursion = recursion or 0
