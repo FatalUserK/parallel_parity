@@ -17,30 +17,6 @@ local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
 nxml.error_handler = function() end
 local gui = GuiCreate()
 
---patch each_child to check for `nil`
-
----Iterate over each child of the xml element, use like:
----```lua
----for child in elem:each_child() do
----	print(child.name)
----end
----```
----@return fun(): element?
-local function custom_each_child(target)
-	if target == nil then return function() end end
-	---@cast target element
-	local i = 0
-	local n = #target.children
-
-	return function()
-		while i < n do
-			i = i + 1
-			return target.children[i]
-		end
-	end
-end
---#endregion
-
 
 --convenient functions
 --#region
