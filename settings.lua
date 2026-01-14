@@ -1,6 +1,8 @@
 dofile_once("data/scripts/lib/mod_settings.lua")
 
----@
+--- note for anyone viewing this file:
+---mod assets are not loaded on the main menu, which means we can't split our work into more than one file or use custom libs or sprites
+---just wanted to justify why this file is (as of last updating this comment) 1453 lines
 
 local mod_id = "parallel_parity"
 mod_settings_version = 1
@@ -9,7 +11,7 @@ local function get_setting_id(name)
 	return mod_id .. "." .. name
 end
 
-local is_ingame = #ModGetActiveModIDs() > 0
+local mods_are_loaded = #ModGetActiveModIDs() > 0
 
 local languages = { --translation keys
 	["English"] = "en",
@@ -24,7 +26,7 @@ local languages = { --translation keys
 	["日本語"] = "jp",
 	["한국어"] = "ko",
 }
-local langs_in_order = { --do this cuz special-indexed tables wont keep this order
+local langs_in_order = { --do this cuz key-indexed tables wont keep this order
 	"en",
 	"ru",
 	"ptbr",
@@ -44,6 +46,7 @@ local current_language = languages[GameTextGetTranslatedOrNot("$current_language
 ParallelParity_Settings = {
 	custom_setting_types = {},
 	offset_amount = 15,
+	max_orbs = 36, -- for mods *cough* Apotheosis *cough cough* which increase the normal amount of orbs in the world
 }
 local ps = ParallelParity_Settings
 
@@ -489,19 +492,19 @@ local shadow_kolmi_template_desc
 local shadow_kolmi_desc = ""
 
 local function change_orb_count(amount)
-	orbs = (orbs + amount) % 37 --max orb count of 36
+	orbs = (orbs + amount) % (ps.max_orbs + 1)
 	orb_offset = orbs - original_orbs
 
-	local _orbs = orbs
-	if _orbs > 13 then
-		_orbs = 33
+	local orbs = orbs --do this to modify the value without affecting the global
+	if orbs > 13 then
+		orbs = 33
 		if orbs == original_orbs == 14 then
-			_orbs = 14
+			orbs = 14 --if the true orb count is 14, then allow the secret 14 orb sampo name to display
 		end
 	end
 
-	local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. _orbs)
-	if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%+d)"):format(orb_offset) end
+	local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs)
+	if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%d%+d)"):format(original_orbs, orb_offset) end
 
 	shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
 end
@@ -518,7 +521,7 @@ ps.settings = {
 	{
 		id = "mod_ingame_warning",
 		type = "note",
-		render_condition = not is_ingame,
+		render_condition = not mods_are_loaded,
 		c = {
 			r = .9,
 			g = .65,
@@ -563,14 +566,14 @@ ps.settings = {
 		id = "mods",
 		type = "group",
 		items = ps.mod_compat_settings,
-		render_condition = is_ingame,
+		render_condition = mods_are_loaded,
 		collapsed = false,
 	},
 	{
 		id = "spliced_pixel_scenes",
 		not_path = true,
 		type = "group",
-		collapsed = is_ingame,
+		collapsed = mods_are_loaded,
 		items = {
 			{
 				id = "lava_lake",
@@ -704,7 +707,7 @@ ps.settings = {
 		id = "other_pixel_scenes",
 		not_path = true,
 		type = "group",
-		collapsed = is_ingame,
+		collapsed = mods_are_loaded,
 		items = {
 			{
 				id = "hidden",
@@ -774,7 +777,7 @@ ps.settings = {
 	{
 		id = "portals",
 		type = "group",
-		collapsed = is_ingame,
+		collapsed = mods_are_loaded,
 		items = {
 			{
 				id = "general",
@@ -910,7 +913,7 @@ function ModSettingsUpdate(init_scope, is_init)
 	end
 
 
-	if is_ingame then
+	if mods_are_loaded then
 		if #ps.mod_compat_settings == 1 then
 			table.insert(ps.mod_compat_settings, {
 				id = "no_mods_detected",
@@ -1449,3 +1452,12 @@ function ModSettingsGui(gui, in_main_menu)
 
 	RenderModSettingsGui(gui, in_main_menu)
 end
+
+
+--this is just here to stop vsc from pestering me about undefined globals
+
+MOD_SETTING_SCOPE_NEW_GAME = MOD_SETTING_SCOPE_NEW_GAME --`0` - setting change (that is the value that's visible when calling ModSettingGet()) is applied after a new run is started
+MOD_SETTING_SCOPE_RUNTIME_RESTART = MOD_SETTING_SCOPE_RUNTIME_RESTART --`1` - setting change is applied on next game exe restart
+MOD_SETTING_SCOPE_RUNTIME = MOD_SETTING_SCOPE_RUNTIME --`2` - setting change is applied immediately
+MOD_SETTING_SCOPE_ONLY_SET_DEFAULT = MOD_SETTING_SCOPE_ONLY_SET_DEFAULT --`3` - this tells us that no changes should be applied. shouldn't be used in mod setting definition.
+GUI_OPTION = GUI_OPTION
