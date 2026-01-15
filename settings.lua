@@ -1040,21 +1040,21 @@ function ModSettingsUpdate(init_scope, is_init)
 				for line in string.gmatch(setting.description, '([^\n]+)') do
 					local line_w = GuiGetTextDimensions(dummy_gui, setting.description or "")
 					if line_w > line_length_max then
-    					local split_lines = {}
-    					local current_line = ""
-    					for word in line:gmatch("%S+") do
-    					    local test_line = (current_line == "") and word or current_line .. " " .. word
-    					    local test_line_w = GuiGetTextDimensions(dummy_gui, test_line)
-    					    if test_line_w > line_length_max then
-    					        split_lines[#split_lines + 1] = current_line
-    					        current_line = word
-    					    else
+						local split_lines = {}
+						local current_line = ""
+						for word in line:gmatch("%S+") do
+							local test_line = (current_line == "") and word or current_line .. " " .. word
+							local test_line_w = GuiGetTextDimensions(dummy_gui, test_line)
+							if test_line_w > line_length_max then
+								split_lines[#split_lines + 1] = current_line
+								current_line = word
+							else
 								if test_line_w > max_line_length then max_line_length = test_line_w end
-    					        current_line = test_line
-    					    end
-    					end
-    					-- Add the last line if it's not empty
-    					if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
+								current_line = test_line
+							end
+						end
+						-- Add the last line if it's not empty
+						if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
 
 						local a = #setting._description_lines
 						for i, split_line in ipairs(split_lines) do
