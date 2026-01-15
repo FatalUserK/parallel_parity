@@ -211,8 +211,8 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 	end
 
 	--cool and awesome shadow kolmi
-	
 	if par.settings.kolmi_arena and par.settings.spawn_kolmi then
+		--replace kolmi with shadow kolmi
 		ModTextFileSetContent("data/scripts/biomes/boss_arena.lua", ModTextFileGetContent("data/scripts/biomes/boss_arena.lua")
 			:modify([[EntityLoad( "data/entities/animals/boss_centipede/boss_centipede.xml", x, y )]],
 	[[if GetParallelWorldPosition(x, y) == 0 then
@@ -223,6 +223,7 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 			)
 		)
 
+		--replace sampo spawn with shampo
 		ModTextFileSetContent("data/scripts/biomes/boss_arena.lua", ModTextFileGetContent("data/scripts/biomes/boss_arena.lua")
 			:modify([[EntityLoad( "data/entities/animals/boss_centipede/sampo.xml", x, y + 80 )]],
 	[[if GetParallelWorldPosition(x, y) == 0 then
@@ -233,12 +234,14 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 			)
 		)
 
+		--portal location spawned after kolmi is defeated
 		ModTextFileSetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua", ModTextFileGetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua")
 			:modify([[EntityLoad( "data/entities/buildings/teleport_ending_victory_delay.xml", x_portal, y_portal )]],
 				[[EntityLoad( "data/entities/buildings/teleport_ending_victory_delay.xml", x_portal + GetParallelWorldPosition(EntityGetTransform(GetUpdatedEntityID()), 0) * BiomeMapGetSize() * 512, y_portal )]]
 			)
 		)
-		
+
+		--replace body chunks spawned with purple ones if its shadow kolmi
 		ModTextFileSetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua", ModTextFileGetContent("data/entities/animals/boss_centipede/boss_centipede_update.lua")
 			:modify([[local o = EntityLoad( "data/entities/animals/boss_centipede/body_chunks.xml", x, y)]],
 				[[local o = EntityGetName(GetUpdatedEntityID()) == "$animal_par_shadow_kolmi" and
