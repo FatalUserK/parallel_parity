@@ -483,6 +483,7 @@ local translation_credit_data = {
 
 
 
+local cached_settings_list = {}
 local keyboard_state = 0
 local orbs = 0
 local original_orbs
@@ -822,7 +823,30 @@ ps.settings = {
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 		},
-	},
+	}, --[[
+	{
+		id = "vertical_parity", --tempted to name it "Vertical Insanity"
+		type = "group",
+		collapsed = true,
+		items = {
+			{
+				id = "enabled",
+				value_default = false,
+				value_recommended = false,
+			},
+			{
+				id = "biome_names",
+				value_default = false,
+				value_recommended = true,
+			},
+			{
+				id = "include_biome_scenes",
+				value_default = true,
+				value_recommended = true,
+				requires = { id = "parallel_parity.vertical_parity.enabled", value = true },
+			}
+		}
+	},--]]
 	{
 		id = "reset",
 		type = "reset_button",
