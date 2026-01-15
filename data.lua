@@ -148,18 +148,18 @@ par.pixel_scenes = {
 
 	--backgrounds
 	--hidden backgrounds are for hidden messages, more info: https://noita.wiki.gg/wiki/Game_Lore#Secret_Messages
-	["data/biome_impl/hidden/boss_arena.png"] =						par.settings.visual,
-	["data/biome_impl/hidden/boss_arena_under.png"] =				par.settings.visual,
-	["data/biome_impl/hidden/boss_arena_under_right.png"] =			par.settings.visual,
-	["data/biome_impl/hidden/completely_random.png"] =				par.settings.visual,
-	["data/biome_impl/hidden/completely_random_2.png"] =			par.settings.visual,
-	["data/biome_impl/hidden/fungal_caverns_1.png"] =				par.settings.visual,
-	["data/biome_impl/hidden/holy_mountain_1.png"] =				par.settings.visual,
-	["data/biome_impl/hidden/jungle_right.png"] =					par.settings.visual,
-	["data/biome_impl/hidden/mountain_text.png"] =					par.settings.visual,
-	["data/biome_impl/hidden/under_the_wand_cave.png"] =			par.settings.visual,
-	["data/biome_impl/hidden/vault_inside.png"] =					par.settings.visual,
-	["data/biome_impl/hidden/crypt_left.png"] =						par.settings.visual,
+	["data/biome_impl/hidden/boss_arena.png"] =						par.settings.hidden,
+	["data/biome_impl/hidden/boss_arena_under.png"] =				par.settings.hidden,
+	["data/biome_impl/hidden/boss_arena_under_right.png"] =			par.settings.hidden,
+	["data/biome_impl/hidden/completely_random.png"] =				par.settings.hidden,
+	["data/biome_impl/hidden/completely_random_2.png"] =			par.settings.hidden,
+	["data/biome_impl/hidden/fungal_caverns_1.png"] =				par.settings.hidden,
+	["data/biome_impl/hidden/holy_mountain_1.png"] =				par.settings.hidden,
+	["data/biome_impl/hidden/jungle_right.png"] =					par.settings.hidden,
+	["data/biome_impl/hidden/mountain_text.png"] =					par.settings.hidden,
+	["data/biome_impl/hidden/under_the_wand_cave.png"] =			par.settings.hidden,
+	["data/biome_impl/hidden/vault_inside.png"] =					par.settings.hidden,
+	["data/biome_impl/hidden/crypt_left.png"] =						par.settings.hidden,
 
 	["data/biome_impl/liquidcave/liquidcave_corner.png"] =			par.settings.visual,
 	["data/biome_impl/liquidcave/liquidcave_top.png"] =				par.settings.visual,
@@ -190,6 +190,16 @@ par.pixel_scenes = {
 	["data/entities/buildings/maggotspot.xml"] =					par.settings.meat_skull, --Tiny boss spawn
 	["data/entities/animals/boss_fish/fish_giga.xml"] =				par.settings.leviathan,
 	["data/entities/items/pickup/evil_eye.xml"] =					par.settings.evil_eye, --Paha Silma pedestal to left of Tree
+}
+
+par.extra_pixel_scenes = {
+	["data/biome/_pixel_scenes.xml"] = {
+		par.settings.hidden and {
+			entity = "mods/parallel_parity/files/cauldron/cauldron.xml",
+			x = 3584,
+			y = 5120,
+		},
+	},
 }
 
 
