@@ -1,7 +1,7 @@
-local world_entity = GameGetWorldStateEntity()
 local world_comp = EntityGetFirstComponentIncludingDisabled(GameGetWorldStateEntity(), "WorldStateComponent")
-if world_comp then
-	if ComponentGetValue2(world_comp, "mods_have_been_active_during_this_run") == true then
+if world_comp and false then
+	print(tostring(ComponentGetValue2(world_comp, "mods_have_been_active_during_this_run")))
+	if ComponentGetValue2(world_comp, "mods_have_been_active_during_this_run") == true or DebugGetIsDevBuild() then
 		EntityKill(GetUpdatedEntityID())
 		return
 	end --twitch_has_been_active_during_this_run
@@ -69,19 +69,23 @@ if is_leap_year then
 	if day_of_year <= 335 then
 		void_day = void_calendar.leap:sub(day_of_year, day_of_year)
 	else
+		print("IS DECEMBER AND LEAP YEAR, PICKING RANDOM")
 		void_day = tostring(Random(0,1))
 	end
 else
 	void_day = void_calendar.normal:sub(day_of_year, day_of_year)
 end
 
-local cauldron_material = not (void_day == "0") and "void_liquid" or "air"
-print(cauldron_material)
+
 
 local x,y = EntityGetTransform(GetUpdatedEntityID())
 LoadPixelScene("mods/parallel_parity/files/cauldron/materials.png",
 	"mods/parallel_parity/files/cauldron/gfx.png",
 	x, y,
 	"mods/parallel_parity/files/cauldron/background.png",
-	true, nil, {["FFFF0000"] = cauldron_material}, nil, true
+	true, nil, nil, nil, true
 )
+
+if void_day == "0" or true then
+	EntityLoad("mods/parallel_parity/files/cauldron/void.xml", x+262, y+317)
+end

@@ -90,6 +90,7 @@ end
 function OnModPreInit() --do misc stuff on mod preinit so other mods can append without mod load order issues
 	dofile_once("mods/parallel_parity/settings.lua") --do this to initialise and set default values for newly-appended mod settings
 	ModSettingsUpdate(1, true) --second parameter indicates this is run from init, do this to skip Gui*() calls from crashing the game
+	ModMaterialsFileAdd("mods/parallel_parity/files/cauldron/pixel_scene_void_liquid.xml")
 
 	dofile_once("mods/parallel_parity/data.lua") --initialise data, we do it like this so mods can append their own or make changes
 
