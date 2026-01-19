@@ -25,6 +25,8 @@ local languages = { --translation keys
 	["简体中文"] = "zhcn",
 	["日本語"] = "jp",
 	["한국어"] = "ko",
+	["Українська"] = "ukr",
+	["Türkçe"] = "trtr",
 }
 local langs_in_order = { --do this cuz key-indexed tables wont keep this order
 	"en",
@@ -38,9 +40,12 @@ local langs_in_order = { --do this cuz key-indexed tables wont keep this order
 	"zhcn",
 	"jp",
 	"ko",
+	"ukr",
+	"trtr",
 }
 
-local current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
+
+local current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
 
 --global table so mods can add their own settings or modify global magic numbers
 ParallelParity_Settings = {
@@ -965,7 +970,7 @@ end
 local screen_w,screen_h
 local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
-	current_language = languages[GameTextGetTranslatedOrNot("$current_language")]
+	current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
 	orbs = 12
 
 	local dummy_gui = not is_init and GuiCreate()
@@ -1363,7 +1368,7 @@ local function draw_translation_credits(gui, x, y)
 	GuiImageNinePiece(gui, create_id(), x, y, tlcr_data_ordered.size[1]+10, tlcr_data_ordered.size[2]+2, 1, "data/ui_gfx/decorations/9piece0_gray.png")
 	for i,tl in ipairs(tlcr_data_ordered) do
 		if tl.highlighted then
-			GuiColorSetForNextWidget(gui, 0.921875, 0.921875, 0.26171875, 1)
+			GuiColorSetForNextWidget(gui, 236/255, 236/255, 67/255, 1)
 		end
 
 		local pos_x,pos_y = x + 5, y + 2 + (i-1)*13
