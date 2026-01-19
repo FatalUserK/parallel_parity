@@ -504,6 +504,7 @@ ps.translation_strings = {
 
 --TRANSLATOR NOTE! you dont have to worry about `translation_credit_data`, i can handle this myself
 -- just please provide the colour value you would like your name to be as well as the translation for "[your translation] by [you]"
+-- (if the structure "[text] [translator]" doesnt read well in your language, dw I'll handle it o/)
 local translation_credit_data = {
 	ptbr = {
 		text = "Tradução para português brasileiro por",
@@ -522,7 +523,7 @@ local translation_credit_data = {
 			g = 16/255,
 			b = 240/255,
 		}
-	}
+	},
 }
 
 
@@ -1057,8 +1058,6 @@ function ModSettingsUpdate(init_scope, is_init)
 
 
 	local function generate_tooltip_data(gui, str, offset_x)
-		print(tostring(str))
-		print(type(str))
 		offset_x = offset_x or 0
 
 		local data = {
@@ -1098,7 +1097,7 @@ function ModSettingsUpdate(init_scope, is_init)
 			end
 		end
 
-		data.w = max_line_length
+		data.w = max_line_length - 1
 		data.h = (#data.lines * 13) - 1
 
 		return data
@@ -1161,6 +1160,7 @@ function ModSettingsUpdate(init_scope, is_init)
 						end
 					end
 				end
+				setting.current_option = ModSettingGet(setting.path) or setting.value_default
 			end
 
 			if setting.description then
