@@ -1056,6 +1056,53 @@ function ModSettingsUpdate(init_scope, is_init)
 	end
 
 
+	local function generate_tooltip_data(gui, str, offset_x)
+		print(tostring(str))
+		print(type(str))
+		offset_x = offset_x or 0
+
+		local data = {
+			lines = {},
+			w = 0,
+			h = 0,
+		}
+
+		local line_length_max = screen_w - description_start_pos - arbitrary_description_buffer - offset_x
+		local max_line_length = 0
+		for line in string.gmatch(str, '([^\n]+)') do
+			local line_w = GuiGetTextDimensions(gui, str or "")
+			if line_w > line_length_max then
+				local split_lines = {}
+				local current_line = ""
+				for word in line:gmatch("%S+") do
+					local test_line = (current_line == "") and word or current_line .. " " .. word
+					local test_line_w = GuiGetTextDimensions(gui, test_line)
+					if test_line_w > line_length_max then
+						split_lines[#split_lines + 1] = current_line
+						current_line = word
+					else
+						if test_line_w > max_line_length then max_line_length = test_line_w end
+						current_line = test_line
+					end
+				end
+				-- Add the last line if it's not empty
+				if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
+
+				local a = #data.lines
+				for i, split_line in ipairs(split_lines) do
+					data.lines[a+i] = split_line
+				end
+			else
+				if line_w > max_line_length then max_line_length = line_w end
+				data.lines[#data.lines+1] = line
+			end
+		end
+
+		data.w = max_line_length
+		data.h = (#data.lines * 13) - 1
+
+		return data
+	end
 
 	local function update_translations_and_path(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
@@ -1085,60 +1132,47 @@ function ModSettingsUpdate(init_scope, is_init)
 
 			if not dummy_gui then goto continue end
 
-			if input_translations[setting.id] then
-				setting.name = input_translations[setting.id][current_language] or input_translations[setting.id].en or setting.id
-				if input_translations[setting.id].en_desc and not input_translations[setting.id][current_language] then --if there is english translation but no other translation
-					setting.description = input_translations[setting.id].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+			local translation = input_translations[setting.id]
+			if translation then
+				setting.name = translation[current_language] or translation.en or setting.id
+				if translation.en_desc and not translation[current_language] then --if there is english translation but no other translation
+					setting.description = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
 				else
-					setting.description = input_translations[setting.id][current_language .. "_desc"]
+					setting.description = translation[current_language .. "_desc"]
 				end
 			else
 				setting.name = setting.id
 			end
 
-			if setting.description then
-				setting._description_lines = {}
-				local line_length_max = screen_w - description_start_pos - arbitrary_description_buffer - (recursion * ps.offset_amount)
-				local max_line_length = 0
-				for line in string.gmatch(setting.description, '([^\n]+)') do
-					local line_w = GuiGetTextDimensions(dummy_gui, setting.description or "")
-					if line_w > line_length_max then
-						local split_lines = {}
-						local current_line = ""
-						for word in line:gmatch("%S+") do
-							local test_line = (current_line == "") and word or current_line .. " " .. word
-							local test_line_w = GuiGetTextDimensions(dummy_gui, test_line)
-							if test_line_w > line_length_max then
-								split_lines[#split_lines + 1] = current_line
-								current_line = word
-							else
-								if test_line_w > max_line_length then max_line_length = test_line_w end
-								current_line = test_line
-							end
+			if setting.options then
+				setting.option_names = {}
+				if translation and translation.options then
+					for _, option in ipairs(setting.options) do
+						setting.option_names[option] = translation.options[option][current_language] or translation.options[option].en or option
+						local desc
+						if translation.options[option][current_language .. "_desc"] then
+							desc = translation.options[option][current_language .. "_desc"]
+						elseif translation.options[option].en_desc then
+							desc = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
 						end
-						-- Add the last line if it's not empty
-						if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
-
-						local a = #setting._description_lines
-						for i, split_line in ipairs(split_lines) do
-							setting._description_lines[a+i] = split_line
+						if desc then
+							setting.option_descriptions = {}
+							setting.option_descriptions[option] = generate_tooltip_data(dummy_gui, desc, recursion * ps.offset_amount)
 						end
-					else
-						if line_w > max_line_length then max_line_length = line_w end
-						setting._description_lines[#setting._description_lines+1] = line
 					end
-
-					setting.desc_w = max_line_length
-					setting.desc_h = (#setting._description_lines * 13) - 1
 				end
 			end
 
+			if setting.description then
+				setting.desc_data = generate_tooltip_data(dummy_gui, setting.description, recursion * ps.offset_amount)
+			end
+
 			if setting.path == "parallel_parity.kolmi_arena.KOLMI" then
-				for i, desc_line in ipairs(setting._description_lines) do
+				for i, desc_line in ipairs(setting.desc_data.lines) do
 					if string.find(desc_line, "SAMPO") then
-						shadow_kolmi_desc_path = setting._description_lines
+						shadow_kolmi_desc_path = setting.desc_data.lines
 						shadow_kolmi_template_desc = {
-							str = setting._description_lines[i],
+							str = setting.desc_data.lines[i],
 							num = i
 						}
 						shadow_kolmi_desc = string.gsub(desc_line, "SAMPO", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs))
@@ -1226,17 +1260,17 @@ end
 
 ---Draws a tooltip at desired position
 ---@param gui gui
----@param setting table pass entire setting rather than raw text to take advantage of prebaked description string size
+---@param data table pass table of desc data to allow prebaking values
 ---@param x number
 ---@param y number
 ---@param sprite string? custom 9piece sprite
-local function DrawTooltip(gui, setting, x, y, sprite)
-	local text_size = {setting.desc_w, setting.desc_h}
+local function DrawTooltip(gui, data, x, y, sprite)
+	local text_size = {data.w, data.h}
 	sprite = sprite or "data/ui_gfx/decorations/9piece0_gray.png"
 	GuiLayoutBeginLayer(gui)
 	GuiZSetForNextWidget(gui, -200)
 	GuiImageNinePiece(gui, create_id(), x, y, text_size[1]+10, text_size[2]+2, 1, sprite)
-	for i,line in ipairs(setting._description_lines) do
+	for i,line in ipairs(data.lines) do
 		GuiZSetForNextWidget(gui, -210)
 		GuiText(gui, x + 5, y + 1 + (i-1)*13, line)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
@@ -1297,7 +1331,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 	GuiText(gui, x_offset + 19, 0, setting.name)
 
-	if highlighted and setting.description then DrawTooltip(gui, setting, x, y+12) end
+	if highlighted and setting.desc_data then DrawTooltip(gui, setting.desc_data, x, y+12) end
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 
 	local toggle_icon = ""
@@ -1454,11 +1488,11 @@ function ModSettingsGui(gui, in_main_menu)
 					GuiImageNinePiece(gui, create_id(), x, y, setting.w+(setting.icon_w or 0)+(setting.text_offset_x or 0), setting.h, 0)
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
-					if guiPrev[3] and mouse_is_valid and setting.description then
+					if guiPrev[3] and mouse_is_valid and setting.desc_data then
 						c.r = math.min((c.r * 1.2)+.05, 1)
 						c.g = math.min((c.g * 1.2)+.05, 1)
 						c.b = math.min((c.b * 1.2)+.05, 1)
-						DrawTooltip(gui, setting, x, y+12)
+						DrawTooltip(gui, setting.desc_data, x, y+12)
 					end
 
 					if setting.icon then
@@ -1467,6 +1501,13 @@ function ModSettingsGui(gui, in_main_menu)
 					end
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x + offset, 0, setting.name)
+				elseif setting.type == "options" then
+					GuiText(gui, 0, 0, "")
+					local _,_,_,x, y = GuiGetPreviousWidgetInfo(gui)
+					local text = setting.name .. ": " .. setting.current_option
+
+
+
 				elseif setting.type == "reset_button" then
 					GuiText(gui, 0, 0, "")
 					local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
@@ -1485,7 +1526,7 @@ function ModSettingsGui(gui, in_main_menu)
 							g = math.min((c.g * 1.2)+.05, 1),
 							b = math.min((c.b * 1.2)+.05, 1),
 						}
-						DrawTooltip(gui, setting, x, y+12)
+						if setting.desc_data then DrawTooltip(gui, setting.desc_data, x, y+12) end
 						if InputIsMouseButtonJustUp(1) then
 							if setting.click_func then
 								setting.click_func()
