@@ -967,6 +967,11 @@ function ModSettingsUpdate(init_scope, is_init)
 					add_modded_translation(dependent, translation_path[setting.id])
 				end
 			end
+			if setting.data then
+				for _, dependent in ipairs(setting.data) do
+					add_modded_translation(dependent, translation_path[setting.id])
+				end
+			end
 		end
 
 		for _, mod_group in ipairs(ps.mod_compat_settings) do
@@ -1009,14 +1014,23 @@ function ModSettingsUpdate(init_scope, is_init)
 		input_settings = input_settings or ps.settings
 		input_translations = input_translations or ps.translation_strings
 		for key, setting in pairs(input_settings) do
+			if not setting.id then goto continue end
 			setting.path = mod_id .. "." .. path .. setting.id
 			setting.type = setting.type or type(setting.value_default)
 			setting.text_offset_x = setting.text_offset_x or 0
 
-			if setting.items then
-				update_translations_and_path(setting.items, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
-			elseif setting.dependents then
-				update_translations_and_path(setting.dependents, input_translations[setting.id], path .. (not setting.not_path and (setting.id .. ".") or ""), recursion + 1)
+			local child_path = path .. (not setting.not_path and (setting.id .. ".") or "")
+			for _, v in pairs(setting) do
+				if type(v) == "table" then
+					local is_table_of_tables = true
+					for _, item in pairs(v) do
+						if type(item) ~= "table" then is_table_of_tables = false end
+					end
+
+					if is_table_of_tables then
+						update_translations_and_path(v, input_translations[setting.id], child_path, recursion + 1)
+					end
+				end
 			end
 
 
@@ -1093,35 +1107,30 @@ function ModSettingsUpdate(init_scope, is_init)
 	update_translations_and_path()
 
 	local function set_defaults(setting)
-		if setting.type == "group" then
-			for i, item in ipairs(setting.items) do
-				set_defaults(item)
-			end
-		else
-			if setting.value_default ~= nil and ModSettingGet(setting.path) == nil then
-				ModSettingSet(setting.path, setting.value_default)
-			end
-			if setting.dependents then
-				set_defaults(setting.dependents)
-				for i, item in ipairs(setting.dependents) do
-					set_defaults(item)
+		if setting.value_default ~= nil and ModSettingGet(setting.path) then
+			ModSettingSet(setting.path, setting.value_default)
+		end
+
+		for _, value in pairs(setting) do
+			if type(value) == "table" then
+				for _, item in ipairs(value) do
+					if type(item) == "table" then set_defaults(item) end
 				end
 			end
 		end
 	end
 	local function save_setting(setting)
-		if setting.items == "group" then
-			for i, item in ipairs(setting.items) do
-				save_setting(item)
-			end
-		elseif setting.id ~= nil and setting.scope ~= nil and setting.scope >= init_scope then
+		if setting.id ~= nil and setting.scope ~= nil and setting.scope >= init_scope then
 			local next_value = ModSettingGetNextValue(setting.path)
 			if next_value ~= nil then
 				ModSettingSet(setting.path, next_value)
 			end
-			if setting.dependents then
-				for i, item in ipairs(setting.dependents) do
-					save_setting(item)
+		end
+
+		for _, value in pairs(setting) do
+			if type(value) == "table" then
+				for _, item in ipairs(value) do
+					if type(item) == "table" then save_setting(item) end
 				end
 			end
 		end

@@ -1,10 +1,9 @@
 local world_comp = EntityGetFirstComponentIncludingDisabled(GameGetWorldStateEntity(), "WorldStateComponent")
-if world_comp and false then
-	print(tostring(ComponentGetValue2(world_comp, "mods_have_been_active_during_this_run")))
-	if ComponentGetValue2(world_comp, "mods_have_been_active_during_this_run") == true or DebugGetIsDevBuild() then
+if world_comp then
+	if ComponentGetValue2(world_comp, "mods_have_been_active_during_this_run") or DebugGetIsDevBuild() then
 		EntityKill(GetUpdatedEntityID())
 		return
-	end --twitch_has_been_active_during_this_run
+	end
 end
 
 local year,month,day = GameGetDateAndTimeLocal()
@@ -23,7 +22,7 @@ local spoof_date = {
 TimeLocal = spoof_date --]]
 
 
--- fun fact, leap years are every 4 years UNLESS it is a century year that isnt divisble by 400 (so 2000 was a leap year, but 2100 wont be)
+-- fun fact, leap years are every 4 years UNLESS it is a century year that isnt divisble by 400 (so 2000 was a leap year, but 2100 wont be) 
 local is_leap_year
 if year % 4 == 0 then
 	if year % 100 == 0 then
@@ -76,16 +75,12 @@ else
 	void_day = void_calendar.normal:sub(day_of_year, day_of_year)
 end
 
-
+local cauldron_material = void_day == "0" and "pixel_scene_void_liquid" or "air"
 
 local x,y = EntityGetTransform(GetUpdatedEntityID())
 LoadPixelScene("mods/parallel_parity/files/cauldron/materials.png",
 	"mods/parallel_parity/files/cauldron/gfx.png",
 	x, y,
 	"mods/parallel_parity/files/cauldron/background.png",
-	true, nil, nil, nil, true
+	true, nil, {["FFFF0000"] = cauldron_material}, nil, true
 )
-
-if void_day == "0" or true then
-	EntityLoad("mods/parallel_parity/files/cauldron/void.xml", x+262, y+317)
-end

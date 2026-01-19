@@ -1,0 +1,8 @@
+<Materials>
+	<CellDataChild
+		_parent="void_liquid"
+		name="pixel_scene_void_liquid"
+		wang_color="ffab33ba"
+		lifetime="10200"
+	/>
+</Materials>
