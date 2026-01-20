@@ -428,6 +428,19 @@ ps.translation_strings = {
 			de_desc = "Die Portale des Eis der Technologie, wo der Das Ende von allem-Zauber gefunden werden kann\nBeinhaltet zusätzliche Änderungen am Jungelbiom damit die Statuen und den Portalort\nin parallelen Welten funktionieren",
 		},
 	},
+	world_gen_changes_require_restart = {
+		en = "Worlgen Changes Apply:",
+		options = {
+			new_run = {
+				en = "On New Run",
+				en_desc = "Apply worldgen changes when you start a new run",
+			},
+			restart = {
+				en = "On Restart",
+				en_desc = "Apply worldgen changes when you restart your game or start a new run",
+			},
+		},
+	},
 	reset = {
 		en = "[Reset]",
 		en_desc = "Resets all settings to default values",
@@ -460,6 +473,17 @@ ps.translation_strings = {
 		en = "Translation Credits",
 		ptbr = "Créditos de Tradução",
 		de = "Übersetzungsdanksagung",
+	},
+
+	data = { --translations for non-settings
+		scopes = {
+			new_run = {
+				en = "Changes will apply on your next run",
+			},
+			restart = {
+				en = "Changes will apply when you next restart or on your next run",
+			},
+		}, --displayed as a tooltip when a user changes a setting that will not be applied under the current scope
 	},
 }
 
@@ -496,6 +520,13 @@ local orb_offset = 0
 local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
 local shadow_kolmi_desc = ""
+
+local logging
+local function log(...)
+	if logging then
+		print(...)
+	end
+end
 
 local function change_orb_count(amount)
 	orbs = (orbs + amount) % (ps.max_orbs + 1)
@@ -560,7 +591,7 @@ ps.settings = {
 		id = "pw_counter",
 		value_default = true,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_NEW_GAME,
+		scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
 	},
 	{
 		id = "ng_plus",
@@ -853,6 +884,16 @@ ps.settings = {
 		}
 	},--]]
 	{
+		id = "world_gen_changes_require_restart",
+		options = {
+			"new_run",
+			"restart",
+		},
+		value_default = "new_run",
+		value_recommended = "new_run",
+		scope = MOD_SETTING_SCOPE_RUNTIME
+	},
+	{
 		id = "reset",
 		type = "reset_button",
 		highlight_c = {
@@ -909,6 +950,25 @@ ps.settings = {
 	},
 }
 
+
+ps.data = {
+	extra_lines = {
+		scope_new_run = {
+			c = {
+				r = 241,
+				g = 241,
+				b = 139,
+			},
+		},
+		scope_restart = {
+			c = {
+				r = 241,
+				g = 241,
+				b = 139,
+			},
+		},
+	},
+}
 
 
 -- some of this code is p nasty tbh, flee all ye of weak heart 'n' all, may rewrite this entirely in the future
@@ -1013,12 +1073,12 @@ function ModSettingsUpdate(init_scope, is_init)
 
 
 
-	local function update_translations_and_path(input_settings, input_translations, path, recursion)
+	local function cache_settings(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
 		path = path or ""
 		input_settings = input_settings or ps.settings
 		input_translations = input_translations or ps.translation_strings
-		for key, setting in pairs(input_settings) do
+		for _, setting in pairs(input_settings) do
 			if not setting.id then goto continue end
 			setting.path = mod_id .. "." .. path .. setting.id
 			setting.type = setting.type or type(setting.value_default)
@@ -1033,7 +1093,7 @@ function ModSettingsUpdate(init_scope, is_init)
 					end
 
 					if is_table_of_tables then
-						update_translations_and_path(v, input_translations[setting.id], child_path, recursion + 1)
+						cache_settings(v, input_translations[setting.id], child_path, recursion + 1)
 					end
 				end
 			end
@@ -1109,7 +1169,19 @@ function ModSettingsUpdate(init_scope, is_init)
 			::continue::
 		end
 	end
-	update_translations_and_path()
+	cache_settings()
+
+	local function cache_settings_data(input_data, input_translations, recursion)
+		recursion = (recursion or 0) + 1
+
+		for key, value in pairs(input_data) do
+			if type(value) == "table" and input_translations[key] then
+				cache_settings(value, input_translations[key], recursion + 1)
+			end
+		end
+	end
+
+	cache_settings_data(ps.data, ps.translation_strings.data)
 
 	local function set_defaults(setting)
 		if setting.value_default ~= nil and ModSettingGet(setting.path) then
@@ -1161,7 +1233,7 @@ local function reset_settings_to_default(group, target, default_value)
 			target_value = default_value
 		end
 		if target_value ~= nil then
-			ModSettingSet(setting.path, target_value) else --print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
+			ModSettingSetNextValue(setting.path, target_value, target == "value_default") else --print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
 		end
 
 		if setting.items then
@@ -1186,8 +1258,9 @@ end
 ---@param x number
 ---@param y number
 ---@param sprite string? custom 9piece sprite
-local function DrawTooltip(gui, setting, x, y, sprite)
-	local text_size = {setting.desc_w, setting.desc_h}
+local function DrawTooltip(gui, setting, x, y, sprite, extra_line)
+	extra_line = extra_line or {w=0,h=0}
+	local text_size = {setting.desc_w + extra_line.w, setting.desc_h + extra_line.h}
 	sprite = sprite or "data/ui_gfx/decorations/9piece0_gray.png"
 	GuiLayoutBeginLayer(gui)
 	GuiZSetForNextWidget(gui, -200)
@@ -1196,6 +1269,20 @@ local function DrawTooltip(gui, setting, x, y, sprite)
 		GuiZSetForNextWidget(gui, -210)
 		GuiText(gui, x + 5, y + 1 + (i-1)*13, line)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
+
+	if extra_line.lines then
+		local y_offset = y + 5 + (#setting._description_lines-1)*13
+		local c = extra_line.c or {
+			r = 1,
+			g = 1,
+			b = 1,
+		}
+		for i,line in ipairs(extra_line.lines) do
+			GuiZSetForNextWidget(gui, -210)
+			GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+			GuiText(gui, x + 5, y_offset + (i-1)*13, line)
+		end
+	end
 	GuiLayoutEndLayer(gui)
 end
 
@@ -1211,11 +1298,11 @@ local function BoolSetting(gui, x_offset, setting, c)
 		b = 1,
 	}
 	local is_disabled
-	if setting.requires and not ModSettingGet(setting.requires.id) == setting.requires.value then
+	if setting.requires and not ModSettingGetNextValue(setting.requires.id) == setting.requires.value then
 		is_disabled = true
 	end
 
-	local value = ModSettingGet(setting.path)
+	local value = ModSettingGetNextValue(setting.path)
 
 	GuiText(gui, x_offset, 0, "")
 	local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
@@ -1263,18 +1350,18 @@ local function BoolSetting(gui, x_offset, setting, c)
 
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
-		ModSettingSet(setting.path, not value)
+		ModSettingSetNextValue(setting.path, not value, (not value) == setting.value_default)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		if keyboard_state == 1 then
-			ModSettingSet(setting.path, setting.value_recommended)
+			ModSettingSetNextValue(setting.path, setting.value_recommended, setting.value_recommended == setting.value_default)
 		elseif keyboard_state == 2 then
-			ModSettingSet(setting.path, false)
+			ModSettingSetNextValue(setting.path, false, setting.value_default == false)
 		elseif keyboard_state == 3 then
-			ModSettingSet(setting.path, true)
+			ModSettingSetNextValue(setting.path, true, setting.value_default == true)
 		else --if 0
-			ModSettingSet(setting.path, setting.value_default)
+			ModSettingSetNextValue(setting.path, setting.value_default, true)
 		end
 	end
 end
@@ -1333,7 +1420,7 @@ function ModSettingsGui(gui, in_main_menu)
 				render_setting = setting.render_condition ~= false
 			end
 			if render_setting then
-				local setting_is_disabled = parent_is_disabled or (setting.requires and not ModSettingGet(setting.requires.id) == setting.requires.value)
+				local setting_is_disabled = parent_is_disabled or (setting.requires and not ModSettingGetNextValue(setting.requires.id) == setting.requires.value)
 				if setting.type == "group" then
 					local c = setting.c and {
 						r = setting.c.r,
