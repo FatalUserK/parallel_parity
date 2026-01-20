@@ -1511,7 +1511,7 @@ function ModSettingsGui(gui, in_main_menu)
 					local _,_,_,x, y = GuiGetPreviousWidgetInfo(gui)
 					local text = setting.name .. ": " .. setting.current_option
 
-
+					
 
 				elseif setting.type == "reset_button" then
 					GuiText(gui, 0, 0, "")
