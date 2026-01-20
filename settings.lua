@@ -476,11 +476,11 @@ ps.translation_strings = {
 	},
 
 	data = { --translations for non-settings
-		scopes = {
-			new_run = {
+		extra_lines = {
+			scope_new_run = {
 				en = "Changes will apply on your next run",
 			},
-			restart = {
+			scope_restart = {
 				en = "Changes will apply when you next restart or on your next run",
 			},
 		}, --displayed as a tooltip when a user changes a setting that will not be applied under the current scope
