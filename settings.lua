@@ -897,6 +897,7 @@ ps.settings = {
 			{
 				id = "spatial_awareness_coordinate_display",
 				options = {"none", "grid", "polar"},
+				type = "options",
 				value_default = "none",
 				value_recommended = "grid",
 			},
@@ -1148,6 +1149,9 @@ function ModSettingsUpdate(init_scope, is_init)
 				setting.name = setting.id
 			end
 
+			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
+			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
+
 			if setting.options then
 				setting.option_names = {}
 				if translation and translation.options then
@@ -1160,8 +1164,8 @@ function ModSettingsUpdate(init_scope, is_init)
 							desc = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
 						end
 						if desc then
-							setting.option_descriptions = {}
-							setting.option_descriptions[option] = generate_tooltip_data(dummy_gui, desc, recursion * ps.offset_amount)
+							setting.option_descriptions = setting.option_descriptions or {}
+							setting.option_descriptions[option] = generate_tooltip_data(dummy_gui, desc, (recursion * ps.offset_amount) + setting.w)
 						end
 					end
 				end
@@ -1185,9 +1189,6 @@ function ModSettingsUpdate(init_scope, is_init)
 					end
 				end
 			end
-
-			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
-			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
 
 			::continue::
 		end
@@ -1507,11 +1508,57 @@ function ModSettingsGui(gui, in_main_menu)
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x + offset, 0, setting.name)
 				elseif setting.type == "options" then
-					GuiText(gui, 0, 0, "")
+					GuiText(gui, offset, 0, "")
 					local _,_,_,x, y = GuiGetPreviousWidgetInfo(gui)
-					local text = setting.name .. ": " .. setting.current_option
+					local text = setting.name .. ": "
 
-					
+					local w,h = GuiGetTextDimensions(gui, text)
+					GuiImageNinePiece(gui, create_id(), x, y, w, h, 0, "")
+					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+
+					local c = setting.c or {
+						r = .8,
+						g = .8,
+						b = .8,
+					}
+
+					local setting_hovered
+					local clicked
+					local rclicked
+					if guiPrev[3] and mouse_is_valid then
+						setting_hovered = true
+						c.r = math.min((c.r * 1.2)+.05, 1)
+						c.g = math.min((c.g * 1.2)+.05, 1)
+						c.b = math.min((c.b * 1.2)+.05, 1)
+
+						clicked =  InputIsMouseButtonJustDown(1)
+						rclicked =  InputIsMouseButtonJustDown(2)
+						if setting.desc_data then DrawTooltip(gui, setting.desc_data, x, y+12) end
+					end
+
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
+					GuiText(gui, offset, 0, text)
+
+					local option_w,option_h = GuiGetTextDimensions(gui, setting.current_option)
+					GuiImageNinePiece(gui, create_id(), x + w, y, option_w, option_h, 0, "")
+					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
+
+					if mouse_is_valid and (setting_hovered or guiPrev[3]) then
+						clicked =  InputIsMouseButtonJustDown(1)
+						rclicked =  InputIsMouseButtonJustDown(2)
+						if setting.option_descriptions[setting.current_option] and not setting_hovered then DrawTooltip(gui, setting.option_descriptions[setting.current_option], x + w, y+12) end
+					end
+
+					if clicked then
+						setting.current_option_int = (setting.current_option_int + 1) % #setting.options
+						setting.current_option = setting.options[setting.current_option_int + 1]
+						ModSettingSetNextValue(setting.path, setting.current_option, setting.current_option == setting.value_default)
+					end
+
+					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
+					GuiText(gui, offset + w, 0, setting.current_option)
+
 
 				elseif setting.type == "reset_button" then
 					GuiText(gui, 0, 0, "")
