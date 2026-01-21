@@ -473,7 +473,7 @@ ps.translation_strings = {
 		},
 	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
 	world_gen_changes_require_restart = {
-		en = "Worlgen Changes Apply:",
+		en = "Worlgen Changes Apply",
 		options = {
 			new_run = {
 				en = "On New Run",
@@ -557,8 +557,12 @@ local translation_credit_data = {
 
 
 
-local cached_settings_list = {}
+local current_scope
+local screen_w,screen_h
+local description_start_pos
+local arbitrary_description_buffer = 11
 local keyboard_state = 0
+
 local orbs = 0
 local original_orbs
 local orb_offset = 0
@@ -569,9 +573,186 @@ local shadow_kolmi_desc = ""
 local logging
 local function log(...)
 	if logging then
-		print(...)
+		local str = ""
+		for _, value in ipairs({...}) do
+			str = str .. tostring(value)
+		end
+		print(str)
 	end
 end
+logging = true
+
+
+
+local function generate_tooltip_data(gui, text, offset_x, extra_line)
+	offset_x = offset_x or 0
+
+
+	local data = {
+		lines = {},
+		w = 0,
+		h = 0,
+	}
+
+
+	local line_length_max = screen_w - description_start_pos - arbitrary_description_buffer - offset_x
+	local max_line_length = 0
+
+
+	local function line_break(target_line)
+		local split_lines = {}
+		local current_line = ""
+		for word in target_line:gmatch("%S+") do
+			local test_line = (current_line == "") and word or current_line .. " " .. word
+			local test_line_w = GuiGetTextDimensions(gui, test_line)
+			if test_line_w > line_length_max then
+				split_lines[#split_lines + 1] = current_line
+				current_line = word
+			else
+				if test_line_w > max_line_length then max_line_length = test_line_w end
+				current_line = test_line
+			end
+		end
+		-- Add the last line if it's not empty
+		if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
+
+
+		return split_lines
+	end --i actually realised i didnt need to modularise this when i realised I could instead modularise split_lines, may recombine
+
+
+	local function split_lines(str)
+		local lines = {}
+		for line in string.gmatch(str, '([^\n]+)') do
+			local line_w = GuiGetTextDimensions(gui, str or "")
+			if line_w > line_length_max then
+				local split_lines = line_break(line)
+
+
+				local a = #lines
+				for i, split_line in ipairs(split_lines) do
+					lines[a+i] = split_line
+				end
+			else
+				if line_w > max_line_length then max_line_length = line_w end
+				lines[#lines+1] = line
+			end
+		end
+
+
+		return lines
+	end
+
+
+	data.lines = split_lines(text)
+	data.h = (#data.lines * 13) - 1
+
+
+	if extra_line then
+		data.extra_lines = split_lines(extra_line)
+		data.h = data.h + (#data.extra_lines * 13) + 5
+	end
+
+
+	data.w = max_line_length - 1 --save afterwards in case it was entended by extra_lines
+
+
+	--log(data.w)
+
+
+	return data
+end
+
+
+local scopes = {
+	"scope_new_run",
+	"scope_restart",
+	--"scope_runtime", --this should be unused
+}
+
+local function SettingUpdate(gui, setting, translation)
+	if translation then
+		setting.name = translation[current_language] or translation.en or setting.id
+		if translation.en_desc and not translation[current_language] then --if there is english translation but no other translation
+			setting.description = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+		else
+			setting.description = translation[current_language .. "_desc"]
+		end
+	else
+		setting.name = setting.id
+	end
+
+	setting.w,setting.h = GuiGetTextDimensions(gui, setting.name or "")
+	if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(gui, setting.icon) end
+
+	if setting.options then
+		if translation and translation.options then
+			setting.option_names = {}
+			setting.option_descriptions = {}
+			for i, option in ipairs(setting.options) do
+				setting.option_names[option] = translation.options[option][current_language] or translation.options[option].en or option
+				local desc
+				if translation.options[option][current_language .. "_desc"] then
+					desc = translation.options[option][current_language .. "_desc"]
+				elseif translation.options[option].en_desc then
+					desc = translation.options[option].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+				end
+
+				if desc then
+					setting.option_descriptions[i] = desc
+					setting.option_descriptions[option] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w)
+				end
+			end
+		end
+		setting.current_option = ModSettingGetNextValue(setting.path) or setting.value_default
+		setting.current_option_int = 0
+		for index, value in ipairs(setting.options) do
+			if setting.current_option == value then setting.current_option_int = index-1 end
+		end
+	end
+
+	if setting.description then
+		setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount)
+	end
+
+
+	if setting.path == "parallel_parity.kolmi_arena.KOLMI" then
+		for i, desc_line in ipairs(setting.desc_data.lines) do
+			if string.find(desc_line, "SAMPO") then
+				shadow_kolmi_desc_path = setting.desc_data.lines
+				shadow_kolmi_template_desc = {
+					str = setting.desc_data.lines[i],
+					num = i
+				}
+				shadow_kolmi_desc = string.gsub(desc_line, "SAMPO", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs))
+				break
+			end
+		end
+	end
+end
+
+local function UpdateSetting(gui, setting)
+	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
+		setting.extra_line.scope_warning = scopes[current_scope]
+		--setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount, ps.data.extra_lines[scopes[current_scope]])
+	else
+		setting.extra_line.scope_warning = nil
+	end
+end
+
+local function SettingSetValue(setting, value, scope)
+	log(scope, " ", current_scope)
+	if not current_scope then print("SCOPE IS UNDEFINED") return end
+	if current_scope == 0 then
+		log("SCOPE IS... acceptable.")
+		--ModSettingSet(setting.path, value)
+	end
+	log(setting.path)
+	ModSettingSetNextValue(setting.path, value, false)
+
+	--UpdateSetting(GuiCreate(), setting)
+end
+
 
 local function change_orb_count(amount)
 	orbs = (orbs + amount) % (ps.max_orbs + 1)
@@ -904,7 +1085,7 @@ ps.settings = {
 				scope = MOD_SETTING_SCOPE_NEW_GAME,
 			},
 		},
-	}, -- [[
+	}, --[[
 	{
 		id = "vertical", --tempted to name it "Vertical Insanity"
 		type = "group",
@@ -1026,18 +1207,17 @@ function ModSettingsGuiCount()
 	return 1
 end
 
-local screen_w,screen_h
 local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
+	log("MOD SETTINGS UPDATED")
+	current_scope = init_scope
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
 	orbs = 12
 
 	local dummy_gui = not is_init and GuiCreate()
-	local description_start_pos
-	local arbitrary_description_buffer = 11
 	if dummy_gui then
 		GuiStartFrame(dummy_gui)
-		screen_w,screen_h = GuiGetScreenDimensions(dummy_gui)
+		screen_w = GuiGetScreenDimensions(dummy_gui)
 
 		--[[ source for magic number -160 below
 		local inner_gui_width = 342
@@ -1121,52 +1301,6 @@ function ModSettingsUpdate(init_scope, is_init)
 	end
 
 
-	local function generate_tooltip_data(gui, str, offset_x)
-		offset_x = offset_x or 0
-
-		local data = {
-			lines = {},
-			w = 0,
-			h = 0,
-		}
-
-		local line_length_max = screen_w - description_start_pos - arbitrary_description_buffer - offset_x
-		local max_line_length = 0
-		for line in string.gmatch(str, '([^\n]+)') do
-			local line_w = GuiGetTextDimensions(gui, str or "")
-			if line_w > line_length_max then
-				local split_lines = {}
-				local current_line = ""
-				for word in line:gmatch("%S+") do
-					local test_line = (current_line == "") and word or current_line .. " " .. word
-					local test_line_w = GuiGetTextDimensions(gui, test_line)
-					if test_line_w > line_length_max then
-						split_lines[#split_lines + 1] = current_line
-						current_line = word
-					else
-						if test_line_w > max_line_length then max_line_length = test_line_w end
-						current_line = test_line
-					end
-				end
-				-- Add the last line if it's not empty
-				if current_line ~= "" then split_lines[#split_lines + 1] = current_line end
-
-				local a = #data.lines
-				for i, split_line in ipairs(split_lines) do
-					data.lines[a+i] = split_line
-				end
-			else
-				if line_w > max_line_length then max_line_length = line_w end
-				data.lines[#data.lines+1] = line
-			end
-		end
-
-		data.w = max_line_length - 1
-		data.h = (#data.lines * 13) - 1
-
-		return data
-	end
-
 	local function cache_settings(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
 		path = path or ""
@@ -1177,6 +1311,7 @@ function ModSettingsUpdate(init_scope, is_init)
 			setting.path = mod_id .. "." .. path .. setting.id
 			setting.type = setting.type or type(setting.value_default)
 			setting.text_offset_x = setting.text_offset_x or 0
+			setting.recursion = recursion + 1
 
 			local child_path = path .. (not setting.not_path and (setting.id .. ".") or "")
 			for _, v in pairs(setting) do
@@ -1192,60 +1327,8 @@ function ModSettingsUpdate(init_scope, is_init)
 				end
 			end
 
-
-			if not dummy_gui then goto continue end
-
-			local translation = input_translations[setting.id]
-			if translation then
-				setting.name = translation[current_language] or translation.en or setting.id
-				if translation.en_desc and not translation[current_language] then --if there is english translation but no other translation
-					setting.description = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
-				else
-					setting.description = translation[current_language .. "_desc"]
-				end
-			else
-				setting.name = setting.id
-			end
-
-			setting.w,setting.h = GuiGetTextDimensions(dummy_gui, setting.name or "")
-			if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(dummy_gui, setting.icon) end
-
-			if setting.options then
-				setting.option_names = {}
-				if translation and translation.options then
-					for _, option in ipairs(setting.options) do
-						setting.option_names[option] = translation.options[option][current_language] or translation.options[option].en or option
-						local desc
-						if translation.options[option][current_language .. "_desc"] then
-							desc = translation.options[option][current_language .. "_desc"]
-						elseif translation.options[option].en_desc then
-							desc = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
-						end
-						if desc then
-							setting.option_descriptions = setting.option_descriptions or {}
-							setting.option_descriptions[option] = generate_tooltip_data(dummy_gui, desc, (recursion * ps.offset_amount) + setting.w)
-						end
-					end
-				end
-				setting.current_option = ModSettingGet(setting.path) or setting.value_default
-			end
-
-			if setting.description then
-				setting.desc_data = generate_tooltip_data(dummy_gui, setting.description, recursion * ps.offset_amount)
-			end
-
-			if setting.path == "parallel_parity.kolmi_arena.KOLMI" then
-				for i, desc_line in ipairs(setting.desc_data.lines) do
-					if string.find(desc_line, "SAMPO") then
-						shadow_kolmi_desc_path = setting.desc_data.lines
-						shadow_kolmi_template_desc = {
-							str = setting.desc_data.lines[i],
-							num = i
-						}
-						shadow_kolmi_desc = string.gsub(desc_line, "SAMPO", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs))
-						break
-					end
-				end
+			if dummy_gui then
+				SettingUpdate(dummy_gui, setting, input_translations[setting.id])
 			end
 
 			::continue::
@@ -1268,6 +1351,11 @@ function ModSettingsUpdate(init_scope, is_init)
 	local function set_defaults(setting)
 		if setting.value_default ~= nil and ModSettingGet(setting.path) then
 			ModSettingSet(setting.path, setting.value_default)
+		end
+
+		local setting_value = ModSettingGet(setting.path)
+		if ModSettingGetNextValue(setting.path) == nil and setting_value ~= nil then
+			ModSettingSetNextValue(setting.path, setting_value, setting_value == setting.value_default)
 		end
 
 		for _, value in pairs(setting) do
@@ -1315,7 +1403,7 @@ local function reset_settings_to_default(group, target, default_value)
 			target_value = default_value
 		end
 		if target_value ~= nil then
-			ModSettingSetNextValue(setting.path, target_value, target == "value_default") else --print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
+			SettingSetValue(setting, target_value, setting.scope) --else print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
 		end
 
 		if setting.items then
@@ -1384,7 +1472,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 		is_disabled = true
 	end
 
-	local value = ModSettingGetNextValue(setting.path)
+	local value = ModSettingGetNextValue(setting.path) and true
 
 	GuiText(gui, x_offset, 0, "")
 	local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
@@ -1432,18 +1520,18 @@ local function BoolSetting(gui, x_offset, setting, c)
 
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
-		ModSettingSetNextValue(setting.path, not value, (not value) == setting.value_default)
+		SettingSetValue(setting, not value, setting.scope)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		if keyboard_state == 1 then
-			ModSettingSetNextValue(setting.path, setting.value_recommended, setting.value_recommended == setting.value_default)
+			SettingSetValue(setting, setting.value_recommended, setting.scope)
 		elseif keyboard_state == 2 then
-			ModSettingSetNextValue(setting.path, false, setting.value_default == false)
+			SettingSetValue(setting, false, setting.scope)
 		elseif keyboard_state == 3 then
-			ModSettingSetNextValue(setting.path, true, setting.value_default == true)
+			SettingSetValue(setting, true, setting.scope)
 		else --if 0
-			ModSettingSetNextValue(setting.path, setting.value_default, true)
+			SettingSetValue(setting, setting.value_default, setting.scope)
 		end
 	end
 end
@@ -1497,7 +1585,7 @@ function ModSettingsGui(gui, in_main_menu)
 
 			local render_setting
 			if type(setting.render_condition) == "function" then
-				render_setting = setting.render_condition() --stupid fuckin bullshit, needing me to use functions, lua should just update conditions in real-time :(
+				render_setting = setting.render_condition() --stupid fuckin bullshit, needing me to use functions, lua should just update conditions in real-time :(  (probably shouldnt)
 			else
 				render_setting = setting.render_condition ~= false
 			end
@@ -1638,7 +1726,7 @@ function ModSettingsGui(gui, in_main_menu)
 					if clicked then
 						setting.current_option_int = (setting.current_option_int + 1) % #setting.options
 						setting.current_option = setting.options[setting.current_option_int + 1]
-						ModSettingSetNextValue(setting.path, setting.current_option, setting.current_option == setting.value_default)
+						SettingSetValue(setting, setting.current_option, setting.scope)
 					end
 
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
