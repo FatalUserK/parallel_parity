@@ -558,6 +558,26 @@ local translation_credit_data = {
 	},
 }
 
+--[[ translation line counter (just for when I'm curious how many lines of translateable text there is in this mod), not including `translation_credit_data`
+local translatable = 0
+local translations = 0
+local function func(t)
+	if t.en then translatable = translatable + 1 end
+	if t.en_desc then translatable = translatable + 1 end
+	for key, value in pairs(t) do
+		local vtype = type(value)
+		if vtype == "table" then
+			func(value)
+		elseif vtype == "string" then
+			translations = translations + 1
+		end
+	end
+end
+func(ps.translation_strings)
+print("translatable: " .. translatable)
+print("translations: " .. translations)
+print(("translated: %s%%"):format((translations/(translatable*3))*100))--]]
+
 
 
 local current_scope
