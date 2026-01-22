@@ -49,8 +49,10 @@ local current_language = languages[GameTextGetTranslatedOrNot("$current_language
 
 --global table so mods can add their own settings or modify global magic numbers
 ParallelParity_Settings = {
-	custom_setting_types = {},
-	offset_amount = 15,
+	custom_setting_types = {}, --custom settings handling, in case someone does something like that
+	offset_amount = 15, --indentation caused by nested settings
+	tooltip_buffer = 11, --buffer distance required between the end of a tooltip and the edge of the game screen used for linebreaks
+	extra_line_sep = 2, --distance between normal descriptions and extra lines
 	max_orbs = 36, -- for mods *cough* Apotheosis *cough cough* which increase the normal amount of orbs in the world
 }
 local ps = ParallelParity_Settings
@@ -474,6 +476,7 @@ ps.translation_strings = {
 	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
 	world_gen_changes_require_restart = {
 		en = "Worlgen Changes Apply",
+		en_desc = "When should settings related to World Generation be applied?\nIf on restart, already loaded chunks will be unaffected and will not generate new pixel scenes or remove old ones",
 		options = {
 			new_run = {
 				en = "On New Run",
@@ -560,15 +563,14 @@ local translation_credit_data = {
 local current_scope
 local screen_w,screen_h
 local description_start_pos
-local arbitrary_description_buffer = 11
 local keyboard_state = 0
 
-local orbs = 0
+local orbs = 12
 local original_orbs
 local orb_offset = 0
 local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
-local shadow_kolmi_desc = ""
+local shadow_kolmi_desc
 
 local logging
 local function log(...)
@@ -582,11 +584,41 @@ local function log(...)
 end
 logging = true
 
+local function dump(o)
+   if type(o) == 'table' then
+      local s = '{ '
+      for k,v in pairs(o) do
+         if type(k) ~= 'number' then k = '"'..k..'"' end
+         s = s .. '['..k..'] = ' .. dump(v) .. ','
+      end
+      return s .. '} '
+   else
+      return tostring(o)
+   end
+end
 
 
-local function generate_tooltip_data(gui, text, offset_x, extra_line)
+local function update_orb_count(amount)
+	orbs = (orbs + amount) % (ps.max_orbs + 1)
+	orb_offset = orbs - original_orbs
+
+	local orbs = orbs --do this to modify the value without affecting the global
+	if orbs > 13 then
+		orbs = 33
+		if orbs == original_orbs == 14 then
+			orbs = 14 --if the true orb count is 14, then allow the secret 14 orb sampo name to display
+		end
+	end
+
+	local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs)
+	if orb_offset ~= 0 then orb_tl = orb_tl .. (" (%d%+d)"):format(original_orbs, orb_offset) end
+
+	shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
+end
+
+
+local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 	offset_x = offset_x or 0
-
 
 	local data = {
 		lines = {},
@@ -594,10 +626,8 @@ local function generate_tooltip_data(gui, text, offset_x, extra_line)
 		h = 0,
 	}
 
-
-	local line_length_max = screen_w - description_start_pos - arbitrary_description_buffer - offset_x
+	local line_length_max = screen_w - description_start_pos - ps.tooltip_buffer - offset_x
 	local max_line_length = 0
-
 
 	local function line_break(target_line)
 		local split_lines = {}
@@ -628,7 +658,6 @@ local function generate_tooltip_data(gui, text, offset_x, extra_line)
 			if line_w > line_length_max then
 				local split_lines = line_break(line)
 
-
 				local a = #lines
 				for i, split_line in ipairs(split_lines) do
 					lines[a+i] = split_line
@@ -644,21 +673,22 @@ local function generate_tooltip_data(gui, text, offset_x, extra_line)
 	end
 
 
-	data.lines = split_lines(text)
-	data.h = (#data.lines * 13) - 1
+	if text then
+		data.lines = split_lines(text)
+		data.h = (#data.lines * 13)
+	end
 
 
-	if extra_line then
-		data.extra_lines = split_lines(extra_line)
-		data.h = data.h + (#data.extra_lines * 13) + 5
+	if extra_lines then
+		if text then data.h = data.h + ps.extra_line_sep end
+		data.extra_lines = extra_lines
+		data.extra_lines.lines = split_lines(extra_lines.text)
+		data.h = data.h + (#data.extra_lines.lines * 13)
 	end
 
 
 	data.w = max_line_length - 1 --save afterwards in case it was entended by extra_lines
-
-
-	--log(data.w)
-
+	data.h = data.h - 1
 
 	return data
 end
@@ -672,6 +702,7 @@ local scopes = {
 
 local function SettingUpdate(gui, setting, translation)
 	if translation then
+		setting.is_cached = true --do is here ig in case of this being called pre-cache
 		setting.name = translation[current_language] or translation.en or setting.id
 		if translation.en_desc and not translation[current_language] then --if there is english translation but no other translation
 			setting.description = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
@@ -679,7 +710,14 @@ local function SettingUpdate(gui, setting, translation)
 			setting.description = translation[current_language .. "_desc"]
 		end
 	else
-		setting.name = setting.id
+		setting.name = setting.name or setting.id
+	end
+
+	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
+		log("SCOPE UNAVAILABLE: ", setting.path)
+		setting.extra_lines = ps.data.extra_lines[scopes[current_scope]]
+	else
+		setting.extra_lines = nil
 	end
 
 	setting.w,setting.h = GuiGetTextDimensions(gui, setting.name or "")
@@ -690,7 +728,7 @@ local function SettingUpdate(gui, setting, translation)
 			setting.option_names = {}
 			setting.option_descriptions = {}
 			for i, option in ipairs(setting.options) do
-				setting.option_names[option] = translation.options[option][current_language] or translation.options[option].en or option
+				setting.option_names[i] = translation.options[option][current_language] or translation.options[option].en or option
 				local desc
 				if translation.options[option][current_language .. "_desc"] then
 					desc = translation.options[option][current_language .. "_desc"]
@@ -700,7 +738,7 @@ local function SettingUpdate(gui, setting, translation)
 
 				if desc then
 					setting.option_descriptions[i] = desc
-					setting.option_descriptions[option] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w)
+					setting.option_descriptions[option] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
 				end
 			end
 		end
@@ -712,7 +750,7 @@ local function SettingUpdate(gui, setting, translation)
 	end
 
 	if setting.description then
-		setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount)
+		setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount, setting.extra_lines)
 	end
 
 
@@ -724,53 +762,26 @@ local function SettingUpdate(gui, setting, translation)
 					str = setting.desc_data.lines[i],
 					num = i
 				}
-				shadow_kolmi_desc = string.gsub(desc_line, "SAMPO", GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs))
+				update_orb_count(0)
 				break
 			end
 		end
 	end
 end
 
-local function UpdateSetting(gui, setting)
-	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
-		setting.extra_line.scope_warning = scopes[current_scope]
-		--setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount, ps.data.extra_lines[scopes[current_scope]])
-	else
-		setting.extra_line.scope_warning = nil
-	end
-end
-
-local function SettingSetValue(setting, value, scope)
-	log(scope, " ", current_scope)
+local function SettingSetValue(setting, value)
 	if not current_scope then print("SCOPE IS UNDEFINED") return end
-	if current_scope == 0 then
-		log("SCOPE IS... acceptable.")
-		--ModSettingSet(setting.path, value)
+
+	log(setting.scope, ", ", current_scope)
+	if setting.scope >= current_scope or not mods_are_loaded then
+		ModSettingSet(setting.path, value)
 	end
-	log(setting.path)
 	ModSettingSetNextValue(setting.path, value, false)
 
-	--UpdateSetting(GuiCreate(), setting)
+	SettingUpdate(GuiCreate(), setting)
 end
 
 
-local function change_orb_count(amount)
-	orbs = (orbs + amount) % (ps.max_orbs + 1)
-	orb_offset = orbs - original_orbs
-
-	local orbs = orbs --do this to modify the value without affecting the global
-	if orbs > 13 then
-		orbs = 33
-		if orbs == original_orbs == 14 then
-			orbs = 14 --if the true orb count is 14, then allow the secret 14 orb sampo name to display
-		end
-	end
-
-	local orb_tl = GameTextGetTranslatedOrNot("$item_mcguffin_" .. orbs)
-	if orb_offset ~= 0 then orb_tl = orb_tl .. ("(%d%+d)"):format(original_orbs, orb_offset) end
-
-	shadow_kolmi_desc = string.gsub(shadow_kolmi_template_desc.str, "SAMPO", orb_tl)
-end
 
 ps.mod_compat_settings = {
 	{
@@ -1156,7 +1167,7 @@ ps.settings = {
 			b = 55/255,
 		},
 		click_func = function()
-			change_orb_count(-1)
+			update_orb_count(-1)
 		end,
 	},
 	{
@@ -1171,7 +1182,7 @@ ps.settings = {
 			b = 225/255,
 		},
 		click_func = function()
-			change_orb_count(1)
+			update_orb_count(1)
 		end,
 	},
 	{
@@ -1185,16 +1196,16 @@ ps.data = {
 	extra_lines = {
 		scope_new_run = {
 			c = {
-				r = 241,
-				g = 241,
-				b = 139,
+				r = 241/255,
+				g = 241/255,
+				b = 139/255,
 			},
 		},
 		scope_restart = {
 			c = {
-				r = 241,
-				g = 241,
-				b = 139,
+				r = 241/255,
+				g = 241/255,
+				b = 139/255,
 			},
 		},
 	},
@@ -1209,10 +1220,8 @@ end
 
 local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
-	log("MOD SETTINGS UPDATED")
 	current_scope = init_scope
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
-	orbs = 12
 
 	local dummy_gui = not is_init and GuiCreate()
 	if dummy_gui then
@@ -1327,7 +1336,7 @@ function ModSettingsUpdate(init_scope, is_init)
 				end
 			end
 
-			if dummy_gui then
+			if dummy_gui and not setting.is_cached then
 				SettingUpdate(dummy_gui, setting, input_translations[setting.id])
 			end
 
@@ -1339,9 +1348,11 @@ function ModSettingsUpdate(init_scope, is_init)
 	local function cache_settings_data(input_data, input_translations, recursion)
 		recursion = (recursion or 0) + 1
 
+		input_data.text = input_translations[current_language] or input_translations.en or nil
+
 		for key, value in pairs(input_data) do
 			if type(value) == "table" and input_translations[key] then
-				cache_settings(value, input_translations[key], recursion + 1)
+				cache_settings_data(value, input_translations[key], recursion + 1)
 			end
 		end
 	end
@@ -1428,29 +1439,30 @@ end
 ---@param x number
 ---@param y number
 ---@param sprite string? custom 9piece sprite
-local function DrawTooltip(gui, data, x, y, sprite, extra_line)
-	extra_line = extra_line or {w=0,h=0}
-	local text_size = {data.w + extra_line.w, data.h + extra_line.h}
+local function DrawTooltip(gui, data, x, y, sprite)
+	local text_size = {data.w, data.h}
 	sprite = sprite or "data/ui_gfx/decorations/9piece0_gray.png"
 	GuiLayoutBeginLayer(gui)
 	GuiZSetForNextWidget(gui, -200)
 	GuiImageNinePiece(gui, create_id(), x, y, text_size[1]+10, text_size[2]+2, 1, sprite)
+	y = y + 1
 	for i,line in ipairs(data.lines) do
 		GuiZSetForNextWidget(gui, -210)
-		GuiText(gui, x + 5, y + 1 + (i-1)*13, line)
+		GuiText(gui, x + 5, y + (i-1)*13, line)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
 
-	if extra_line.lines then
-		local y_offset = y + 5 + (#data.lines-1)*13
-		local c = extra_line.c or {
+	if data.extra_lines then
+		local extra_y = y
+		if data.lines then extra_y = extra_y + ps.extra_line_sep + (#data.lines)*13 end
+		local c = data.extra_lines.c or {
 			r = 1,
 			g = 1,
 			b = 1,
 		}
-		for i,line in ipairs(extra_line.lines) do
+		for i,line in ipairs(data.extra_lines.lines) do
 			GuiZSetForNextWidget(gui, -210)
 			GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-			GuiText(gui, x + 5, y_offset + (i-1)*13, line)
+			GuiText(gui, x + 5, extra_y + (i-1)*13, line)
 		end
 	end
 	GuiLayoutEndLayer(gui)
@@ -1718,15 +1730,21 @@ function ModSettingsGui(gui, in_main_menu)
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 					if mouse_is_valid and (setting_hovered or guiPrev[3]) then
-						clicked =  InputIsMouseButtonJustDown(1)
-						rclicked =  InputIsMouseButtonJustDown(2)
 						if setting.option_descriptions[setting.current_option] and not setting_hovered then DrawTooltip(gui, setting.option_descriptions[setting.current_option], x + w, y+12) end
-					end
 
-					if clicked then
-						setting.current_option_int = (setting.current_option_int + 1) % #setting.options
-						setting.current_option = setting.options[setting.current_option_int + 1]
-						SettingSetValue(setting, setting.current_option, setting.scope)
+						if InputIsMouseButtonJustDown(1) then
+							setting.current_option_int = (setting.current_option_int + 1) % #setting.options --modulate to get option number indexed by 0
+							setting.current_option = setting.options[setting.current_option_int + 1] --add one cuz lua is 1-indexed
+							SettingSetValue(setting, setting.current_option)
+							GamePlaySound("ui", "ui/button_click", 0, 0)
+						end
+
+						if InputIsMouseButtonJustDown(2) then
+							setting.current_option_int = (setting.current_option_int + 1) % #setting.options --modulate to get option number indexed by 0
+							setting.current_option = setting.options[setting.current_option_int + 1] --add one cuz lua is 1-indexed
+							SettingSetValue(setting, setting.current_option)
+							GamePlaySound("ui", "ui/button_click", 0, 0)
+						end
 					end
 
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
