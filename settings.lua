@@ -46,6 +46,7 @@ local langs_in_order = { --do this cuz key-indexed tables wont keep this order
 
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
+local cached_lang
 
 --global table so mods can add their own settings or modify global magic numbers
 ParallelParity_Settings = {
@@ -80,11 +81,11 @@ ps.translation_strings = {
 	},
 	visuals = {
 		en = "Visuals",
-		en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering\nThe criteria for this group is decided at my own discretion",
+		--en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering\nThe criteria for this group is decided at my own discretion",
 		ptbr = "Visuais",
-		ptbr_desc = "Dá uma limpeza em cenas de pixels visuais e backgrounds que não alteram significamente a jogabilidade\nOs critérios para este grupo são definidos a meu critério",
+		--ptbr_desc = "Dá uma limpeza em cenas de pixels visuais e backgrounds que não alteram significamente a jogabilidade\nOs critérios para este grupo são definidos a meu critério",
 		de = "Visuell",
-		de_desc = "Verschönert hauptsächlich visuelle Pixelszenen und Hintergründe welche keinen Einfluss auf das Spielerlebnis haben. \nDie Kriterien für diese Gruppe sind von mir selbst entschieden",
+		--de_desc = "Verschönert hauptsächlich visuelle Pixelszenen und Hintergründe welche keinen Einfluss auf das Spielerlebnis haben. \nDie Kriterien für diese Gruppe sind von mir selbst entschieden",
 	},
 	return_rifts = {
 		en = "Return Rifts",
@@ -578,6 +579,26 @@ print("translatable: " .. translatable)
 print("translations: " .. translations)
 print(("translated: %s%%"):format((translations/(translatable*3))*100))--]]
 
+--[[ injector for ModSettingSet and ModSettingSetValue so i can read the values being changed more easily
+local old_modsettingset = ModSettingSet
+function ModSettingSet(id, value)
+	local prev_value = ModSettingGet(id)
+	local str = ("MOD SETTING SET: [%s], %s --> %s"):format(id, prev_value, value)
+	if value ~= prev_value then str = str .. "                                 ------------------------------" end
+	print(str)
+	old_modsettingset(id, value)
+end
+
+local old_modsettingsetnextvalue = ModSettingSetNextValue
+function ModSettingSetNextValue(id, value, is_default)
+	local prev_value = ModSettingGetNextValue(id)
+	local str = ("MOD SETTING SET NEXT VALUE: [%s], %s --> %s"):format(id, prev_value, value)
+	if value ~= prev_value then str = str .. "                                 ------------------------------" end
+	print(str)
+	old_modsettingsetnextvalue(id, value, is_default)
+end --]]
+
+
 
 
 local current_scope
@@ -592,7 +613,7 @@ local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
 local shadow_kolmi_desc
 
-local logging
+local logging = false
 local function log(...)
 	if logging then
 		local str = ""
@@ -602,7 +623,6 @@ local function log(...)
 		print(str)
 	end
 end
-logging = true
 
 local function dump(o)
    if type(o) == 'table' then
@@ -639,6 +659,7 @@ end
 
 local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 	offset_x = offset_x or 0
+	log(text)
 
 	local data = {
 		lines = {},
@@ -722,7 +743,6 @@ local scopes = {
 
 local function SettingUpdate(gui, setting, translation)
 	if translation then
-		setting.is_cached = true --do is here ig in case of this being called pre-cache
 		setting.name = translation[current_language] or translation.en or setting.id
 		if translation.en_desc and not translation[current_language] then --if there is english translation but no other translation
 			setting.description = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
@@ -1241,7 +1261,10 @@ end
 local tlcr_data_ordered = {}
 function ModSettingsUpdate(init_scope, is_init)
 	current_scope = init_scope
+
 	current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
+	local cached = current_language == cached_lang
+	cached_lang = current_language
 
 	local dummy_gui = not is_init and GuiCreate()
 	if dummy_gui then
@@ -1329,7 +1352,6 @@ function ModSettingsUpdate(init_scope, is_init)
 		tlcr_data_ordered.size = {max_len, 13 * #tlcr_data_ordered}
 	end
 
-
 	local function cache_settings(input_settings, input_translations, path, recursion)
 		recursion = recursion or 0
 		path = path or ""
@@ -1356,14 +1378,13 @@ function ModSettingsUpdate(init_scope, is_init)
 				end
 			end
 
-			if dummy_gui and not setting.is_cached then
+			if dummy_gui then
 				SettingUpdate(dummy_gui, setting, input_translations[setting.id])
 			end
 
 			::continue::
 		end
 	end
-	cache_settings()
 
 	local function cache_settings_data(input_data, input_translations, recursion)
 		recursion = (recursion or 0) + 1
@@ -1377,45 +1398,43 @@ function ModSettingsUpdate(init_scope, is_init)
 		end
 	end
 
-	cache_settings_data(ps.data, ps.translation_strings.data)
-
-	local function set_defaults(setting)
-		if setting.value_default ~= nil and ModSettingGet(setting.path) then
-			ModSettingSet(setting.path, setting.value_default)
-		end
-
-		local setting_value = ModSettingGet(setting.path)
-		if ModSettingGetNextValue(setting.path) == nil and setting_value ~= nil then
-			ModSettingSetNextValue(setting.path, setting_value, setting_value == setting.value_default)
-		end
-
-		for _, value in pairs(setting) do
-			if type(value) == "table" then
-				for _, item in ipairs(value) do
-					if type(item) == "table" then set_defaults(item) end
-				end
-			end
-		end
-	end
-	local function save_setting(setting)
-		if setting.id ~= nil and setting.scope ~= nil and setting.scope >= init_scope then
+	local function apply_settings(setting)
+		if setting.path then
+			local current_value = ModSettingGet(setting.path)
 			local next_value = ModSettingGetNextValue(setting.path)
-			if next_value ~= nil then
-				ModSettingSet(setting.path, next_value)
+
+			if current_value == nil and setting.value_default then
+				current_value = setting.value_default
 			end
+			if next_value == nil and current_value ~= nil then
+				next_value = current_value
+				ModSettingSetNextValue(setting.path, next_value)
+			end
+
+			if current_value ~= next_value and setting.scope >= init_scope then
+				current_value = next_value
+			end
+
+			if current_value ~= nil then ModSettingSet(setting.path, current_value) end
 		end
 
 		for _, value in pairs(setting) do
 			if type(value) == "table" then
-				for _, item in ipairs(value) do
-					if type(item) == "table" then save_setting(item) end
-				end
+				apply_settings(value)
 			end
 		end
+
 	end
+
+
+
+	if not cached then
+		cache_settings()
+		cache_settings_data(ps.data, ps.translation_strings.data)
+	end
+
 	for i, setting in ipairs(ps.settings) do
-		set_defaults(setting)
-		save_setting(setting)
+		apply_settings(setting)
 	end
 
 	ModSettingSet(get_setting_id("_version"), mod_settings_version)
