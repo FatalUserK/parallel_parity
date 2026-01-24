@@ -715,16 +715,24 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 
 
 	if text then
+		for i, line in ipairs(split_lines(text)) do
+			
+		end
 		data.lines = split_lines(text)
 		data.h = (#data.lines * 13)
 	end
 
 
-	if extra_lines then
-		if text then data.h = data.h + ps.extra_line_sep end
-		data.extra_lines = extra_lines
-		data.extra_lines.lines = split_lines(extra_lines.text)
-		data.h = data.h + (#data.extra_lines.lines * 13)
+	if extra_lines or false then
+		for key, value in pairs(extra_lines) do
+			data.extra_lines = {}
+			data.extra_lines[key] = value
+			if text then data.h = data.h + ps.extra_line_sep end
+
+			data.extra_lines[key] = extra_lines
+			data.extra_lines[key].lines = split_lines(extra_lines.text)
+			data.h = data.h + (#data.extra_lines[key].lines * 13)
+		end
 	end
 
 
