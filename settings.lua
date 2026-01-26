@@ -44,6 +44,7 @@ local langs_in_order = { --do this cuz key-indexed tables wont keep this order
 	"trtr",
 }
 
+print(tostring(ModImageDoesExist("../../workshop/content/881100/2921365704/files/font_pixel_huge.xml")))
 
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
 local cached_lang
@@ -65,7 +66,7 @@ local ps = ParallelParity_Settings
 ps.translation_strings = {
 	mod_ingame_warning = {
 		en = "Warning! Options for other mods will not show up here!",
-		en_desc = "Due to fundamental limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE:\nTHIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE MANY MOD COMPATIBILITY OPTIONS",
+		en_desc = "Due to fundamental θ limitations with the Modding API, mods cannot interact with one another until the game begins.\nPlease enter a run if you wish to see settings related to other mods\nNOTE:\nTHIS MOD IS VERY NEW AND THUS DOES NOT CURRENTLY HAVE MANY MOD COMPATIBILITY OPTIONS",
 		ptbr = "Aviso! Opções para outros mods não iram aparecer aqui!",
 		ptbr_desc = "Por conta de limitações com a Modding API, mods não poderam interagir um com o outro até que o jogo inicie.\nPor favor, entre em uma run se deseja ver opções relacionadas a outros mods\nNOTA:\nESSE MOD É MUITO NOVO E, PORTANTO, NÃO POSSUI MUITAS CONFIGURAÇÕES DE COMPATIBILIDADE COM OUTROS MODS ATUALMENTE",
 		de = "Warnung! Einstellungen für andere Mods werden hier nicht angezeigt!",
@@ -600,6 +601,18 @@ end --]]
 
 
 
+local font_dir
+if ModDoesFileExist("mods/parallel_parity/fonts/regular.xml") then
+	font_dir = "mods/parallel_parity/fonts/"
+else
+	font_dir = "../../workshop/content/881100/3635992834/fonts/workshop/"
+end
+
+local regular_font = font_dir .. "regular.xml"
+
+--ukrainian language that worked
+--regular_font = "../../workshop/content/881100/2921365704/fonts/font_pixel_huge.xml"
+
 
 local current_scope
 local screen_w,screen_h
@@ -613,7 +626,7 @@ local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
 local shadow_kolmi_desc
 
-local logging = false
+local logging = true
 local function log(...)
 	if logging then
 		local str = ""
@@ -659,7 +672,6 @@ end
 
 local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 	offset_x = offset_x or 0
-	log(text)
 
 	local data = {
 		lines = {},
@@ -675,7 +687,7 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 		local current_line = ""
 		for word in target_line:gmatch("%S+") do
 			local test_line = (current_line == "") and word or current_line .. " " .. word
-			local test_line_w = GuiGetTextDimensions(gui, test_line)
+			local test_line_w = GuiGetTextDimensions(gui, test_line, 1, 2, regular_font)
 			if test_line_w > line_length_max then
 				split_lines[#split_lines + 1] = current_line
 				current_line = word
@@ -695,7 +707,7 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 	local function split_lines(str)
 		local lines = {}
 		for line in string.gmatch(str, '([^\n]+)') do
-			local line_w = GuiGetTextDimensions(gui, str or "")
+			local line_w = GuiGetTextDimensions(gui, str or "", 1, 2, regular_font)
 			if line_w > line_length_max then
 				local split_lines = line_break(line)
 
@@ -716,14 +728,20 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 
 	if text then
 		for i, line in ipairs(split_lines(text)) do
-			
+			local x_pos = 0
+			local y_pos = (i-1)*13
+			data.lines[#data.lines+1] = {
+				text = line,
+				x = x_pos,
+				y = y_pos,
+			}
 		end
-		data.lines = split_lines(text)
+
 		data.h = (#data.lines * 13)
 	end
 
 
-	if extra_lines or false then
+	if extra_lines and false then
 		for key, value in pairs(extra_lines) do
 			data.extra_lines = {}
 			data.extra_lines[key] = value
@@ -768,7 +786,7 @@ local function SettingUpdate(gui, setting, translation)
 		setting.extra_lines = nil
 	end
 
-	setting.w,setting.h = GuiGetTextDimensions(gui, setting.name or "")
+	setting.w,setting.h = GuiGetTextDimensions(gui, setting.name or "", 1, 2, regular_font)
 	if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(gui, setting.icon) end
 
 	if setting.options then
@@ -804,10 +822,10 @@ local function SettingUpdate(gui, setting, translation)
 
 	if setting.path == "parallel_parity.kolmi_arena.KOLMI" then
 		for i, desc_line in ipairs(setting.desc_data.lines) do
-			if string.find(desc_line, "SAMPO") then
+			if string.find(desc_line.text, "SAMPO") then
 				shadow_kolmi_desc_path = setting.desc_data.lines
 				shadow_kolmi_template_desc = {
-					str = setting.desc_data.lines[i],
+					str = setting.desc_data.lines[i].text,
 					num = i
 				}
 				update_orb_count(0)
@@ -932,7 +950,7 @@ ps.settings = {
 						scope = MOD_SETTING_SCOPE_NEW_GAME,
 						hover_func = function()
 							if shadow_kolmi_template_desc then
-								shadow_kolmi_desc_path[shadow_kolmi_template_desc.num] = shadow_kolmi_desc
+								shadow_kolmi_desc_path[shadow_kolmi_template_desc.num].text = shadow_kolmi_desc
 							end
 						end,
 					},
@@ -1352,8 +1370,8 @@ function ModSettingsUpdate(init_scope, is_init)
 			if translation_credit_data[lang] then
 				tlcr_data_ordered[#tlcr_data_ordered+1] = translation_credit_data[lang]
 				tlcr_data_ordered[#tlcr_data_ordered].highlighted = lang == current_language
-				tlcr_data_ordered[#tlcr_data_ordered].translator.offset = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text) + 4
-				local curr_x = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text .. tlcr_data_ordered[#tlcr_data_ordered].translator[1]) + 4
+				tlcr_data_ordered[#tlcr_data_ordered].translator.offset = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text, 1, 2, regular_font) + 4
+				local curr_x = GuiGetTextDimensions(dummy_gui, tlcr_data_ordered[#tlcr_data_ordered].text .. tlcr_data_ordered[#tlcr_data_ordered].translator[1], 1, 2, regular_font) + 4
 				if curr_x > max_len then max_len = curr_x end
 			end
 		end
@@ -1495,10 +1513,11 @@ local function DrawTooltip(gui, data, x, y, sprite)
 	y = y + 1
 	for i,line in ipairs(data.lines) do
 		GuiZSetForNextWidget(gui, -210)
-		GuiText(gui, x + 5, y + (i-1)*13, line)
+		GuiText(gui, x + 5 + line.x, y + line.y, line.text, 1, regular_font)
+		--GuiText(gui, x + 5, y + (i-1)*13, line)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
 
-	if data.extra_lines then
+	if data.extra_lines or false then
 		local extra_y = y
 		if data.lines then extra_y = extra_y + ps.extra_line_sep + (#data.lines)*13 end
 		local c = data.extra_lines.c or {
@@ -1509,7 +1528,7 @@ local function DrawTooltip(gui, data, x, y, sprite)
 		for i,line in ipairs(data.extra_lines.lines) do
 			GuiZSetForNextWidget(gui, -210)
 			GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-			GuiText(gui, x + 5, extra_y + (i-1)*13, line)
+			GuiText(gui, x + 5, extra_y + (i-1)*13, line, 1, regular_font)
 		end
 	end
 	GuiLayoutEndLayer(gui)
@@ -1567,7 +1586,8 @@ local function BoolSetting(gui, x_offset, setting, c)
 
 	GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-	GuiText(gui, x_offset + 19, 0, setting.name)
+	GuiText(gui, x_offset + 19, 0, setting.name, 1, regular_font)
+
 
 	if highlighted and setting.desc_data then DrawTooltip(gui, setting.desc_data, x, y+12) end
 	GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
@@ -1575,7 +1595,7 @@ local function BoolSetting(gui, x_offset, setting, c)
 	local toggle_icon = ""
 	if is_disabled then toggle_icon = "(X)"
 	else toggle_icon = value == true and "(*)" or "(  )" end
-	GuiText(gui, x_offset, 0, toggle_icon)
+	GuiText(gui, x_offset, 0, toggle_icon, 1, regular_font)
 
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
@@ -1607,11 +1627,11 @@ local function draw_translation_credits(gui, x, y)
 		local pos_x,pos_y = x + 5, y + 2 + (i-1)*13
 		GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 		GuiZSetForNextWidget(gui, -210)
-		GuiText(gui, pos_x, pos_y , tl.text)
+		GuiText(gui, pos_x, pos_y , tl.text, 1, regular_font)
 		local c = tl.translator
 		GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 		GuiZSetForNextWidget(gui, -210)
-		GuiText(gui, pos_x + tl.translator.offset, pos_y, tl.translator[1])
+		GuiText(gui, pos_x + tl.translator.offset, pos_y, tl.translator[1], 1, regular_font)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
 	GuiLayoutEndLayer(gui)
 end
@@ -1694,7 +1714,7 @@ function ModSettingsGui(gui, in_main_menu)
 
 
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-					GuiText(gui, offset+10, 0, setting.name)
+					GuiText(gui, offset+10, 0, setting.name, 1, regular_font)
 					if setting.description then
 						GuiTooltip(gui, setting.description, "")
 					end
@@ -1738,13 +1758,13 @@ function ModSettingsGui(gui, in_main_menu)
 						GuiImage(gui, create_id(), (setting.icon_offset_x or 0) + offset, setting.icon_offset_y or 0, setting.icon, 1, 1, 1)
 					end
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x + offset, 0, setting.name)
+					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x + offset, 0, setting.name, 1, regular_font)
 				elseif setting.type == "options" then
 					GuiText(gui, offset, 0, "")
 					local _,_,_,x, y = GuiGetPreviousWidgetInfo(gui)
 					local text = setting.name .. ": "
 
-					local w,h = GuiGetTextDimensions(gui, text)
+					local w,h = GuiGetTextDimensions(gui, text, 1, 2, regular_font)
 					GuiImageNinePiece(gui, create_id(), x, y, w, h, 0, "")
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
@@ -1770,9 +1790,9 @@ function ModSettingsGui(gui, in_main_menu)
 
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
 					GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
-					GuiText(gui, offset, 0, text)
+					GuiText(gui, offset, 0, text, 1, regular_font)
 
-					local option_w,option_h = GuiGetTextDimensions(gui, setting.current_option)
+					local option_w,option_h = GuiGetTextDimensions(gui, setting.current_option, 1, 2, regular_font)
 					GuiImageNinePiece(gui, create_id(), x + w, y, option_w, option_h, 0, "")
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
@@ -1795,7 +1815,7 @@ function ModSettingsGui(gui, in_main_menu)
 					end
 
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-					GuiText(gui, offset + w, 0, setting.current_option)
+					GuiText(gui, offset + w, 0, setting.current_option, 1, regular_font)
 
 
 				elseif setting.type == "reset_button" then
@@ -1828,7 +1848,7 @@ function ModSettingsGui(gui, in_main_menu)
 
 					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name, 1, regular_font)
 
 				elseif setting.type == "tl_credit" then
 					GuiText(gui, 0, 0, "")
@@ -1850,7 +1870,7 @@ function ModSettingsGui(gui, in_main_menu)
 
 					--GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name)
+					GuiText(gui, (setting.icon_w or 0) + setting.text_offset_x, 0, setting.name, 1, regular_font)
 
 				elseif ps.custom_setting_types[setting.type] then
 					ps.custom_setting_types[setting.type](gui, offset, setting)

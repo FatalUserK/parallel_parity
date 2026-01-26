@@ -17,6 +17,8 @@ local nxml = dofile_once("mods/parallel_parity/files/nxml.lua")
 nxml.error_handler = function() end
 local gui = GuiCreate()
 
+dofile("mods/parallel_parity/utf8.lua")
+
 
 --convenient functions
 --#region
