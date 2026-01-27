@@ -474,7 +474,7 @@ ps.translation_strings = {
 			},
 		},
 	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
-	world_gen_changes_require_restart = {
+	worldgen_scope = {
 		en = "Worldgen Changes Apply",
 		en_desc = "When should settings related to World Generation be applied?\nIf on restart, already loaded chunks will be unaffected and will not generate new pixel scenes or remove old ones",
 		options = {
@@ -616,6 +616,9 @@ local current_scope
 local screen_w,screen_h
 local description_start_pos
 local keyboard_state = 0
+
+local worldgen_scope = ModSettingGet("parallel_parity.worldgen_scope") == "on_restart" and 1 or 0
+print("worldgen_scope: " .. worldgen_scope)
 
 local orbs = 12
 local original_orbs
@@ -788,28 +791,35 @@ local function SettingUpdate(gui, setting, translation)
 	if setting.icon then setting.icon_w,setting.icon_h = GuiGetImageDimensions(gui, setting.icon) end
 
 	if setting.options then
-		if translation and translation.options then
+		if translation then
 			setting.option_names = {}
 			setting.option_descriptions = {}
 			setting.option_desc_data = {}
-			for i, option in ipairs(setting.options) do
-				local desc
 
-				if translation.options[option] then
-					setting.option_names[i] = translation.options[option][current_language] or translation.options[option].en or option
+			if translation.options then
+				for i, option in ipairs(setting.options) do
+					local desc
 
-					if translation.options[option][current_language .. "_desc"] then
-						desc = translation.options[option][current_language .. "_desc"]
-					elseif translation.options[option].en_desc then
-						desc = translation.options[option].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+					if translation.options[option] then
+						setting.option_names[i] = translation.options[option][current_language] or translation.options[option].en or option
+
+						if translation.options[option][current_language .. "_desc"] then
+							desc = translation.options[option][current_language .. "_desc"]
+						elseif translation.options[option].en_desc then
+							desc = translation.options[option].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+						end
+					else
+						setting.option_names[i] = option
 					end
-				else
-					setting.option_names[i] = option
-				end
 
-				if desc then
-					setting.option_descriptions[i] = desc
-					setting.option_desc_data[i] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
+					if desc then
+						setting.option_descriptions[i] = desc
+						setting.option_desc_data[i] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
+					end
+				end
+			else
+				for i, option in ipairs(setting.options) do
+					setting.option_names[i] = option
 				end
 			end
 		end
@@ -890,19 +900,19 @@ ps.settings = {
 		id = "general",
 		value_default = true,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_NEW_GAME,
+		scope = worldgen_scope,
 	},
 	{
 		id = "visuals",
 		value_default = true,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_NEW_GAME,
+		scope = worldgen_scope,
 	},
 	{
 		id = "return_rifts",
 		value_default = false,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_NEW_GAME,
+		scope = worldgen_scope,
 	},
 	{
 		id = "pw_counter",
@@ -914,7 +924,7 @@ ps.settings = {
 		id = "ng_plus",
 		value_default = true,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_NEW_GAME,
+		scope = worldgen_scope,
 	},
 	{
 		id = "mods",
@@ -933,14 +943,14 @@ ps.settings = {
 				id = "lava_lake",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "ORB",
 						value_default = false,
 						value_recommended = true,
 						requires = { id = "parallel_parity.lava_lake", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 				},
 			},
@@ -948,20 +958,20 @@ ps.settings = {
 				id = "desert_skull",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "kolmi_arena",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "KOLMI",
 						value_default = false,
 						value_recommended = true,
 						requires = { id = "parallel_parity.kolmi_arena", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 						hover_func = function()
 							if shadow_kolmi_template_desc then
 								shadow_kolmi_desc_path[shadow_kolmi_template_desc.num].text = shadow_kolmi_desc
@@ -974,14 +984,14 @@ ps.settings = {
 				id = "tree",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "GREED",
 						value_default = false,
 						value_recommended = true,
 						requires = { id = "parallel_parity.tree", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 				},
 			},
@@ -989,14 +999,14 @@ ps.settings = {
 				id = "dark_cave",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "HP",
 						value_default = true,
 						value_recommended = true,
 						requires = { id = "parallel_parity.dark_cave", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 				},
 			},
@@ -1004,27 +1014,27 @@ ps.settings = {
 				id = "mountain_lake",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "lake_island",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "FIRE_ESSENCE",
 						value_default = false,
 						value_recommended = true,
 						requires = { id = "parallel_parity.lake_island", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 					{
 						id = "BOSS",
 						value_default = false,
 						value_recommended = false,
 						requires = { id = "parallel_parity.lake_island", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 				},
 			},
@@ -1032,20 +1042,20 @@ ps.settings = {
 				id = "moons",
 				value_default = false,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "gourd_room",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "GOURDS",
 						value_default = false,
 						value_recommended = true,
 						requires = { id = "parallel_parity.gourd_room", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 				},
 			},
@@ -1053,7 +1063,7 @@ ps.settings = {
 				id = "meat_skull",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 		},
 	},
@@ -1067,26 +1077,26 @@ ps.settings = {
 				id = "hidden",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "fungal_altars",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "fishing_hut",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 				dependents = {
 					{
 						id = "BUNKERS",
 						value_default = true,
 						value_recommended = true,
 						requires = { id = "parallel_parity.fishing_hut", value = true },
-						scope = MOD_SETTING_SCOPE_NEW_GAME,
+						scope = worldgen_scope,
 					},
 				},
 			},
@@ -1094,37 +1104,37 @@ ps.settings = {
 				id = "pyramid_boss",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "leviathan",
 				value_default = false,
 				value_recommended = false,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "avarice_diamond",
 				value_default = false,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "essence_eaters",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "music_machines",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "evil_eye",
 				value_default = false,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 		},
 	},
@@ -1137,43 +1147,43 @@ ps.settings = {
 				id = "general",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "holy_mountain",
 				value_default = true,
 				value_recommended = false,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "fast_travel",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "tower_entrance",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "mountain",
 				value_default = false,
 				value_recommended = false,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "skull_island",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 			{
 				id = "summon",
 				value_default = true,
 				value_recommended = true,
-				scope = MOD_SETTING_SCOPE_NEW_GAME,
+				scope = worldgen_scope,
 			},
 		},
 	}, --[[
@@ -1207,7 +1217,7 @@ ps.settings = {
 		}
 	},--]]
 	{
-		id = "world_gen_changes_require_restart",
+		id = "worldgen_scope",
 		type = "options",
 		options = {"new_run", "restart"},
 		value_default = "new_run",
@@ -1443,7 +1453,7 @@ function ModSettingsUpdate(init_scope, is_init)
 			local current_value = ModSettingGet(setting.path)
 			local next_value = ModSettingGetNextValue(setting.path)
 
-			if current_value == nil and setting.value_default then
+			if current_value == nil and setting.value_default ~= nil then
 				current_value = setting.value_default
 			end
 			if next_value == nil and current_value ~= nil then
@@ -1456,6 +1466,12 @@ function ModSettingsUpdate(init_scope, is_init)
 			end
 
 			if current_value ~= nil then ModSettingSet(setting.path, current_value) end
+
+			--if setting.value_default ~= nil then
+			--	log(setting.path)
+			--	log(ModSettingGet(setting.path))
+			--	log(ModSettingGetNextValue(setting.path))
+			--end
 		end
 
 		for _, value in pairs(setting) do
