@@ -44,8 +44,6 @@ local langs_in_order = { --do this cuz key-indexed tables wont keep this order
 	"trtr",
 }
 
-print(tostring(ModImageDoesExist("../../workshop/content/881100/2921365704/files/font_pixel_huge.xml")))
-
 local current_language = languages[GameTextGetTranslatedOrNot("$current_language")] or "unknown"
 local cached_lang
 
@@ -477,7 +475,7 @@ ps.translation_strings = {
 		},
 	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
 	world_gen_changes_require_restart = {
-		en = "Worlgen Changes Apply",
+		en = "Worldgen Changes Apply",
 		en_desc = "When should settings related to World Generation be applied?\nIf on restart, already loaded chunks will be unaffected and will not generate new pixel scenes or remove old ones",
 		options = {
 			new_run = {
@@ -606,7 +604,7 @@ if ModDoesFileExist("mods/parallel_parity/fonts/regular.xml") then
 	font_dir = "mods/parallel_parity/fonts/"
 else
 	font_dir = "../../workshop/content/881100/3635992834/fonts/workshop/"
-end
+end --if i cant locate the fonts under the local mods folder, the mod has to be running from the workshop directory
 
 local regular_font = font_dir .. "regular.xml"
 
@@ -793,26 +791,43 @@ local function SettingUpdate(gui, setting, translation)
 		if translation and translation.options then
 			setting.option_names = {}
 			setting.option_descriptions = {}
+			setting.option_desc_data = {}
 			for i, option in ipairs(setting.options) do
-				setting.option_names[i] = translation.options[option][current_language] or translation.options[option].en or option
 				local desc
-				if translation.options[option][current_language .. "_desc"] then
-					desc = translation.options[option][current_language .. "_desc"]
-				elseif translation.options[option].en_desc then
-					desc = translation.options[option].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+
+				if translation.options[option] then
+					setting.option_names[i] = translation.options[option][current_language] or translation.options[option].en or option
+
+					if translation.options[option][current_language .. "_desc"] then
+						desc = translation.options[option][current_language .. "_desc"]
+					elseif translation.options[option].en_desc then
+						desc = translation.options[option].en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+					end
+				else
+					setting.option_names[i] = option
 				end
 
 				if desc then
 					setting.option_descriptions[i] = desc
-					setting.option_descriptions[option] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
+					setting.option_desc_data[i] = generate_tooltip_data(gui, desc, (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
 				end
 			end
 		end
 		setting.current_option = ModSettingGetNextValue(setting.path) or setting.value_default
-		setting.current_option_int = 0
+		setting.current_option_int = 1
 		for index, value in ipairs(setting.options) do
-			if setting.current_option == value then setting.current_option_int = index-1 end
+			if value == setting.value_default then setting.value_default_int = index end
+			if value == setting.value_recommended then setting.value_recommended_int = index end
+			if value == setting.value_on then setting.value_on_int = index end
+			if value == setting.value_off then setting.value_off_int = index end
+
+			if value == setting.current_option then setting.current_option_int = index end
 		end
+
+		setting.value_default = setting.value_default or 1
+		setting.value_recommended = setting.value_recommended or setting.value_default
+		setting.value_on = setting.value_on or setting.value_default
+		setting.value_off = setting.value_off or setting.value_default
 	end
 
 	if setting.description then
@@ -838,7 +853,6 @@ end
 local function SettingSetValue(setting, value)
 	if not current_scope then print("SCOPE IS UNDEFINED") return end
 
-	log(setting.scope, ", ", current_scope)
 	if setting.scope >= current_scope or not mods_are_loaded then
 		ModSettingSet(setting.path, value)
 	end
@@ -1224,7 +1238,7 @@ ps.settings = {
 	{
 		id = "off",
 		type = "reset_button",
-		reset_target = "value_false",
+		reset_target = "value_on",
 		reset_target_default = false,
 		render_condition = function() return keyboard_state == 2 end,
 		c = {
@@ -1239,7 +1253,7 @@ ps.settings = {
 	{
 		id = "on",
 		type = "reset_button",
-		reset_target = "value_true",
+		reset_target = "value_on",
 		reset_target_default = true,
 		render_condition = function() return keyboard_state == 3 end,
 		c = {
@@ -1434,7 +1448,7 @@ function ModSettingsUpdate(init_scope, is_init)
 			end
 			if next_value == nil and current_value ~= nil then
 				next_value = current_value
-				ModSettingSetNextValue(setting.path, next_value)
+				ModSettingSetNextValue(setting.path, next_value, false)
 			end
 
 			if current_value ~= next_value and setting.scope >= init_scope then
@@ -1479,7 +1493,12 @@ local function reset_settings_to_default(group, target, default_value)
 			target_value = default_value
 		end
 		if target_value ~= nil then
-			SettingSetValue(setting, target_value, setting.scope) --else print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
+			SettingSetValue(setting, target_value) --else print(setting.path .. " DOES NOT HAVE A DEFAULT FOR " .. target)
+		end
+
+		if type(setting.options) == "table" then
+			setting.current_option_int = setting[target .. "_int"]
+			setting.current_option = setting.options[setting.current_option_int]
 		end
 
 		if setting.items then
@@ -1599,18 +1618,18 @@ local function BoolSetting(gui, x_offset, setting, c)
 
 	if clicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
-		SettingSetValue(setting, not value, setting.scope)
+		SettingSetValue(setting, not value)
 	end
 	if rclicked then
 		GamePlaySound("ui", "ui/button_click", 0, 0)
 		if keyboard_state == 1 then
-			SettingSetValue(setting, setting.value_recommended, setting.scope)
+			SettingSetValue(setting, setting.value_recommended)
 		elseif keyboard_state == 2 then
-			SettingSetValue(setting, false, setting.scope)
+			SettingSetValue(setting, false)
 		elseif keyboard_state == 3 then
-			SettingSetValue(setting, true, setting.scope)
+			SettingSetValue(setting, true)
 		else --if 0
-			SettingSetValue(setting, setting.value_default, setting.scope)
+			SettingSetValue(setting, setting.value_default)
 		end
 	end
 end
@@ -1783,8 +1802,6 @@ function ModSettingsGui(gui, in_main_menu)
 						c.g = math.min((c.g * 1.2)+.05, 1)
 						c.b = math.min((c.b * 1.2)+.05, 1)
 
-						clicked =  InputIsMouseButtonJustDown(1)
-						rclicked =  InputIsMouseButtonJustDown(2)
 						if setting.desc_data then DrawTooltip(gui, setting.desc_data, x, y+12) end
 					end
 
@@ -1792,30 +1809,48 @@ function ModSettingsGui(gui, in_main_menu)
 					GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 					GuiText(gui, offset, 0, text, 1, regular_font)
 
-					local option_w,option_h = GuiGetTextDimensions(gui, setting.current_option, 1, 2, regular_font)
+					local option_w,option_h = GuiGetTextDimensions(gui, ("[%s]"):format(setting.option_names[setting.current_option_int]), 1, 2, regular_font)
 					GuiImageNinePiece(gui, create_id(), x + w, y, option_w, option_h, 0, "")
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 					if mouse_is_valid and (setting_hovered or guiPrev[3]) then
-						if setting.option_descriptions[setting.current_option] and not setting_hovered then DrawTooltip(gui, setting.option_descriptions[setting.current_option], x + w, y+12) end
+						if setting.option_desc_data[setting.current_option_int] and not setting_hovered then
+							DrawTooltip(gui, setting.option_desc_data[setting.current_option_int], x + w, y+12)
+						end
 
-						if InputIsMouseButtonJustDown(1) then
-							setting.current_option_int = (setting.current_option_int + 1) % #setting.options --modulate to get option number indexed by 0
-							setting.current_option = setting.options[setting.current_option_int + 1] --add one cuz lua is 1-indexed
+						clicked = InputIsMouseButtonJustDown(1)
+						rclicked = InputIsMouseButtonJustDown(2)
+
+
+						if clicked then
+							local option_offset = 1
+							if keyboard_state == 1 then option_offset = -1 end
+
+							setting.current_option_int = ((setting.current_option_int + option_offset - 1) % #setting.options) + 1 --add post-modulation to avoid 0-indexing
+							setting.current_option = setting.options[setting.current_option_int] --add one cuz lua is 1-indexed
 							SettingSetValue(setting, setting.current_option)
 							GamePlaySound("ui", "ui/button_click", 0, 0)
 						end
 
-						if InputIsMouseButtonJustDown(2) then
-							setting.current_option_int = (setting.current_option_int + 1) % #setting.options --modulate to get option number indexed by 0
-							setting.current_option = setting.options[setting.current_option_int + 1] --add one cuz lua is 1-indexed
+						if rclicked then
+							if keyboard_state == 1 then
+								setting.current_option_int = setting.value_recommended_int
+							elseif keyboard_state == 2 then
+								setting.current_option_int = setting.value_off_int
+							elseif keyboard_state == 3 then
+								setting.current_option_int = setting.value_on_int
+							else
+								setting.current_option_int = setting.value_default_int
+							end
+
+							setting.current_option = setting.options[setting.current_option_int]
 							SettingSetValue(setting, setting.current_option)
 							GamePlaySound("ui", "ui/button_click", 0, 0)
 						end
 					end
 
 					GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-					GuiText(gui, offset + w, 0, setting.current_option, 1, regular_font)
+					GuiText(gui, offset + w, 0, ("[%s]"):format(setting.option_names[setting.current_option_int]), 1, regular_font)
 
 
 				elseif setting.type == "reset_button" then
