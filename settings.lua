@@ -608,6 +608,11 @@ end --if i cant locate the fonts under the local mods folder, the mod has to be 
 
 local regular_font = font_dir .. "regular.xml"
 
+
+if mods_are_loaded and DebugGetIsDevBuild() then --custom fonts do not work in-game for noita_dev.exe: https://discord.com/channels/453998283174576133/632303734877192192/1465859077216145541
+	regular_font = "data/fonts/font_pixel_noshadow.xml"
+end
+
 --ukrainian language that worked
 --regular_font = "../../workshop/content/881100/2921365704/fonts/font_pixel_huge.xml"
 
