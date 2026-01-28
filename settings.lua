@@ -1466,17 +1466,11 @@ function ModSettingsUpdate(init_scope, is_init)
 				ModSettingSetNextValue(setting.path, next_value, false)
 			end
 
-			if current_value ~= next_value and setting.scope >= init_scope then
+			if current_value ~= next_value and setting.scope <= init_scope then
 				current_value = next_value
 			end
 
 			if current_value ~= nil then ModSettingSet(setting.path, current_value) end
-
-			--if setting.value_default ~= nil then
-			--	log(setting.path)
-			--	log(ModSettingGet(setting.path))
-			--	log(ModSettingGetNextValue(setting.path))
-			--end
 		end
 
 		for _, value in pairs(setting) do
