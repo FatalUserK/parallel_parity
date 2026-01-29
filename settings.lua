@@ -51,6 +51,7 @@ local cached_lang
 ParallelParity_Settings = {
 	custom_setting_types = {}, --custom settings handling, in case someone does something like that
 	offset_amount = 15, --indentation caused by nested settings
+	desc_line_gap = 12, --distance betwen the start of one line and the start of the next
 	tooltip_buffer = 11, --buffer distance required between the end of a tooltip and the edge of the game screen used for linebreaks
 	extra_line_sep = 2, --distance between normal descriptions and extra lines
 	max_orbs = 36, -- for mods *cough* Apotheosis *cough cough* which increase the normal amount of orbs in the world
@@ -732,41 +733,61 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 	end
 
 
+	local x_pos = 0
+	local y_pos = 0
+
 	if text then
 		for i, line in ipairs(split_lines(text)) do
-			local x_pos = 0
-			local y_pos = (i-1)*13
 			data.lines[#data.lines+1] = {
 				text = line,
 				x = x_pos,
 				y = y_pos,
+				c = {
+					r = 1,
+					g = 1,
+					b = 1,
+				},
 			}
-		end
 
-		data.h = (#data.lines * 13)
+			y_pos = y_pos + ps.desc_line_gap
+		end
 	end
 
 
-	if extra_lines and false then
+	if extra_lines then
 		for key, value in pairs(extra_lines) do
-			data.extra_lines = {}
-			data.extra_lines[key] = value
-			if text then data.h = data.h + ps.extra_line_sep end
+			if #data.lines > 0 then
+				y_pos = y_pos + ps.extra_line_sep
+			end
 
-			data.extra_lines[key] = extra_lines
-			data.extra_lines[key].lines = split_lines(extra_lines.text)
-			data.h = data.h + (#data.extra_lines[key].lines * 13)
+			for i, line in ipairs(split_lines(value.text)) do
+				data.lines[#data.lines+1] = {
+					text = line,
+					x = x_pos,
+					y = y_pos,
+					c = value.c or {
+						r = 1,
+						g = 1,
+						b = 1,
+					},
+				}
+
+				y_pos = y_pos + ps.desc_line_gap
+			end
 		end
 	end
 
+	if #data.lines == 0 then return end
 
 	data.w = max_line_length - 1 --save afterwards in case it was entended by extra_lines
-	data.h = data.h - 1
+	data.h = (#data.lines * (ps.desc_line_gap + 1)) - 1
 
 	return data
 end
 
-
+--MOD_SETTING_SCOPE_NEW_GAME
+--MOD_SETTING_SCOPE_RUNTIME_RESTART
+--MOD_SETTING_SCOPE_RUNTIME
 local scopes = {
 	"scope_new_run",
 	"scope_restart",
@@ -785,11 +806,10 @@ local function SettingUpdate(gui, setting, translation)
 		setting.name = setting.name or setting.id
 	end
 
+	setting.extra_lines = {}
+
 	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
-		log("SCOPE UNAVAILABLE: ", setting.path)
-		setting.extra_lines = ps.data.extra_lines[scopes[current_scope]]
-	else
-		setting.extra_lines = nil
+		setting.extra_lines.scope_warning = ps.data.extra_lines[scopes[setting.scope+1]]
 	end
 
 	setting.w,setting.h = GuiGetTextDimensions(gui, setting.name or "", 1, 2, regular_font)
@@ -827,6 +847,11 @@ local function SettingUpdate(gui, setting, translation)
 					setting.option_names[i] = option
 				end
 			end
+		else
+			local descs = setting.option_descriptions or {}
+			for i,_ in ipairs(setting.options) do
+				setting.option_desc_data[i] = generate_tooltip_data(gui, descs[i], (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
+			end
 		end
 		setting.current_option = ModSettingGetNextValue(setting.path) or setting.value_default
 		setting.current_option_int = 1
@@ -845,9 +870,7 @@ local function SettingUpdate(gui, setting, translation)
 		setting.value_off = setting.value_off or setting.value_default
 	end
 
-	if setting.description then
-		setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount, setting.extra_lines)
-	end
+	setting.desc_data = generate_tooltip_data(gui, setting.description, setting.recursion * ps.offset_amount, setting.extra_lines)
 
 
 	if setting.path == "parallel_parity.kolmi_arena.KOLMI" then
@@ -905,13 +928,13 @@ ps.settings = {
 		id = "general",
 		value_default = true,
 		value_recommended = true,
-		scope = worldgen_scope,
+		scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
 	},
 	{
 		id = "visuals",
 		value_default = true,
 		value_recommended = true,
-		scope = worldgen_scope,
+		scope = MOD_SETTING_SCOPE_NEW_GAME,
 	},
 	{
 		id = "return_rifts",
@@ -1404,7 +1427,7 @@ function ModSettingsUpdate(init_scope, is_init)
 				if curr_x > max_len then max_len = curr_x end
 			end
 		end
-		tlcr_data_ordered.size = {max_len, 13 * #tlcr_data_ordered}
+		tlcr_data_ordered.size = {max_len, ps.desc_line_gap * #tlcr_data_ordered}
 	end
 
 	local function cache_settings(input_settings, input_translations, path, recursion)
@@ -1553,22 +1576,18 @@ local function DrawTooltip(gui, data, x, y, sprite)
 	y = y + 1
 	for i,line in ipairs(data.lines) do
 		GuiZSetForNextWidget(gui, -210)
+		GuiColorSetForNextWidget(gui, line.c.r, line.c.g, line.c.b, 1)
 		GuiText(gui, x + 5 + line.x, y + line.y, line.text, 1, regular_font)
 		--GuiText(gui, x + 5, y + (i-1)*13, line)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
 
 	if data.extra_lines or false then
 		local extra_y = y
-		if data.lines then extra_y = extra_y + ps.extra_line_sep + (#data.lines)*13 end
-		local c = data.extra_lines.c or {
-			r = 1,
-			g = 1,
-			b = 1,
-		}
+		if data.lines then extra_y = extra_y + ps.extra_line_sep + (#data.lines)*ps.desc_line_gap end
 		for i,line in ipairs(data.extra_lines.lines) do
 			GuiZSetForNextWidget(gui, -210)
-			GuiColorSetForNextWidget(gui, c.r, c.g, c.b, 1)
-			GuiText(gui, x + 5, extra_y + (i-1)*13, line, 1, regular_font)
+			GuiColorSetForNextWidget(gui, line.c.r, line.c.g, line.c.b, 1)
+			GuiText(gui, x + 5, extra_y + (i-1)*ps.desc_line_gap, line, 1, regular_font)
 		end
 	end
 	GuiLayoutEndLayer(gui)
@@ -1664,7 +1683,7 @@ local function draw_translation_credits(gui, x, y)
 			GuiColorSetForNextWidget(gui, 236/255, 236/255, 67/255, 1)
 		end
 
-		local pos_x,pos_y = x + 5, y + 2 + (i-1)*13
+		local pos_x,pos_y = x + 5, y + 2 + (i-1)*ps.desc_line_gap
 		GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NextSameLine)
 		GuiZSetForNextWidget(gui, -210)
 		GuiText(gui, pos_x, pos_y , tl.text, 1, regular_font)
