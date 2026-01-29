@@ -433,50 +433,6 @@ ps.translation_strings = {
 			de_desc = "Die Portale des Eis der Technologie, wo der Das Ende von allem-Zauber gefunden werden kann\nBeinhaltet zusätzliche Änderungen am Jungelbiom damit die Statuen und den Portalort\nin parallelen Welten funktionieren",
 		},
 	},
-	vertical = {
-		en = "Vertical Parity",
-		en_desc = "As above, so below.",
-		ru_desc = "Как вверху, так и внизу.",
-		ptbr_desc = "Assim na terra como no céu.",
-		eses_desc = "Como es arriba, es abajo.",
-		de_desc = "Wie oben, so unten.",
-		frfr_desc = "Ce qui est en haut est comme ce qui est en bas.",
-		it_desc = "Come in cielo, così in terra.",
-		pl_desc = "Jako w niebie, tak i na ziemi.",
-		zhcn_desc = "上下一致.",
-		jp_desc = "上のように、下も.",
-		ko_desc = "위에서, 그리고 아래에서.",
-		pixel_scenes = {
-			en = "Pixel Scenes",
-			en_desc = "Should Pixel Scenes from the Pixel Scenes and Spliced Pixel Scenes categories spawn Above/Below\nSome things may not spawn in properly or be replaced due to lacking relevant Spawn Functions",
-		},
-		biome_scenes = {
-			en = "Biome Scenes",
-			en_desc = "Should Pixel Scenes that already spawn in Parallel Worlds spawn Above/Below (eg. Holy Mountains)",
-		},
-		biome_names = {
-			en = "Above/Below biome names",
-			en_desc = "Display a \"ENTERED ABOVE/BELOW (biome name)\" similar to Parallel World biome names",
-		},
-		spatial_awareness_coordinate_display = {
-			en = "Spatial Awareness Coordinate Format",
-			en_desc = "How should your current vertical and horizontal coordinates in Parallel Worlds be displayed",
-			options = {
-				none = {
-					en = "None",
-					en_desc = "Do not display vertical position",
-				},
-				grid = {
-					en = "Cartesian",
-					en_desc = "Display position as (x, y) coordinates on a grid",
-				},
-				polar = {
-					en = "Polar",
-					en_desc = "Display position as (r, θ)",
-				},
-			},
-		},
-	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
 	worldgen_scope = {
 		en = "Worldgen Changes Apply", --Worldgen is an abbreviation of World Generation
 		en_desc = "When should settings related to World Generation be applied?\nIf on restart, already loaded chunks will be unaffected and will not generate new pixel scenes or remove old ones",
