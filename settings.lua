@@ -60,6 +60,8 @@ local ps = ParallelParity_Settings
 
 
 
+--as of 29/01/2026, there are 125 translateable strings
+
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the `languages` table above
 ps.translation_strings = {
@@ -81,11 +83,11 @@ ps.translation_strings = {
 	},
 	visuals = {
 		en = "Visuals",
-		--en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering\nThe criteria for this group is decided at my own discretion",
+		en_desc = "Mostly cleans up visual pixel-scenes and backgrounds that are not meaningfully gameplay-altering\nThe criteria for this group is decided at my own discretion",
 		ptbr = "Visuais",
-		--ptbr_desc = "Dá uma limpeza em cenas de pixels visuais e backgrounds que não alteram significamente a jogabilidade\nOs critérios para este grupo são definidos a meu critério",
+		ptbr_desc = "Dá uma limpeza em cenas de pixels visuais e backgrounds que não alteram significamente a jogabilidade\nOs critérios para este grupo são definidos a meu critério",
 		de = "Visuell",
-		--de_desc = "Verschönert hauptsächlich visuelle Pixelszenen und Hintergründe welche keinen Einfluss auf das Spielerlebnis haben. \nDie Kriterien für diese Gruppe sind von mir selbst entschieden",
+		de_desc = "Verschönert hauptsächlich visuelle Pixelszenen und Hintergründe welche keinen Einfluss auf das Spielerlebnis haben. \nDie Kriterien für diese Gruppe sind von mir selbst entschieden",
 	},
 	return_rifts = {
 		en = "Return Rifts",
@@ -476,7 +478,7 @@ ps.translation_strings = {
 		},
 	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
 	worldgen_scope = {
-		en = "Worldgen Changes Apply",
+		en = "Worldgen Changes Apply", --Worldgen is an abbreviation of World Generation
 		en_desc = "When should settings related to World Generation be applied?\nIf on restart, already loaded chunks will be unaffected and will not generate new pixel scenes or remove old ones",
 		options = {
 			new_run = {
@@ -531,7 +533,11 @@ ps.translation_strings = {
 			scope_restart = {
 				en = "Changes will apply when you next restart or on your next run",
 			},
-		}, --displayed as a tooltip when a user changes a setting that will not be applied under the current scope
+			missing_translation = {
+				en = "(Missing %s translation)", --default (you do not need to use %s)
+				en_example = "(Missing English translation)" --  <-- example
+			}
+		},
 	},
 }
 
@@ -565,7 +571,7 @@ local translations = 0
 local function func(t)
 	if t.en then translatable = translatable + 1 end
 	if t.en_desc then translatable = translatable + 1 end
-	for key, value in pairs(t) do
+	for _,value in pairs(t) do
 		local vtype = type(value)
 		if vtype == "table" then
 			func(value)
@@ -623,7 +629,13 @@ local screen_w,screen_h
 local description_start_pos
 local keyboard_state = 0
 
-local worldgen_scope = ModSettingGet("parallel_parity.worldgen_scope") == "on_restart" and 1 or 0
+local worldgen_scope
+local function return_worldgen_scope()
+	worldgen_scope = ModSettingGet("parallel_parity.worldgen_scope") == "on_restart" and 1 or 0
+	print(worldgen_scope)
+	return worldgen_scope
+end
+return_worldgen_scope()
 
 local orbs = 12
 local original_orbs
@@ -632,7 +644,7 @@ local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
 local shadow_kolmi_desc
 
-local logging = true
+local logging = false
 local function log(...)
 	if logging then
 		local str = ""
@@ -644,16 +656,16 @@ local function log(...)
 end
 
 local function dump(o)
-   if type(o) == 'table' then
-      local s = '{ '
-      for k,v in pairs(o) do
-         if type(k) ~= 'number' then k = '"'..k..'"' end
-         s = s .. '['..k..'] = ' .. dump(v) .. ','
-      end
-      return s .. '} '
-   else
-      return tostring(o)
-   end
+	if type(o) == 'table' then
+		local s = '{ '
+		for k,v in pairs(o) do
+			if type(k) ~= 'number' then k = '"'..k..'"' end
+			s = s .. '['..k..'] = ' .. dump(v) .. ','
+		end
+		return s .. '} '
+	else
+		return tostring(o)
+	end
 end
 
 
@@ -759,6 +771,7 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 				y_pos = y_pos + ps.extra_line_sep
 			end
 
+			log("full dump of extra_lines data ", key, ": ", dump(value))
 			for i, line in ipairs(split_lines(value.text)) do
 				data.lines[#data.lines+1] = {
 					text = line,
@@ -794,10 +807,13 @@ local scopes = {
 }
 
 local function SettingUpdate(gui, setting, translation)
+	setting.extra_lines = setting.extra_lines or {}
+
 	if translation then
 		setting.name = translation[current_language] or translation.en or setting.id
 		if translation.en_desc and not translation[current_language] then --if there is english translation but no other translation
-			setting.description = translation.en_desc .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+			setting.description = translation.en_desc-- .. string.format("\n(Missing %s translation)", GameTextGetTranslatedOrNot("$current_language"))
+			setting.extra_lines.missing_translation = ps.data.extra_lines.missing_translation
 		else
 			setting.description = translation[current_language .. "_desc"]
 		end
@@ -805,10 +821,17 @@ local function SettingUpdate(gui, setting, translation)
 		setting.name = setting.name or setting.id
 	end
 
-	setting.extra_lines = {}
+	if setting.scope_func then
+		print("scope func identified")
+		setting.scope = setting.scope_func()
+	end
 
 	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
+		log("SETTING: ", ModSettingGet(setting.path), ", ", ModSettingGetNextValue(setting.path))
 		setting.extra_lines.scope_warning = ps.data.extra_lines[scopes[setting.scope+1]]
+		log(setting.scope+1)
+	else
+		setting.extra_lines.scope_warning = nil
 	end
 
 	setting.w,setting.h = GuiGetTextDimensions(gui, setting.name or "", 1, 2, regular_font)
@@ -890,6 +913,7 @@ end
 local function SettingSetValue(setting, value)
 	if not current_scope then print("SCOPE IS UNDEFINED") return end
 
+	log(setting.scope, ", ", current_scope)
 	if setting.scope >= current_scope or not mods_are_loaded then
 		ModSettingSet(setting.path, value)
 	end
@@ -927,13 +951,14 @@ ps.settings = {
 		id = "general",
 		value_default = true,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
+		scope_func = return_worldgen_scope,
+		scope = worldgen_scope,
 	},
 	{
 		id = "visuals",
 		value_default = true,
 		value_recommended = true,
-		scope = MOD_SETTING_SCOPE_NEW_GAME,
+		scope = worldgen_scope,
 	},
 	{
 		id = "return_rifts",
@@ -1325,6 +1350,13 @@ ps.data = {
 				b = 139/255,
 			},
 		},
+		missing_translation = {
+			c = {
+				r = 35/255,
+				g = 90/255,
+				b = 35/255,
+			}
+		}
 	},
 }
 
@@ -1336,6 +1368,8 @@ function ModSettingsGuiCount()
 end
 
 local tlcr_data_ordered = {}
+---@param init_scope int 3 menu loaded, 2 settings updated (ingame only), 1 restart, 0 new game
+---@param is_init bool is being called manually from `mods/parallel_parity/init.lua`
 function ModSettingsUpdate(init_scope, is_init)
 	current_scope = init_scope
 
@@ -1463,14 +1497,17 @@ function ModSettingsUpdate(init_scope, is_init)
 		end
 	end
 
-	local function cache_settings_data(input_data, input_translations, recursion)
+	local function cache_settings_data(input_data, input_translations, recursion, id)
 		recursion = (recursion or 0) + 1
 
 		input_data.text = input_translations[current_language] or input_translations.en or nil
+		if id == "missing_translation" then
+			input_data.text = string.format(input_data.text, GameTextGetTranslatedOrNot("$current_language"))
+		end
 
 		for key, value in pairs(input_data) do
 			if type(value) == "table" and input_translations[key] then
-				cache_settings_data(value, input_translations[key], recursion + 1)
+				cache_settings_data(value, input_translations[key], recursion + 1, key)
 			end
 		end
 	end
@@ -1479,20 +1516,31 @@ function ModSettingsUpdate(init_scope, is_init)
 		if setting.path then
 			local current_value = ModSettingGet(setting.path)
 			local next_value = ModSettingGetNextValue(setting.path)
+			if current_value ~= next_value then logging = true end
+			log(setting.path)
+			log("A: ", current_value, ", ", next_value)
 
 			if current_value == nil and setting.value_default ~= nil then
 				current_value = setting.value_default
 			end
+			log("B: ", current_value, ", ", next_value)
 			if next_value == nil and current_value ~= nil then
 				next_value = current_value
 				ModSettingSetNextValue(setting.path, next_value, false)
 			end
+			log("C: ", current_value, ", ", ModSettingGetNextValue(setting.path))
+			log("D: ", current_value, ", ", next_value)
 
-			if current_value ~= next_value and setting.scope <= init_scope then
+			log("E: ", setting.scope, ", ", init_scope)
+			if current_value ~= next_value and (setting.scope >= init_scope or not mods_are_loaded) then
 				current_value = next_value
 			end
+			log("F: ", current_value, ", ", next_value)
 
 			if current_value ~= nil then ModSettingSet(setting.path, current_value) end
+			log("G: ", current_value, ", ", next_value)
+			log("H: ", ModSettingGet(setting.path), ", ", ModSettingGetNextValue(setting.path))
+			logging = false
 		end
 
 		for _, value in pairs(setting) do
@@ -1500,19 +1548,18 @@ function ModSettingsUpdate(init_scope, is_init)
 				apply_settings(value)
 			end
 		end
-
 	end
 
-
-
-	if not cached then
-		cache_settings()
-		cache_settings_data(ps.data, ps.translation_strings.data)
-	end
 
 	for i, setting in ipairs(ps.settings) do
-		apply_settings(setting)
+		apply_settings(setting) --apply settings first so scope messages aren't silly
 	end
+
+	if not cached then
+		cache_settings_data(ps.data, ps.translation_strings.data) --cache first
+		cache_settings()
+	end
+
 
 	ModSettingSet(get_setting_id("_version"), mod_settings_version)
 	if dummy_gui then GuiDestroy(dummy_gui) end
@@ -1573,16 +1620,6 @@ local function DrawTooltip(gui, data, x, y, sprite)
 		GuiText(gui, x + 5 + line.x, y + line.y, line.text, 1, regular_font)
 		--GuiText(gui, x + 5, y + (i-1)*13, line)
 	end --GuiText doesnt work by itself ig, newlines put next on the same line for some reason? idk.
-
-	if data.extra_lines or false then
-		local extra_y = y
-		if data.lines then extra_y = extra_y + ps.extra_line_sep + (#data.lines)*ps.desc_line_gap end
-		for i,line in ipairs(data.extra_lines.lines) do
-			GuiZSetForNextWidget(gui, -210)
-			GuiColorSetForNextWidget(gui, line.c.r, line.c.g, line.c.b, 1)
-			GuiText(gui, x + 5, extra_y + (i-1)*ps.desc_line_gap, line, 1, regular_font)
-		end
-	end
 	GuiLayoutEndLayer(gui)
 end
 
@@ -1925,9 +1962,9 @@ function ModSettingsGui(gui, in_main_menu)
 					local guiPrev = {GuiGetPreviousWidgetInfo(gui)}
 
 					local c = {
-						r = 0.21,
+						r = 0.17,
 						g = 0.5,
-						b = 0.21,
+						b = 0.17,
 					}
 					if guiPrev[3] and mouse_is_valid then
 						c.r = math.min((c.r * 1.2)+.05, 1)

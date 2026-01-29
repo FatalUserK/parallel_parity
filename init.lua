@@ -43,8 +43,14 @@ local function dump(o) --handy func i stole that prints an entire table
 	end
 end
 
-local function log(s)
-	if par.logging then print(tostring(s)) end
+local function log(...)
+	if par.logging then
+		local str = ""
+		for _, value in ipairs({...}) do
+			str = str .. tostring(value)
+		end
+		print(str)
+	end
 end
 
 local biome_scripts = {}
@@ -474,7 +480,6 @@ function OnMagicNumbersAndWorldSeedInitialized()
 			for key, chunk in pairs(chunk_index.scenes) do
 				table_insert = table_insert .. "			[\"".. key .."\"] = {\n"
 				for _, scene in ipairs(chunk) do
-					log(scene.materials)
 					if scene.materials == "" then scene.materials = "mods/parallel_parity/files/nil_materials.png" end
 					table_insert = table_insert .. (
 [[					{

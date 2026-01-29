@@ -198,7 +198,7 @@ par.extra_pixel_scenes = {
 			entity = "mods/parallel_parity/files/cauldron/cauldron.xml",
 			x = 3584,
 			y = 5120,
-		},
+		} or nil,
 	},
 }
 
