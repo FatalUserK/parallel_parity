@@ -541,7 +541,7 @@ print("translatable: " .. translatable)
 print("translations: " .. translations)
 print(("translated: %s%%"):format((translations/(translatable*3))*100))--]]
 
---[[ injector for ModSettingSet and ModSettingSetValue so i can read the values being changed more easily
+-- [[ injector for ModSettingSet and ModSettingSetValue so i can read the values being changed more easily
 local old_modsettingset = ModSettingSet
 function ModSettingSet(id, value)
 	local prev_value = ModSettingGet(id)
@@ -600,7 +600,7 @@ local shadow_kolmi_desc_path
 local shadow_kolmi_template_desc
 local shadow_kolmi_desc
 
-local logging = false
+local logging = true
 local function log(...)
 	if logging then
 		local str = ""
@@ -778,8 +778,10 @@ local function SettingUpdate(gui, setting, translation)
 	end
 
 	if setting.scope_func then
-		print("scope func identified")
+		--print("scope func identified")
+		--print("pre: " .. setting.scope)
 		setting.scope = setting.scope_func()
+		--print("post: " .. setting.scope)
 	end
 
 	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
@@ -1472,7 +1474,7 @@ function ModSettingsUpdate(init_scope, is_init)
 		if setting.path then
 			local current_value = ModSettingGet(setting.path)
 			local next_value = ModSettingGetNextValue(setting.path)
-			if current_value ~= next_value then logging = true end
+			if current_value == next_value then logging = false end
 			log(setting.path)
 			log("A: ", current_value, ", ", next_value)
 
@@ -1496,7 +1498,7 @@ function ModSettingsUpdate(init_scope, is_init)
 			if current_value ~= nil then ModSettingSet(setting.path, current_value) end
 			log("G: ", current_value, ", ", next_value)
 			log("H: ", ModSettingGet(setting.path), ", ", ModSettingGetNextValue(setting.path))
-			logging = false
+			logging = true
 		end
 
 		for _, value in pairs(setting) do
