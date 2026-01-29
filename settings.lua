@@ -446,9 +446,10 @@ ps.translation_strings = {
 		zhcn_desc = "上下一致.",
 		jp_desc = "上のように、下も.",
 		ko_desc = "위에서, 그리고 아래에서.",
+		--[[^^ I grabbed and slightly modified these translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
 		pixel_scenes = {
 			en = "Pixel Scenes",
-			en_desc = "Should Pixel Scenes from the Pixel Scenes and Spliced Pixel Scenes categories spawn Above/Below\nSome things may not spawn in properly or be replaced due to lacking relevant Spawn Functions",
+			en_desc = "Makes Pixel Scenes from the Pixel Scenes and Spliced Pixel Scenes categories spawn Above/Below\nSome things may not spawn in properly or be replaced due to lacking relevant Spawn Functions, though this is already present in vanilla",
 		},
 		biome_scenes = {
 			en = "Biome Scenes",
@@ -470,13 +471,32 @@ ps.translation_strings = {
 					en = "Cartesian",
 					en_desc = "Display position as (x, y) coordinates on a grid",
 				},
-				polar = {
+				polar = {--you do not have to translate the "Polar" option strings if you don't want to... However: it *would* be funny
 					en = "Polar",
 					en_desc = "Display position as (r, θ)",
+					polar_angle_display = {
+						en = "Display angle as",
+						en_desc = "Choose the angle format for Spatial Awareness Polar Coordinates\nCan you tell I enjoy adding stupid bullshit to my mod?",
+						options = { --im sorry
+							degrees = {
+								en = "Degrees",
+								en_desc = "Standard 360°"
+							},
+							radians = {
+								en = "Radians",
+								en_desc = "A single Rad (or Radian) is defined as being the angle of an arc whose length equals the radius of the arc from the central point, making a full revolution equal to 2π Rad"
+								--en_desc = "The radian, denoted by the symbol rad, is the unit of angle in the International System of Units (SI) and is the standard unit of angular measure used in many areas of mathematics. It is defined such that one radian is the angle subtended at the center of a plane circle by an arc that is equal in length to the radius. The unit is defined in the SI as the coherent unit for plane angle, as well as for phase angle. Angles without explicitly specified units are generally assumed to be measured in radians, especially in mathematical writing"
+							},
+							gradians = {
+								en = "Gradians",
+								en_desc = "A single Grad (or Grade/Gradian) is defined as being 1/100th of a right-angle, making a full revolution equal to 400 Grad\nWelcome to hell."
+							},
+						},
+					},
 				},
 			},
 		},
-	}, --[[I grabbed the translations from $log_collision_2, please correct if you feel any of this is inaccurate! -UserK]]
+	},
 	worldgen_scope = {
 		en = "Worldgen Changes Apply", --Worldgen is an abbreviation of World Generation
 		en_desc = "When should settings related to World Generation be applied?\nIf on restart, already loaded chunks will be unaffected and will not generate new pixel scenes or remove old ones",
