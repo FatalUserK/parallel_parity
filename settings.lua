@@ -624,7 +624,6 @@ local description_start_pos
 local keyboard_state = 0
 
 local worldgen_scope = ModSettingGet("parallel_parity.worldgen_scope") == "on_restart" and 1 or 0
-print("worldgen_scope: " .. worldgen_scope)
 
 local orbs = 12
 local original_orbs
