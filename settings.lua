@@ -541,7 +541,7 @@ print("translatable: " .. translatable)
 print("translations: " .. translations)
 print(("translated: %s%%"):format((translations/(translatable*3))*100))--]]
 
--- [[ injector for ModSettingSet and ModSettingSetValue so i can read the values being changed more easily
+--[[ injector for ModSettingSet and ModSettingSetValue so i can read the values being changed more easily
 local old_modsettingset = ModSettingSet
 function ModSettingSet(id, value)
 	local prev_value = ModSettingGet(id)
@@ -588,7 +588,6 @@ local keyboard_state = 0
 local worldgen_scope
 local function return_worldgen_scope()
 	worldgen_scope = ModSettingGet("parallel_parity.worldgen_scope") == "on_restart" and 1 or 0
-	print(worldgen_scope)
 	return worldgen_scope
 end
 return_worldgen_scope()
@@ -727,7 +726,6 @@ local function generate_tooltip_data(gui, text, offset_x, extra_lines)
 				y_pos = y_pos + ps.extra_line_sep
 			end
 
-			log("full dump of extra_lines data ", key, ": ", dump(value))
 			for i, line in ipairs(split_lines(value.text)) do
 				data.lines[#data.lines+1] = {
 					text = line,
@@ -785,9 +783,7 @@ local function SettingUpdate(gui, setting, translation)
 	end
 
 	if ModSettingGet(setting.path) ~= ModSettingGetNextValue(setting.path) then
-		log("SETTING: ", ModSettingGet(setting.path), ", ", ModSettingGetNextValue(setting.path))
 		setting.extra_lines.scope_warning = ps.data.extra_lines[scopes[setting.scope+1]]
-		log(setting.scope+1)
 	else
 		setting.extra_lines.scope_warning = nil
 	end
@@ -871,7 +867,6 @@ end
 local function SettingSetValue(setting, value)
 	if not current_scope then print("SCOPE IS UNDEFINED") return end
 
-	log(setting.scope, ", ", current_scope)
 	if setting.scope >= current_scope or not mods_are_loaded then
 		ModSettingSet(setting.path, value)
 	end
@@ -1474,31 +1469,21 @@ function ModSettingsUpdate(init_scope, is_init)
 		if setting.path then
 			local current_value = ModSettingGet(setting.path)
 			local next_value = ModSettingGetNextValue(setting.path)
-			if current_value == next_value then logging = false end
-			log(setting.path)
-			log("A: ", current_value, ", ", next_value)
 
 			if current_value == nil and setting.value_default ~= nil then
 				current_value = setting.value_default
 			end
-			log("B: ", current_value, ", ", next_value)
+
 			if next_value == nil and current_value ~= nil then
 				next_value = current_value
 				ModSettingSetNextValue(setting.path, next_value, false)
 			end
-			log("C: ", current_value, ", ", ModSettingGetNextValue(setting.path))
-			log("D: ", current_value, ", ", next_value)
 
-			log("E: ", setting.scope, ", ", init_scope)
 			if current_value ~= next_value and (setting.scope >= init_scope or not mods_are_loaded) then
 				current_value = next_value
 			end
-			log("F: ", current_value, ", ", next_value)
 
 			if current_value ~= nil then ModSettingSet(setting.path, current_value) end
-			log("G: ", current_value, ", ", next_value)
-			log("H: ", ModSettingGet(setting.path), ", ", ModSettingGetNextValue(setting.path))
-			logging = true
 		end
 
 		for _, value in pairs(setting) do
@@ -1508,15 +1493,19 @@ function ModSettingsUpdate(init_scope, is_init)
 		end
 	end
 
-
-	for i, setting in ipairs(ps.settings) do
-		apply_settings(setting) --apply settings first so scope messages aren't silly
-	end
-
 	if not cached then
 		cache_settings_data(ps.data, ps.translation_strings.data) --cache first
 		cache_settings()
 	end
+
+	for _,setting in ipairs(ps.settings) do
+		apply_settings(setting)
+	end
+
+	if not cached then --do this twice cuz fuck i need to do paths before `apply_settings` this but add extra lines AFTER, this shit is so ass
+		cache_settings_data(ps.data, ps.translation_strings.data) --cache first
+		cache_settings()
+	end --resolve by splitting settings caching and translations caching into their own individual functions
 
 
 	ModSettingSet(get_setting_id("_version"), mod_settings_version)
@@ -1851,10 +1840,10 @@ function ModSettingsGui(gui, in_main_menu)
 
 
 						if clicked then
-							local option_offset = 1
-							if keyboard_state == 1 then option_offset = -1 end
+							local option_change_amount = 1
+							if keyboard_state == 1 then option_change_amount = -1 end
 
-							setting.current_option_int = ((setting.current_option_int + option_offset - 1) % #setting.options) + 1 --add post-modulation to avoid 0-indexing
+							setting.current_option_int = ((setting.current_option_int + option_change_amount - 1) % #setting.options) + 1 --add post-modulation to avoid 0-indexing
 							setting.current_option = setting.options[setting.current_option_int] --add one cuz lua is 1-indexed
 							SettingSetValue(setting, setting.current_option)
 							GamePlaySound("ui", "ui/button_click", 0, 0)
