@@ -182,32 +182,7 @@ function OnModPreInit() --do misc stuff on mod preinit so other mods can append 
 
 		ModTextFileSetContent("data/scripts/perks/map.lua", ModTextFileGetContent("data/scripts/perks/map.lua")
 			:modify([[GameCreateSpriteForXFrames( "data/particles/" .. name .. ".png", mi_x + 6, mi_y - 92, true, 0, 0, 1, true )]],
-				[[local pw_str = tostring(pw)
-				local pw_chars = {
-					["-"] = {]] .. pw_char_minus .. [[, "mods/parallel_parity/files/pw_counter/minus.png"},
-					["0"] = {]] .. pw_char_0 .. [[, "mods/parallel_parity/files/pw_counter/0.png"},
-					["1"] = {]] .. pw_char_1 .. [[, "mods/parallel_parity/files/pw_counter/1.png"},
-					["2"] = {]] .. pw_char_2 .. [[, "mods/parallel_parity/files/pw_counter/2.png"},
-					["3"] = {]] .. pw_char_3 .. [[, "mods/parallel_parity/files/pw_counter/3.png"},
-					["4"] = {]] .. pw_char_4 .. [[, "mods/parallel_parity/files/pw_counter/4.png"},
-					["5"] = {]] .. pw_char_5 .. [[, "mods/parallel_parity/files/pw_counter/5.png"},
-					["6"] = {]] .. pw_char_6 .. [[, "mods/parallel_parity/files/pw_counter/6.png"},
-					["7"] = {]] .. pw_char_7 .. [[, "mods/parallel_parity/files/pw_counter/7.png"},
-					["8"] = {]] .. pw_char_8 .. [[, "mods/parallel_parity/files/pw_counter/8.png"},
-					["9"] = {]] .. pw_char_9 .. [[, "mods/parallel_parity/files/pw_counter/9.png"},
-				}
-				local pw_str_len = 0
-				for char in string.gmatch(pw_str, ".") do
-					local curr_char = pw_chars[char] or pw_chars["-"]
-					pw_str_len = pw_str_len + curr_char[1]
-				end
-				local pw_str_x_origin = (pw_str_len * -.5) + mi_x + 9 --halve and make negative plus mi_x plus arbitrary offset
-				local pw_str_x_offset = 0
-				for char in string.gmatch(pw_str, ".") do
-					local curr_char = pw_chars[char] or pw_chars["-"]
-					GameCreateSpriteForXFrames(curr_char[2], pw_str_x_origin + pw_str_x_offset, mi_y - 92, true, 0, 0, 1, true )
-					pw_str_x_offset = pw_str_x_offset + curr_char[1]
-				end]]
+				[[dofile_once("mods/parallel_parity/files/pw_counter/world_coordinate_display.lua")(x, y, mi_x, mi_y)]]
 			)
 		)
 	end
@@ -303,6 +278,10 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
 	--Scraper
 	--#region
+	local function get_script_at_position(x, y)
+		return 
+	end
+
 	local biome_appends = {}
 	local function add_pixel_scene_to_compiler(scene_data, x, y, biome_map_targets, ps_file_path)
 		local chunk_pos_x = math.floor(x * 0.001953125) --i heard somewhere multiplication is more efficient than dividing so i hope thats true
@@ -314,6 +293,8 @@ function OnMagicNumbersAndWorldSeedInitialized()
 			gfx = scene_data.gfx or "",
 			background = scene_data.background or "",
 			entity = scene_data.entity or "",
+			offset_x = x - (chunk_pos_x * 512),
+			offset_y = y - (chunk_pos_y * 512),
 		}
 
 		for _, biome_map in ipairs(biome_map_targets) do
@@ -334,51 +315,30 @@ function OnMagicNumbersAndWorldSeedInitialized()
 								local biome_scene_index = biome_appends[ng_script][map_scene_index]
 								if is_pixel_scene then
 									biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {}
-									biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = {
-										materials = scene_data.materials,
-										gfx = scene_data.gfx,
-										background = scene_data.background,
-										offset_x = x - (chunk_pos_x * 512),
-										offset_y = y - (chunk_pos_y * 512),
-									}
+									biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = scene_data
 								end
 								if is_entity then
 									biome_scene_index.entities[chunk_key] = biome_scene_index.entities[chunk_key] or {}
-									biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = {
-										path = scene_data.entity,
-										offset_x = x - (chunk_pos_x * 512),
-										offset_y = y - (chunk_pos_y * 512),
-									}
+									biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = scene_data
 								end
 							end
 						end
-					else
-						skip_scraping = true --do this cuz I HATE NG+ WHY DO I NEED TO DO SO MUCH STUPID STUFF JUST TO ACCOUNT FOR IT AAAAAAAAAAAAAAAA
 					end
-				end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
-				if not skip_scraping then
+				else
 					biome_appends[biomescript] = biome_appends[biomescript] or {} --make sure biomescript table exists
 					biome_appends[biomescript][map_scene_index] = biome_appends[biomescript][map_scene_index] or {scenes = {}, entities = {}} --make sure biomemap table exists
 
 					local biome_scene_index = biome_appends[biomescript][map_scene_index] --shorten to local val so less indexing is required
 					if is_pixel_scene then
 						biome_scene_index.scenes[chunk_key] = biome_scene_index.scenes[chunk_key] or {} --make sure scene chunk table exists
-						biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = { --add to scene chunk table
-							materials = scene_data.materials,
-							gfx = scene_data.gfx,
-							background = scene_data.background,
-							offset_x = x - (chunk_pos_x * 512),
-							offset_y = y - (chunk_pos_y * 512),
-						}
+						biome_scene_index.scenes[chunk_key][#biome_scene_index.scenes[chunk_key] + 1] = scene_data --add to scene chunk table
 					end
 					if is_entity then
 						biome_scene_index.entities[chunk_key] = biome_scene_index.entities[chunk_key] or {}
-						biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = {
-							path = scene_data.entity,
-							offset_x = x - (chunk_pos_x * 512),
-							offset_y = y - (chunk_pos_y * 512),
-						}
+						biome_scene_index.entities[chunk_key][#biome_scene_index.entities[chunk_key] + 1] = scene_data
 					end
+				end--]]-- NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT NG+ SUPPORT
+				if not skip_scraping then
 				end
 			else
 				return true

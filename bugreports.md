@@ -1,0 +1,2 @@
+Parallel Parity + Apotheosis, Parallel Portals disables, Return Rifts enabled, portal still does not take you to Main World
+https://discord.com/channels/453998283174576133/453998283174576137/1498048123879162017

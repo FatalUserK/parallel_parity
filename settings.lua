@@ -64,6 +64,9 @@ local ps = ParallelParity_Settings
 
 --To add translations, add them below the same way English (en) languages have been added.
 --Translation Keys can be seen in the `languages` table above
+
+--Translations that need updating/verifying will have an indicator represented like "*key", example: --[[*de]]
+--Once you have updated the translation or verified that no change is necessary, please remove the note as to avoid being flagged by it in future
 ps.translation_strings = {
 	mod_ingame_warning = {
 		en = "Warning! Options for other mods will not show up here!",
@@ -459,7 +462,7 @@ ps.translation_strings = {
 			en = "Above/Below biome names",
 			en_desc = "Display a \"ENTERED ABOVE/BELOW (biome name)\" similar to Parallel World biome names",
 		},
-		spatial_awareness_coordinate_display = {
+		pw_coordinate_display = {
 			en = "Spatial Awareness Coordinate Format",
 			en_desc = "How should your current vertical and horizontal coordinates in Parallel Worlds be displayed",
 			options = {
@@ -474,24 +477,24 @@ ps.translation_strings = {
 				polar = {--you do not have to translate the "Polar" option strings if you don't want to... However: it *would* be funny
 					en = "Polar",
 					en_desc = "Display position as (r, θ)",
-					polar_angle_display = {
-						en = "Display angle as",
-						en_desc = "Choose the angle format for Spatial Awareness Polar Coordinates\nCan you tell I enjoy adding stupid bullshit to my mod?",
-						options = { --im sorry
-							degrees = {
-								en = "Degrees",
-								en_desc = "Standard 360°"
-							},
-							radians = {
-								en = "Radians",
-								en_desc = "A single Rad (or Radian) is defined as being the angle of an arc whose length equals the radius of the arc from the central point, making a full revolution equal to 2π Rad"
-								--en_desc = "The radian, denoted by the symbol rad, is the unit of angle in the International System of Units (SI) and is the standard unit of angular measure used in many areas of mathematics. It is defined such that one radian is the angle subtended at the center of a plane circle by an arc that is equal in length to the radius. The unit is defined in the SI as the coherent unit for plane angle, as well as for phase angle. Angles without explicitly specified units are generally assumed to be measured in radians, especially in mathematical writing"
-							},
-							gradians = {
-								en = "Gradians",
-								en_desc = "A single Grad (or Grade/Gradian) is defined as being 1/100th of a right-angle, making a full revolution equal to 400 Grad\nWelcome to hell."
-							},
-						},
+				},
+			},
+			angle_format = {
+				en = "Display angle as",
+				en_desc = "Choose the angle format for Spatial Awareness Polar Coordinates\nCan you tell I enjoy adding stupid bullshit to my mod?",
+				options = { --im sorry
+					degrees = {
+						en = "Degrees",
+						en_desc = "Standard 360°"
+					},
+					radians = {
+						en = "Radians",
+						en_desc = "A single Rad (or Radian) is defined as being the angle of an arc whose length equals the radius of the arc from the central point, making a full revolution equal to 2π Rad."
+						--en_desc = "The radian, denoted by the symbol rad, is the unit of angle in the International System of Units (SI) and is the standard unit of angular measure used in many areas of mathematics. It is defined such that one radian is the angle subtended at the center of a plane circle by an arc that is equal in length to the radius. The unit is defined in the SI as the coherent unit for plane angle, as well as for phase angle. Angles without explicitly specified units are generally assumed to be measured in radians, especially in mathematical writing"
+					},
+					gradians = {
+						en = "Gradians",
+						en_desc = "A single Grad (or Grade/Gradian) is defined as being 1/100th of a right-angle, making a full revolution equal to 400 Grad.\nThings are only downhill from here!"
 					},
 				},
 			},
@@ -887,11 +890,6 @@ local function SettingUpdate(gui, setting, translation)
 					setting.option_names[i] = option
 				end
 			end
-		else
-			local descs = setting.option_descriptions or {}
-			for i,_ in ipairs(setting.options) do
-				setting.option_desc_data[i] = generate_tooltip_data(gui, descs[i], (setting.recursion * ps.offset_amount) + setting.w, setting.extra_lines)
-			end
 		end
 		setting.current_option = ModSettingGetNextValue(setting.path) or setting.value_default
 		setting.current_option_int = 1
@@ -1013,7 +1011,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "ORB",
 						value_default = false,
@@ -1034,7 +1032,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "KOLMI",
 						value_default = false,
@@ -1054,7 +1052,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "GREED",
 						value_default = false,
@@ -1069,7 +1067,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "HP",
 						value_default = true,
@@ -1090,7 +1088,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "FIRE_ESSENCE",
 						value_default = false,
@@ -1118,7 +1116,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "GOURDS",
 						value_default = false,
@@ -1159,7 +1157,7 @@ ps.settings = {
 				value_default = true,
 				value_recommended = true,
 				scope = worldgen_scope,
-				dependents = {
+				items = {
 					{
 						id = "BUNKERS",
 						value_default = true,
@@ -1255,33 +1253,52 @@ ps.settings = {
 				scope = worldgen_scope,
 			},
 		},
-	}, --[[
+	}, -- [[
 	{
 		id = "vertical", --tempted to name it "Vertical Insanity"
 		type = "group",
 		collapsed = true,
+		c = {
+			r=179/255, --185,
+			g=73/255, --143,
+			b=151/255, --219,
+		},
 		items = {
 			{
 				id = "pixel_scenes",
 				value_default = false,
 				value_recommended = false,
+				scope = worldgen_scope,
 			},
 			{
 				id = "biome_scenes",
 				value_default = false,
 				value_recommended = false,
+				scope = worldgen_scope,
 			},
 			{
 				id = "biome_names",
 				value_default = false,
 				value_recommended = true,
+				scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
 			},
 			{
-				id = "spatial_awareness_coordinate_display",
+				id = "pw_coordinate_display",
 				type = "options",
 				options = {"none", "grid", "polar"},
 				value_default = "none",
 				value_recommended = "grid",
+				scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
+				items = {
+					{
+						id = "angle_format",
+						type = "options",
+						options = {"degrees", "radians", "gradians"},
+						value_default = "degrees",
+						render_condition = function() return ModSettingGetNextValue("parallel_parity.vertical.pw_coordinate_display") == "polar" end,
+						scope = MOD_SETTING_SCOPE_RUNTIME_RESTART,
+					}
+				}
 			},
 		}
 	},--]]
@@ -1434,11 +1451,6 @@ function ModSettingsUpdate(init_scope, is_init)
 			if setting.items then
 				for _, item in ipairs(setting.items) do
 					add_modded_translation(item, translation_path[setting.id])
-				end
-			end
-			if setting.dependents then
-				for _, dependent in ipairs(setting.dependents) do
-					add_modded_translation(dependent, translation_path[setting.id])
 				end
 			end
 			if setting.data then
@@ -1599,9 +1611,6 @@ local function reset_settings_to_default(group, target, default_value)
 		if setting.items then
 			reset_settings_to_default(setting.items, target, default_value)
 		end
-		if setting.dependents then
-			reset_settings_to_default(setting.dependents, target, default_value)
-		end
 	end
 end
 
@@ -1639,16 +1648,12 @@ end
 ---@param x_offset number indentation as a result of child settings
 ---@param setting table setting data
 ---@param c number[] colour data
-local function BoolSetting(gui, x_offset, setting, c)
+local function BoolSetting(gui, x_offset, setting, c, is_disabled)
 	c = c or {
 		r = 1,
 		g = 1,
 		b = 1,
 	}
-	local is_disabled
-	if setting.requires and not ModSettingGetNextValue(setting.requires.id) == setting.requires.value then
-		is_disabled = true
-	end
 
 	local value = ModSettingGetNextValue(setting.path) and true
 
@@ -1761,6 +1766,7 @@ function ModSettingsGui(gui, in_main_menu)
 		_settings = _settings or ps.settings
 
 		for _, setting in ipairs(_settings) do
+			local items_displayed
 
 			local render_setting
 			if type(setting.render_condition) == "function" then
@@ -1771,6 +1777,8 @@ function ModSettingsGui(gui, in_main_menu)
 			if render_setting then
 				local setting_is_disabled = parent_is_disabled or (setting.requires and not ModSettingGetNextValue(setting.requires.id) == setting.requires.value)
 				if setting.type == "group" then
+					items_displayed = true
+					
 					local c = setting.c and {
 						r = setting.c.r,
 						g = setting.c.g,
@@ -1826,7 +1834,7 @@ function ModSettingsGui(gui, in_main_menu)
 						r = .7^recursion,
 						g = .7^recursion,
 						b = .7^recursion,
-					})
+					}, setting_is_disabled)
 
 				elseif setting.type == "note" then
 					local c = setting.c and {
@@ -1992,8 +2000,8 @@ function ModSettingsGui(gui, in_main_menu)
 					ps.custom_setting_types[setting.type](gui, offset, setting)
 				end
 
-				if setting.dependents then
-					RenderModSettingsGui(gui, in_main_menu, setting.dependents, offset + ps.offset_amount, setting_is_disabled, recursion + 1)
+				if setting.items and not items_displayed then
+					RenderModSettingsGui(gui, in_main_menu, setting.items, offset + ps.offset_amount, setting_is_disabled, recursion + 1)
 				end
 			end
 		end
