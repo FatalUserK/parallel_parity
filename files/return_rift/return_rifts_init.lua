@@ -1,3 +1,5 @@
+if ModIsEnabled("return_rifts") then return end
+
 local old_OnPlayerSpawned = OnPlayerSpawned
 function OnPlayerSpawned(player)
 	if old_OnPlayerSpawned then old_OnPlayerSpawned(player) end
